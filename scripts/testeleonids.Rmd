@@ -1,0 +1,86 @@
+---
+title: "Análise descritiva - Variáveis do Censo Agro 2017"
+output:
+  rmdformats::html_docco:
+    highlight: kate
+  prettydoc::html_pretty: default
+---
+
+
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+               cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+Para o cálculo da proporção de área dos estabelecimentos em cada tipo, foi utilizado
+
+**Censo Agropecuário - 2017**
+IBGE/SIDRA. Censo Agropecuário 2017: Resultados definitivos. Rio de Janeiro: IBGE, 2019.
+
+* [Base de dados completa](https://sidra.ibge.gov.br/pesquisa/censo-agropecuario/censo-agropecuario-2017)
+
++ [Tabela 6778 - Número de estabelecimentos agropecuários, por tipologia, existência de energia elétrica, condição do produtor em relação às terras, residência da pessoa que dirige o estabelecimento, grupos de atividade econômica e grupos de área total](https://sidra.ibge.gov.br/tabela/6778)
+
++ [Tabela 6878 - Número de estabelecimentos agropecuários e Área dos estabelecimentos agropecuários, por tipologia, grupos de atividade econômica, sexo do produtor, classe de idade do produtor e condição do produtor em relação às terras](https://sidra.ibge.gov.br/tabela/6878)
+
++ [Tabela 6884 - Número de estabelecimentos agropecuários com pessoal ocupado, Pessoal ocupado em estabelecimentos agropecuários, Número de estabelecimentos agropecuários com pessoal ocupado com laço de parentesco com o produtor e Pessoal ocupado em estabelecimentos agropecuários com laço de parentesco com o produtor, por tipologia, sexo, faixas de idade, condição do produtor em relação às terras e grupos de atividade econômica](https://sidra.ibge.gov.br/tabela/6884)
+
++ [Tabela 6898 - Número de estabelecimentos agropecuários com produção e Valor da produção dos estabelecimentos agropecuários, por tipologia, tipo de produção, classes de valor da produção e grupos de área total](https://sidra.ibge.gov.br/tabela/6898)
+
++ [Tabela 6901 - Número de estabelecimentos agropecuários que obtiveram receitas ou com outras rendas do produtor e Valor das receitas ou rendas obtidas pelos estabelecimentos agropecuários, por tipologia, receitas do estabelecimento e outras rendas do produtor, condição do produtor em relação às terras e grupos de atividade econômica](https://sidra.ibge.gov.br/tabela/6901)
+
+
+[Base de dados completa](https://sidra.ibge.gov.br/pesquisa/censo-agropecuario/censo-agropecuario-2017)
+
+Onde: <br/>
+_AreaEstabelecimento.AF_ = Área em hectares (ha) dos estabelecimentos da agricultura familiar da microrregião;<br/>
+_AreaEstabelecimento.MP_ = Área em hectares (ha) dos estabelecimentos beneficiados pelo Pronamp (médio produtor) da microrregião;<br/>
+_AreaEstabelecimento.GP_ = Área em hectares (ha) dos estabelecimentos que não são nem agricultura familiar, nem atendidos pelo Pronamp da microrregião (patronal);<br/>
+
+* Proporção de área dos estabelecimentos da agricultura familiar<br/>
+$$\tiny
+prop.AreaEstabelecimento.AF = \frac {AreaEstabelecimento.AF} {AreaEstabelecimento.Total}
+$$
+
+* Proporção de área dos estabelecimentos beneficiados pelo Pronamp (médio produtor)<br/>
+$$\tiny
+prop.AreaEstabelecimento.MP = \frac {AreaEstabelecimento.MP} {AreaEstabelecimento.Total}
+$$
+
+$$\tiny
+prop.AreaEstabelecimento.GP = \frac {AreaEstabelecimento.GP} {AreaEstabelecimento.Total}
+$$
+
+
+### *Grupo 1* - Receitas da produção do estabelecimento {.tabset .tabset-fade .tabset-pills}
+
+#### *Grupo 1* - Receitas da produção do estabelecimento {.tabset .tabset-fade .tabset-pills}
+<span style="color:red">
+Questões importantes da interpretação:
+
+* Três regiões (Nordeste, Norte, Sul) apresentam a média das receitas obtidas nos estabelecimentos de AF maior do que a dos estabelecimentos patronais
+* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior, com grande diferença, é a do Centro-Oeste
+}
+</span>,
+
+
+#### *Grupo 2* - Receitas da produção do estabelecimento {.tabset .tabset-fade}
+Questões importantes da interpretação:
+
+* Três regiões (Nordeste, Norte, Sul) apresentam a média das receitas obtidas nos estabelecimentos de AF maior do que a dos estabelecimentos patronais
+* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior, com grande diferença, é a do Centro-Oeste
+
+
+\textcolor{red}{Questões importantes da interpretação}</span>,
