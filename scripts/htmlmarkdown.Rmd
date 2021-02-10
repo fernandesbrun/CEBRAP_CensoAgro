@@ -6,8 +6,6 @@ output:
   prettydoc::html_pretty: default
 ---
 
-
-
 ```{r setup, include=FALSE}
 library(knitr)
 library(rmdformats)
