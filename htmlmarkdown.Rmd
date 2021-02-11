@@ -444,25 +444,25 @@ tmap_arrange(tm_AF_REC_TOT, tm_MP_REC_TOT, tm_GP_REC_TOT,
 
 ```{r}
 library(kableExtra)
+library(scales)
 
 tabelaRECEITAS <- 
   microrregioes_pct_pivot3 %>%
   drop_na(prop3_REC_PROD) %>%
   group_by(COD_REGIAO, TIPOLOGIA) %>%
-  summarise(AF_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "AF"], na.rm = TRUE),
-            MP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "MP"], na.rm = TRUE),
-            GP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "GP"], na.rm = TRUE),
-            AF_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            MP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "MP"], na.rm = TRUE),
-            GP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "GP"], na.rm = TRUE),
-            AF_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "AF"], na.rm = TRUE),
-            MP_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "MP"], na.rm = TRUE),
-            GP_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "GP"], na.rm = TRUE),
-            AF_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "AF"], na.rm = TRUE),
-            MP_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "MP"], na.rm = TRUE),
-            GP_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "GP"], na.rm = TRUE)) %>%
-  pivot_longer( 
-               cols = c(3:14),
+  summarise(AF_prod = scales::percent(mean(prop3_REC_PROD[TIPOLOGIA == "AF"], na.rm = TRUE)),
+            MP_prod = scales::percent(mean(prop3_REC_PROD[TIPOLOGIA == "MP"], na.rm = TRUE)),
+            GP_prod = scales::percent(mean(prop3_REC_PROD[TIPOLOGIA == "GP"], na.rm = TRUE)),
+            AF_fora = scales::percent(mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE)),
+            MP_fora = scales::percent(mean(prop3_REC_FORA[TIPOLOGIA == "MP"], na.rm = TRUE)),
+            GP_fora = scales::percent(mean(prop3_REC_FORA[TIPOLOGIA == "GP"], na.rm = TRUE)),
+            AF_outr = scales::percent(mean(prop3_REC_OUTR[TIPOLOGIA == "AF"], na.rm = TRUE)),
+            MP_outr = scales::percent(mean(prop3_REC_OUTR[TIPOLOGIA == "MP"], na.rm = TRUE)),
+            GP_outr = scales::percent(mean(prop3_REC_OUTR[TIPOLOGIA == "GP"], na.rm = TRUE)),
+            AF_prog = scales::percent(mean(prop3_REC_PROG[TIPOLOGIA == "AF"], na.rm = TRUE)),
+            MP_prog = scales::percent(mean(prop3_REC_PROG[TIPOLOGIA == "MP"], na.rm = TRUE)),
+            GP_prog = scales::percent(mean(prop3_REC_PROG[TIPOLOGIA == "GP"], na.rm = TRUE))) %>%
+  pivot_longer(cols = c(3:14),
                names_to = "names") %>%
   drop_na(., value) %>%
   pivot_wider(names_from = COD_REGIAO,
@@ -480,16 +480,25 @@ tabelaRECEITAS <-
                 "AF_prog" = "Programas e políticas",
                 "MP_prog" = "Programas e políticas",
                 "GP_prog" = "Programas e políticas"))) %>%
+  mutate(TIPOLOGIA = recode(TIPOLOGIA, 
+         "AF" = "Agricultura familiar",
+         "MP" = "Médio produtor",
+         "GP" = "Grande produtor")) %>%
   select(-names) %>%
-  arrange(TIPOLOGIA)
+  relocate("Origem da renda", .after = TIPOLOGIA) %>%
+  arrange(desc(TIPOLOGIA))  %>%
+  rename(Tipologia = TIPOLOGIA)
 
+tabelaRECEITAS[is.na(tabelaRECEITAS)] <- "-"
 
 ```
 
 ```{r}
-kbl(tabelaRECEITAS, digits = 2, caption = "Group Rows") %>%
-  kable_paper("striped", full_width = F) %>%
-  pack_rows(index = table(teste$TIPOLOGIA))
+kbl(tabelaRECEITAS, digits = 2, caption = "Origem da renda dos estabelecimentos por tipologia", align = "clccccc") %>%
+  kable_paper("basic", full_width = F) %>%
+  collapse_rows(columns = 1) %>%
+  column_spec(column = c(3:6), width = "2.6cm") %>%
+  row_spec(5:8, color = "black", background = "#f5f5f5")
 ```
 
 
