@@ -3,7 +3,7 @@ usethis::edit_r_environ()
 usethis::use_git()
 usethis::use_github()
 
- ads
+ads
 library(ggthemes)
 library(ggpubr)
 library(tidyverse)
@@ -11,9 +11,9 @@ library(readr)
 library(esquisse)
 library(readxl)
 # library(rstatix)
- library(sp)
- library(sf)
- library(tmap)
+library(sp)
+library(sf)
+library(tmap)
 library(leaflet)
 library(arsenal)
 library(knitr)
@@ -210,9 +210,9 @@ microrregioes_pct_pivot <-
   microrregioes_pct %>%
   pivot_longer(
     cols = -c(1:5),
-  names_to = c("TIPOLOGIA", ".value"),
-  names_pattern = "(..)_(.......+)"
-)
+    names_to = c("TIPOLOGIA", ".value"),
+    names_pattern = "(..)_(.......+)"
+  )
 
 
 
@@ -244,7 +244,7 @@ REC_TOT <-
 
 ggplotly(REC_TOT, tooltip = c("label")) %>%
   layout(margin=list(t = 115),
-    title = list(text = paste0('Receitas obtidas nos estabelecimentos/pelos produtores',
+         title = list(text = paste0('Receitas obtidas nos estabelecimentos/pelos produtores',
                                     '<br>',
                                     '<sup>',
                                     'Participação por tipologia de propriedade nas receitas nas microrregiões',
@@ -254,14 +254,14 @@ ggplotly(REC_TOT, tooltip = c("label")) %>%
 # REC_PROD - pct tipo 1 ####
 REC_PROD <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_REC_PROD)) %>% ggplot(aes(x = TIPOLOGIA, y = prop_REC_PROD,
-                 color = TIPOLOGIA, label = LOCALIZACAO)) +
+                                                                            color = TIPOLOGIA, label = LOCALIZACAO)) +
   labs(x = "", y = "Porcentagem de participação", title = "Receitas de produção (animal e vegetal)", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
-    panel.spacing = unit(1, "lines")) +
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        panel.spacing = unit(1, "lines")) +
   facet_grid(vars(), vars(COD_REGIAO)) +
   geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
   geom_jitter(alpha = .25, width = .3) +
@@ -336,7 +336,7 @@ REC_PROG <-
 # REC_PROD - pct tipo 2 ####
 REC_PROD2 <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop2_REC_PROD)) %>% ggplot(aes(x = TIPOLOGIA, y = prop2_REC_PROD,
-                                                                            color = TIPOLOGIA, label = LOCALIZACAO)) +
+                                                                             color = TIPOLOGIA, label = LOCALIZACAO)) +
   labs(x = "", y = "Porcentagem de participação", title = "Receitas de produção (animal e vegetal)", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
@@ -772,9 +772,9 @@ by_cyl_am
 teste <- microrregioes_pct_pivot3 %>%
   group_by(TIPOLOGIA, COD_REGIAO) %>%
   summarise(
-            Min = (100*first(prop_AREA)),
-            Media = (100*mean(prop_AREA, na.rm = TRUE)),
-            Max = (100*max(prop_AREA, na.rm = TRUE)),
+    Min = (100*first(prop_AREA)),
+    Media = (100*mean(prop_AREA, na.rm = TRUE)),
+    Max = (100*max(prop_AREA, na.rm = TRUE)),
   )
 
 kable(teste)
@@ -825,10 +825,10 @@ SHP_Micro_join <- SHP_Microrregioes %>%
 # Mapa
 
 tm_AF_REC_PROD <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
+  SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
   filter(prop_REC_PROD > 0) %>%
   filter(TIPOLOGIA == "AF") %>%
-tm_shape() +
+  tm_shape() +
   tm_fill(col = "prop_REC_PROD", 
           title = "Receitas da produção<br/>do estabelecimento - AF", 
           id = "LOCALIZACAO", palette="BuGn", 
@@ -836,15 +836,15 @@ tm_shape() +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
   tm_view(view.legend.position = c("left", "bottom")) +
-tm_shape(SHP_Estados) +
+  tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
 
 tm_MP_REC_PROD <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
+  SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
   filter(prop_REC_PROD > 0) %>%
   filter(TIPOLOGIA == "MP") %>%  
-tm_shape() +
+  tm_shape() +
   tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -853,10 +853,10 @@ tm_shape() +
   tm_borders(lwd = 1) 
 
 tm_GP_REC_PROD <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
+  SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
   filter(prop_REC_PROD > 0) %>%
   filter(TIPOLOGIA == "GP") %>%
-tm_shape() +
+  tm_shape() +
   tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -882,3 +882,242 @@ trial2 <- microrregioes %>% select(VP_T, VP_AF, VP_MP)
 
 # summarize the data with our package
 table1 <- gtsummary::tbl_summary(trial2)
+
+#########################################################################################################################
+
+
+
+
+#Qual o valor por hectare 
+
+microrregioes_novasvar <- microrregioes %>%
+  
+  mutate(
+    VP_GP = (VP_T) - ((VP_AF) + (VP_MP)),
+    AREA_GP = (AREA_T - (AREA_AF + AREA_MP))
+  )
+
+microrregioes_novasvar[microrregioes_novasvar < 0] <- NA
+
+microrregioes_novasvar <- microrregioes_novasvar %>%
+  mutate(
+    #Valor da produção por área
+    TT_VPdivAREA = round((VP_T*1000) / AREA_T, 2), 
+    AF_VPdivAREA = round((VP_AF*1000) / AREA_AF, 2),
+    MP_VPdivAREA = round((VP_MP*1000) / AREA_MP, 2),
+    GP_VPdivAREA = round((VP_GP*1000) / AREA_GP, 2)
+    ) %>%
+  
+  select(1:3, COD_ESTADO, COD_REGIAO, TT_VPdivAREA:GP_VPdivAREA, VP_T:VP_MP, VP_GP, AREA_T:AREA_MP, AREA_GP)
+
+microrregioes_novasvar$GP_VPdivAREA[is.nan(microrregioes_novasvar$GP_VPdivAREA)] = NA
+microrregioes_novasvar[microrregioes_novasvar < 0] <- NA
+is.na(microrregioes_novasvar) <- do.call(cbind,lapply(microrregioes_novasvar, is.infinite))
+
+#Renda da produção por estabelecimento
+
+microrregioes_novasvar_pivot <- 
+  microrregioes_novasvar %>%
+  select(1:5, TT_VPdivAREA:GP_VPdivAREA) %>%
+  pivot_longer(
+    cols = -c(1:5),
+    names_to = c("TIPOLOGIA", ".value"),
+    names_pattern = "(..)_(.........+)"
+  )
+microrregioes_novasvar_pivot <- na.omit(microrregioes_novasvar_pivot) 
+
+microrregioes_novasvar_pivot %>%
+  ggplot() +
+  aes(x = TIPOLOGIA, weight = VPdivAREA, fill = TIPOLOGIA) +
+  geom_bar() +
+  scale_color_hue() +
+  theme_minimal() +
+  coord_flip() +
+  facet_wrap(vars(COD_REGIAO), ncol = 1)
+
+
+# Juntando o shape e a tabela
+microrregioes_novasvar_shape <- SHP_Microrregioes %>%
+  left_join(., microrregioes_novasvar_pivot, by = "COD")
+
+
+## AF
+tm_AF_VPdivAREA <- 
+microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
+  filter(TIPOLOGIA == "AF") %>%
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+          id = "LOCALIZACAO", palette="BuGn",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "quantile") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+## MP
+tm_MP_VPdivAREA <- 
+  microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
+  filter(TIPOLOGIA == "MP") %>%
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- MP", 
+          id = "LOCALIZACAO", palette="Oranges",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          #legend.format=list(digits=0),
+          style = "quantile") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+## GP
+tm_GP_VPdivAREA <- 
+  microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
+  
+  filter(VPdivAREA < 15000) %>%
+  filter(TIPOLOGIA == "GP") %>%
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- GP", 
+          id = "LOCALIZACAO", palette="Purples",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "quantile") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+##TT
+tm_TT_VPdivAREA <- 
+  microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
+  filter(TIPOLOGIA == "TT") %>%
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- Total", 
+          id = "LOCALIZACAO", palette="Greys",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "quantile") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)
+
+
+tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
+             sync = TRUE, 
+             nrow = 2)
+
+
+###############
+
+microrregioes_novasvar_pivot$TIPOLOGIA <- factor(microrregioes_novasvar_pivot$TIPOLOGIA, levels = c("TT", "GP", "MP", "AF"))
+
+
+  microrregioes_novasvar_pivot %>% 
+    filter(!is.na(VPdivAREA)) %>% 
+    filter(VPdivAREA >= 0) %>%
+    filter(VPdivAREA < 15000) %>%
+  ggplot(aes(x = TIPOLOGIA, y = VPdivAREA, color = TIPOLOGIA, label = LOCALIZACAO)) +
+  labs(x = "", y = "VP / ha ", title = "Valor da produção por hectare nas microrregiões") +
+    scale_color_manual(values = c("TT" = "#737373", "GP" = "#7570B3", "MP" = "#D95F02", "AF" = "#1B9E77")) +
+  #scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
+  theme_light() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        panel.spacing = unit(1, "lines")) +
+  facet_grid(vars(), vars(COD_REGIAO)) +
+  geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
+  geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
+  #scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), labels=function(x) paste0(x*100,"%")) +
+  scale_x_discrete(labels=c("Todos os estab.", "Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  coord_flip()
+
+
+################################
+  
+  
+  # REC_TOT - pct tipo 1 ####
+microrregioes_pct_pivot3 %>% filter(!is.na(prop3_REC_PROG)) %>% 
+    ggplot(aes(x = TIPOLOGIA, y = prop3_REC_PROG, color = TIPOLOGIA, label = LOCALIZACAO)) +
+    labs(x = "", y = "Participação", title = "Receitas obtidas") +
+    scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
+    theme_light() +
+    theme(legend.position='none',
+          plot.title = element_text(hjust = 0.5),
+          plot.subtitle = element_text(hjust = 0.5),
+          axis.title.y = element_text(vjust = -1),
+          panel.spacing = unit(1, "lines")) +
+    geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
+    geom_jitter(alpha = .25, width = .3) +
+    stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
+    #scale_y_continuous(limits=c(0,0.7), breaks=seq(0, 1, by = 0.3), 
+                       #labels=function(x) paste0(x*100,"%")) +
+    scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+    facet_grid(vars(), vars(COD_REGIAO)) +
+    coord_flip()
+  
+teste <- 
+  microrregioes_pct_pivot3 %>%
+  drop_na(prop3_REC_PROD) %>%
+  group_by(COD_REGIAO, TIPOLOGIA) %>%
+  summarise(AF_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "GP"], na.rm = TRUE),
+            AF_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            GP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            AF_outr = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_outr = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            GP_outr = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            AF_prog = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_prog = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            GP_prog = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE)) %>%
+  pivot_longer( 
+               cols = c(3:14),
+               names_to = "names") %>%
+  drop_na(., value) %>%
+  pivot_wider(names_from = COD_REGIAO,
+            values_from = value) %>%
+  mutate(recode(names,
+                "AF_prod" = "Produção do estabelecimento",
+                "MP_prod" = "Produção do estabelecimento",
+                "GP_prod" = "Produção do estabelecimento",
+                "AF_fora" = "Fora do estabelecimento",
+                "MP_fora" = "Fora do estabelecimento",
+                "GP_fora" = "Fora do estabelecimento",
+                "AF_outr" = "Outras do estabelecimento",
+                "MP_outr" = "Outras do estabelecimento",
+                "GP_outr" = "Outras do estabelecimento",
+                "AF_prog" = "Programas e políticas",
+                "MP_prog" = "Programas e políticas",
+                "GP_prog" = "Programas e políticas")) %>%
+  select(-names) %>%
+
+
+
+  
+
+pivot_wider(names_from = Variable, 
+            values_from = all_values)
+
+# Multiple variables stored in column names
+microrregioes_novasvar_pivot <- 
+  microrregioes_novasvar %>%
+  pivot_longer(
+    cols = -c(1:5),
+    names_to = c("TIPOLOGIA", ".value"),
+    names_pattern = "(..)_(.......+)"
+  )
