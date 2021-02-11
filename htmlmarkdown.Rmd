@@ -188,17 +188,38 @@ microrregioes_pct <- microrregioes %>%
          GP_prop2_REC_FORA = (R_VALOR_T_302 - (R_VALOR_AF_302 + R_VALOR_MP_302)) /  R_VALOR_T_TOT ,
          GP_prop2_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - ((R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) + (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307))) / R_VALOR_T_TOT ,
          
-         #Qual o valor por hectare 
-         T_VPdivAREA = VP_T / AREA_T, 
-         AF_VPdivAREA = VP_AF / AREA_AF,
-         MP_VPdivAREA = VP_MP / AREA_MP,
-         GP_VPdivAREA = (VP_T - (VP_AF + VP_MP)) / (AREA_T - (AREA_AF + AREA_MP))
+        #porcentagem tipo 3, usando o total de cada tipologia 
+        MP_prop3_REC_PROD = R_VALOR_MP_1 / R_VALOR_MP_TOT ,
+        MP_prop3_REC_OUTR = R_VALOR_MP_2 / R_VALOR_MP_TOT ,
+        MP_prop3_REC_FORA = R_VALOR_MP_302 / R_VALOR_MP_TOT ,
+        MP_prop3_REC_PROG = (R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) / R_VALOR_MP_TOT ,
+        AF_prop3_REC_PROD = R_VALOR_AF_1 / R_VALOR_AF_TOT ,
+        AF_prop3_REC_OUTR = R_VALOR_AF_2 / R_VALOR_AF_TOT ,
+        AF_prop3_REC_FORA = R_VALOR_AF_302 / R_VALOR_AF_TOT ,
+        AF_prop3_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_AF_TOT ,   
+        GP_prop3_REC_PROD = (R_VALOR_T_1 - (R_VALOR_AF_1 + R_VALOR_MP_1)) /  (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT)) ,
+        GP_prop3_REC_OUTR = (R_VALOR_T_2 - (R_VALOR_AF_2 + R_VALOR_MP_2)) /  (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT)) ,
+        GP_prop3_REC_FORA = (R_VALOR_T_302 - (R_VALOR_AF_302 + R_VALOR_MP_302)) /  (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT)) ,
+        GP_prop3_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - ((R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) + (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307))) / (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT))  
          
   )
 
+# microrregioes_pct <- microrregioes_pct %>%
+#   select(-(4:162))
+```
+
+```{r Renomeando pra trabalhar no item 7, message=FALSE, warning=FALSE, include=FALSE}
+microrregioes_renamed <- microrregioes_pct %>%
+  rename(
+    TT_R_NEST = R_NEST_T_TOT , TT_R_NEST_1 = R_NEST_T_1 , TT_R_NEST_101 = R_NEST_T_101 , TT_R_NEST_102 = R_NEST_T_102 , TT_R_NEST_103 = R_NEST_T_103 , TT_R_NEST_2 = R_NEST_T_2 , TT_R_NEST_201 = R_NEST_T_201 , TT_R_NEST_202 = R_NEST_T_202 , TT_R_NEST_203 = R_NEST_T_203 , TT_R_NEST_204 = R_NEST_T_204 , TT_R_NEST_205 = R_NEST_T_205 , TT_R_NEST_3 = R_NEST_T_3 , TT_R_NEST_301 = R_NEST_T_301 , TT_R_NEST_302 = R_NEST_T_302 , TT_R_NEST_303 = R_NEST_T_303 , TT_R_NEST_304 = R_NEST_T_304 , TT_R_NEST_305 = R_NEST_T_305 , TT_R_NEST_306 = R_NEST_T_306 , TT_R_NEST_307 = R_NEST_T_307 , AF_R_NEST = R_NEST_AF_TOT , AF_R_NEST_1 = R_NEST_AF_1 , AF_R_NEST_101 = R_NEST_AF_101 , AF_R_NEST_102 = R_NEST_AF_102 , AF_R_NEST_103 = R_NEST_AF_103 , AF_R_NEST_2 = R_NEST_AF_2 , AF_R_NEST_201 = R_NEST_AF_201 , AF_R_NEST_202 = R_NEST_AF_202 , AF_R_NEST_203 = R_NEST_AF_203 , AF_R_NEST_204 = R_NEST_AF_204 , AF_R_NEST_205 = R_NEST_AF_205 , AF_R_NEST_3 = R_NEST_AF_3 , AF_R_NEST_301 = R_NEST_AF_301 , AF_R_NEST_302 = R_NEST_AF_302 , AF_R_NEST_303 = R_NEST_AF_303 , AF_R_NEST_304 = R_NEST_AF_304 , AF_R_NEST_305 = R_NEST_AF_305 , AF_R_NEST_306 = R_NEST_AF_306 , AF_R_NEST_307 = R_NEST_AF_307 , MP_R_NEST = R_NEST_MP_TOT , MP_R_NEST_1 = R_NEST_MP_1 , MP_R_NEST_101 = R_NEST_MP_101 , MP_R_NEST_102 = R_NEST_MP_102 , MP_R_NEST_103 = R_NEST_MP_103 , MP_R_NEST_2 = R_NEST_MP_2 , MP_R_NEST_201 = R_NEST_MP_201 , MP_R_NEST_202 = R_NEST_MP_202 , MP_R_NEST_203 = R_NEST_MP_203 , MP_R_NEST_204 = R_NEST_MP_204 , MP_R_NEST_205 = R_NEST_MP_205 , MP_R_NEST_3 = R_NEST_MP_3 , MP_R_NEST_301 = R_NEST_MP_301 , MP_R_NEST_302 = R_NEST_MP_302 , MP_R_NEST_303 = R_NEST_MP_303 , MP_R_NEST_304 = R_NEST_MP_304 , MP_R_NEST_305 = R_NEST_MP_305 , MP_R_NEST_306 = R_NEST_MP_306 , MP_R_NEST_307 = R_NEST_MP_307 , TT_R_VALOR = R_VALOR_T_TOT , TT_R_VALOR_1 = R_VALOR_T_1 , TT_R_VALOR_101 = R_VALOR_T_101 , TT_R_VALOR_102 = R_VALOR_T_102 , TT_R_VALOR_103 = R_VALOR_T_103 , TT_R_VALOR_2 = R_VALOR_T_2 , TT_R_VALOR_201 = R_VALOR_T_201 , TT_R_VALOR_202 = R_VALOR_T_202 , TT_R_VALOR_203 = R_VALOR_T_203 , TT_R_VALOR_204 = R_VALOR_T_204 , TT_R_VALOR_205 = R_VALOR_T_205 , TT_R_VALOR_3 = R_VALOR_T_3 , TT_R_VALOR_301 = R_VALOR_T_301 , TT_R_VALOR_302 = R_VALOR_T_302 , TT_R_VALOR_303 = R_VALOR_T_303 , TT_R_VALOR_304 = R_VALOR_T_304 , TT_R_VALOR_305 = R_VALOR_T_305 , TT_R_VALOR_306 = R_VALOR_T_306 , TT_R_VALOR_307 = R_VALOR_T_307 , AF_R_VALOR = R_VALOR_AF_TOT , AF_R_VALOR_1 = R_VALOR_AF_1 , AF_R_VALOR_101 = R_VALOR_AF_101 , AF_R_VALOR_102 = R_VALOR_AF_102 , AF_R_VALOR_103 = R_VALOR_AF_103 , AF_R_VALOR_2 = R_VALOR_AF_2 , AF_R_VALOR_201 = R_VALOR_AF_201 , AF_R_VALOR_202 = R_VALOR_AF_202 , AF_R_VALOR_203 = R_VALOR_AF_203 , AF_R_VALOR_204 = R_VALOR_AF_204 , AF_R_VALOR_205 = R_VALOR_AF_205 , AF_R_VALOR_3 = R_VALOR_AF_3 , AF_R_VALOR_301 = R_VALOR_AF_301 , AF_R_VALOR_302 = R_VALOR_AF_302 , AF_R_VALOR_303 = R_VALOR_AF_303 , AF_R_VALOR_304 = R_VALOR_AF_304 , AF_R_VALOR_305 = R_VALOR_AF_305 , AF_R_VALOR_306 = R_VALOR_AF_306 , AF_R_VALOR_307 = R_VALOR_AF_307 , MP_R_VALOR = R_VALOR_MP_TOT , MP_R_VALOR_1 = R_VALOR_MP_1 , MP_R_VALOR_101 = R_VALOR_MP_101 , MP_R_VALOR_102 = R_VALOR_MP_102 , MP_R_VALOR_103 = R_VALOR_MP_103 , MP_R_VALOR_2 = R_VALOR_MP_2 , MP_R_VALOR_201 = R_VALOR_MP_201 , MP_R_VALOR_202 = R_VALOR_MP_202 , MP_R_VALOR_203 = R_VALOR_MP_203 , MP_R_VALOR_204 = R_VALOR_MP_204 , MP_R_VALOR_205 = R_VALOR_MP_205 , MP_R_VALOR_3 = R_VALOR_MP_3 , MP_R_VALOR_301 = R_VALOR_MP_301 , MP_R_VALOR_302 = R_VALOR_MP_302 , MP_R_VALOR_303 = R_VALOR_MP_303 , MP_R_VALOR_304 = R_VALOR_MP_304 , MP_R_VALOR_305 = R_VALOR_MP_305 , MP_R_VALOR_306 = R_VALOR_MP_306 , MP_R_VALOR_307 = R_VALOR_MP_307 , TT_O_LACO = O_LACO_T , AF_O_LACO = O_LACO_AF , MP_O_LACO = O_LACO_MP , TT_O = O_T , AF_O = O_AF , MP_O = O_MP , TT_O_NEST_LACO_T = O_NEST_LACO_T , AF_O_NEST_LACO = O_NEST_LACO_AF , MP_O_NEST_LACO = O_NEST_LACO_MP , TT_AREA = AREA_T , AF_AREA = AREA_AF , MP_AREA = AREA_MP , TT_PROD = PROD_T , TT_PROD_01 = PROD_T_01 , TT_PROD_02 = PROD_T_02 , TT_PROD_03 = PROD_T_03 , TT_PROD_04 = PROD_T_04 , TT_PROD_05 = PROD_T_05 , TT_PROD_06 = PROD_T_06 , TT_PROD_07 = PROD_T_07 , AF_PROD = PROD_AF , AF_PROD_01 = PROD_AF_01 , AF_PROD_02 = PROD_AF_02 , AF_PROD_03 = PROD_AF_03 , AF_PROD_04 = PROD_AF_04 , AF_PROD_05 = PROD_AF_05 , AF_PROD_06 = PROD_AF_06 , AF_PROD_07 = PROD_AF_07 , MP_PROD = PROD_MP , MP_PROD_01 = PROD_MP_01 , MP_PROD_02 = PROD_MP_02 , MP_PROD_03 = PROD_MP_03 , MP_PROD_04 = PROD_MP_04 , MP_PROD_05 = PROD_MP_05 , MP_PROD_06 = PROD_MP_06 , MP_PROD_07 = PROD_MP_07 , TT_VP = VP_T , TT_VP_AN = VP_T_AN , TT_VP_VG = VP_T_VG , AF_VP = VP_AF , AF_VP_AN = VP_AF_AN , AF_VP_VG = VP_AF_VG , MP_VP = VP_MP , MP_VP_AN = VP_MP_AN , MP_VP_VG = VP_MP_VG 
+  )
+
+
 microrregioes_pct <- microrregioes_pct %>%
   select(-(4:162))
+
 ```
+
 
 ```{r Pivot longer, message=FALSE, warning=FALSE, include=FALSE}
 # Multiple variables stored in column names
@@ -209,6 +230,11 @@ microrregioes_pct_pivot <-
   names_to = c("TIPOLOGIA", ".value"),
   names_pattern = "(..)_(.......+)"
   )
+
+
+microrregioes_pct_pivot[microrregioes_pct_pivot < 0] <- NA
+is.na(microrregioes_pct_pivot) <- do.call(cbind,lapply(microrregioes_pct_pivot, is.infinite))
+is.na(microrregioes_pct_pivot) <- do.call(cbind,lapply(microrregioes_pct_pivot, is.nan))
 ```
 
 
@@ -416,6 +442,56 @@ tmap_arrange(tm_AF_REC_TOT, tm_MP_REC_TOT, tm_GP_REC_TOT,
 
 ```
 
+```{r}
+library(kableExtra)
+
+tabelaRECEITAS <- 
+  microrregioes_pct_pivot3 %>%
+  drop_na(prop3_REC_PROD) %>%
+  group_by(COD_REGIAO, TIPOLOGIA) %>%
+  summarise(AF_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "GP"], na.rm = TRUE),
+            AF_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "GP"], na.rm = TRUE),
+            AF_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "GP"], na.rm = TRUE),
+            AF_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "GP"], na.rm = TRUE)) %>%
+  pivot_longer( 
+               cols = c(3:14),
+               names_to = "names") %>%
+  drop_na(., value) %>%
+  pivot_wider(names_from = COD_REGIAO,
+            values_from = value) %>%
+  mutate("Origem da renda" = (recode(names,
+                "AF_prod" = "Produção do estabelecimento",
+                "MP_prod" = "Produção do estabelecimento",
+                "GP_prod" = "Produção do estabelecimento",
+                "AF_fora" = "Fora do estabelecimento",
+                "MP_fora" = "Fora do estabelecimento",
+                "GP_fora" = "Fora do estabelecimento",
+                "AF_outr" = "Outras do estabelecimento",
+                "MP_outr" = "Outras do estabelecimento",
+                "GP_outr" = "Outras do estabelecimento",
+                "AF_prog" = "Programas e políticas",
+                "MP_prog" = "Programas e políticas",
+                "GP_prog" = "Programas e políticas"))) %>%
+  select(-names) %>%
+  arrange(TIPOLOGIA)
+
+
+```
+
+```{r}
+kbl(tabelaRECEITAS, digits = 2, caption = "Group Rows") %>%
+  kable_paper("striped", full_width = F) %>%
+  pack_rows(index = table(teste$TIPOLOGIA))
+```
+
 
 
 ------
@@ -437,6 +513,143 @@ A variável de valor das receitas obtidas foi separada em quatro grandes grupos:
 <br/>
  
 ##### *Grupo 1* - Receitas da produção do estabelecimento {.tabset .tabset-fade .tabset-pills}
+
+
+###### Proporção da receita pelo total de receitas de cada tipo de estabelecimento
+
+Para o cálculo da proporção das rendas da produção em cada tipo (composição das rendas), foi utilizado:
+
+* Proporção das rendas de produção na agricultura familiar:
+
+$$\tiny
+prop1.ReceitaProducao.AF = \frac {ReceitaProducao.AF} {Receita.AF} 
+$$
+
+* Proporção das rendas de produção no médio produtor rural:
+
+$$\tiny
+prop1.ReceitaProducao.MP = \frac {ReceitaProducao.MP} {Receita.AF} 
+$$
+
+* Proporção das rendas de produção no grande produtor rural:
+
+$$\tiny
+prop1.ReceitaProducao.GP = \frac {ReceitaProducao.GP} {Receita.AF} 
+$$
+Onde:<br/>
+_ReceitaProducao.AF_ =  Rendas da produção (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_ReceitaProducao.MP_ = Rendas da produção (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_ReceitaProducao.GP _ =  Rendas da produção (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+
+```{r graf RENDAS - Rendas da produção, message=FALSE, warning=FALSE, include=FALSE}
+
+# REC_PROD - pct tipo 1 ####
+REC2_PROD <- 
+  microrregioes_pct_pivot3 %>% filter(!is.na(prop2_REC_PROD)) %>% ggplot(aes(x = TIPOLOGIA, y = prop2_REC_PROD,
+                 color = TIPOLOGIA, label = LOCALIZACAO)) +
+  labs(x = "", y = "Participação", title = "Receitas de produção (animal e vegetal)", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
+  scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
+  theme_light() +
+  theme(legend.position = 'none',
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5),
+    panel.spacing = unit(1, "lines")) +
+  facet_grid(vars(), vars(COD_REGIAO)) +
+  geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
+  geom_jitter(alpha = .25, width = .3) +
+  stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.01, color="gray39") +
+  scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
+                     labels=function(x) paste0(x*100,"%")) +
+  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  coord_flip()
+
+```
+
+```{r grafPLOT RENDAS - Rendas da produção PLOT, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggREC2_PROD <- ggplotly(REC2_PROD, tooltip = c("label", "y")) %>%
+  layout(margin = margens,
+    title = list(text = paste0('Receitas de produção (animal e vegetal)',
+                                    '<br>',
+                                    '<sup>',
+                                    'Participação por tipologia nas receitas de produção nas microrregiões',
+                                    '</sup>')))
+
+ggREC2_PROD
+```
+<br/>
+<br/>
+Questões principais:
+
+* Três regiões (Nordeste, Norte, Sul) apresentam a média da participação das receitas obtidas nos estabelecimentos de AF maior do que a dos estabelecimentos patronais
+* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior, com grande diferença, é a do Centro-Oeste 
+* Os três tipos de estabelecimentos possuem distribuições muito distintas
+* Enquando os dados do Centro-Oeste apontam para uma dominância da agricultura patronal (>60% das receitas obtidas em estabelecimentos patronais, ~30% de médios produtores e ~10% de agricultura familiar)
+	+ Em contraponto, a região Nordeste demonstra uma variância nas categorias que vai na contra-mão do Centro-Oeste, com ~50% das receitas tendo sido obtidas pela agricultura familiar, contra ~20% da patronal.
+* Agricultura familiar na região norte também apresenta destaque
+* Sobre a região Nordeste, é importante notar que até chegar em 60% de participação da AF, se faz presente um número de microrregiões com valores cada vez mais altos ao passo que, na mesma região, no tipo patronal, o número de microrregiões é decrescente
+	+ Essa observação é relevante para pensar a questão da concentração de renda em algumas microrregiões do Nordeste patronal
+<br/>
+<br/>
+
+```{r mapa RENDAS - Rendas da produção, message=FALSE, warning=FALSE, include=FALSE}
+## AF
+tm_AF_REC_PROD <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
+  filter(prop_REC_PROD > 0) %>%
+  filter(TIPOLOGIA == "AF") %>%
+tm_shape() +
+  tm_fill(col = "prop_REC_PROD", 
+          title = "Receitas da produção<br/>do estabelecimento - AF", 
+          id = "LOCALIZACAO", palette="BuGn", 
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## MP
+tm_MP_REC_PROD <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
+  filter(prop_REC_PROD > 0) %>%
+  filter(TIPOLOGIA == "MP") %>%  
+tm_shape() +
+  tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## GP
+tm_GP_REC_PROD <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
+  filter(prop_REC_PROD > 0) %>%
+  filter(TIPOLOGIA == "GP") %>%
+tm_shape() +
+  tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+```{r mapaPLOT RENDAS - Rendas da produção PLOT, echo=FALSE, message=FALSE, warning=FALSE}
+tmap_arrange(tm_AF_REC_PROD, tm_MP_REC_PROD, tm_GP_REC_PROD, 
+             sync = TRUE, 
+             nrow = 1)
+```
+
+
+###### Proporção da receita pelo total de cada tipo de receita
+
 
 Para o cálculo da proporção das rendas da produção em cada tipo, foi utilizado:
 
@@ -1472,19 +1685,19 @@ tmap_arrange(tm_AF_VP, tm_MP_VP, tm_GP_VP,
 
 Para o cálculo da razão entre o valor da produção e a área (em ha), foi utilizado:
 
-* Proporção do valor da produção da agricultura familiar:
+* Valor da produção por hectare da agricultura familiar:
 
 $$\tiny
 prop.ValorProducaoArea.AF = \frac {ValorProducao.AF} {AreaEstabelecimento.AF} 
 $$
 
-* Proporção do valor da produção do médio produtor rural:
+* Valor da produção por hectare do médio produtor rural:
 
 $$\tiny
 prop.ValorProducaoArea.MP = \frac {ValorProducao.MP} {AreaEstabelecimento.MP} 
 $$
 
-* Proporção do valor da produção do grande produtor rural:
+* Valor da produção por hectare do grande produtor rural:
 
 $$\tiny
 prop.ValorProducaoArea.GP = \frac {ValorProducao.GP} {AreaEstabelecimento.GP} 
@@ -1499,14 +1712,71 @@ _AreaEstabelecimento.MP_ = Área em hectares (ha) dos estabelecimentos do médio
 _AreaEstabelecimento.GP_ = Área em hectares (ha) dos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
 _AreaEstabelecimento.Total_ = Área total em hectares (ha) dos estabelecimentos na microrregião;<br/>
 
+```{r Preparação dos dados, message=FALSE, warning=FALSE, include=FALSE}
+microrregioes_novasvar <- microrregioes %>%
+  
+  mutate(
+    VP_GP = (VP_T) - ((VP_AF) + (VP_MP)),
+    AREA_GP = (AREA_T - (AREA_AF + AREA_MP))
+  )
+
+microrregioes_novasvar[microrregioes_novasvar < 0] <- NA
+
+microrregioes_novasvar <- microrregioes_novasvar %>%
+  mutate(
+    #Valor da produção por área
+    TT_VPdivAREA = round((VP_T*1000) / AREA_T, 2), 
+    AF_VPdivAREA = round((VP_AF*1000) / AREA_AF, 2),
+    MP_VPdivAREA = round((VP_MP*1000) / AREA_MP, 2),
+    GP_VPdivAREA = round((VP_GP*1000) / AREA_GP, 2)
+    ) %>%
+  
+  select(1:3, COD_ESTADO, COD_REGIAO, TT_VPdivAREA:GP_VPdivAREA, VP_T:VP_MP, VP_GP, AREA_T:AREA_MP, AREA_GP)
+
+microrregioes_novasvar$GP_VPdivAREA[is.nan(microrregioes_novasvar$GP_VPdivAREA)] = NA
+microrregioes_novasvar[microrregioes_novasvar < 0] <- NA
+is.na(microrregioes_novasvar) <- do.call(cbind,lapply(microrregioes_novasvar, is.infinite))
+
+#Renda da produção por estabelecimento
+
+microrregioes_novasvar_pivot <- 
+  microrregioes_novasvar %>%
+  select(1:5, TT_VPdivAREA:GP_VPdivAREA) %>%
+  pivot_longer(
+    cols = -c(1:5),
+    names_to = c("TIPOLOGIA", ".value"),
+    names_pattern = "(..)_(.........+)"
+  )
+microrregioes_novasvar_pivot <- na.omit(microrregioes_novasvar_pivot) 
+
+microrregioes_novasvar_pivot %>%
+  ggplot() +
+  aes(x = TIPOLOGIA, weight = VPdivAREA, fill = TIPOLOGIA) +
+  geom_bar() +
+  scale_color_hue() +
+  theme_minimal() +
+  coord_flip() +
+  facet_wrap(vars(COD_REGIAO), ncol = 1)
+
+
+# Juntando o shape e a tabela
+microrregioes_novasvar_shape <- SHP_Microrregioes %>%
+  left_join(., microrregioes_novasvar_pivot, by = "COD")
+```
 
 
 ```{r graf ESTABELECIMENTOS - Valor da produção por área, message=FALSE, warning=FALSE, include=FALSE}
-VPArea <- 
-  microrregioes_pct_pivot3 %>% filter(!is.na(VPdivAREA)) %>% filter(VPdivAREA >= 0) %>% filter(VPdivAREA < 10) %>%
+microrregioes_novasvar_pivot$TIPOLOGIA <- factor(microrregioes_novasvar_pivot$TIPOLOGIA, levels = c("TT", "GP", "MP", "AF"))
+
+VP_AREA <-
+  microrregioes_novasvar_pivot %>% 
+    filter(!is.na(VPdivAREA)) %>% 
+    filter(VPdivAREA >= 0) %>%
+    filter(VPdivAREA < 15000) %>%
   ggplot(aes(x = TIPOLOGIA, y = VPdivAREA, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação ", title = "Proporção de valor da produção dos estabelecimentos", subtitle = "Participação por tipologia no valor da produção dos estabelecimentos") +
-  scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
+  labs(x = "", y = "VP / ha ", title = "Valor da produção por hectare nas microrregiões") +
+    scale_color_manual(values = c("TT" = "#737373", "GP" = "#7570B3", "MP" = "#D95F02", "AF" = "#1B9E77")) +
+  #scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
         plot.title = element_text(hjust = 0.5),
@@ -1515,20 +1785,16 @@ VPArea <-
   facet_grid(vars(), vars(COD_REGIAO)) +
   geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
-  # scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
-  #                    labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  #scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), labels=function(x) paste0(x*100,"%")) +
+  scale_x_discrete(labels=c("Todos os estab.", "Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
+
 ```
 
 ```{r grafPLOT ESTABELECIMENTOS - Valor da produção por área, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
-gg_VP_AREA <- ggplotly(VPArea, tooltip = c("label", "y")) %>%
+gg_VP_AREA <- ggplotly(VP_AREA, tooltip = c("label", "y")) %>%
   layout(margin = margens,
-    title = list(text = paste0('Proporção de valor da produção dos estabelecimentos',
-                                    '<br>',
-                                    '<sup>',
-                                    'Participação por tipologia no valor da produção dos estabelecimentos',
-                                    '</sup>')))
+    title = list(text = paste0('Valor da produção por hectare nas microrregiões')))
 
 gg_VP_AREA
 ```
@@ -1537,6 +1803,7 @@ gg_VP_AREA
 
 Questões principais:
 
+* No geral, o valor da produção por hectare é maior nas regiões Sul e Sudeste
 
 
 <br/>
@@ -1546,55 +1813,84 @@ Questões principais:
 
 ```{r mapa ESTABELECIMENTOS - Valor da produção por área, message=FALSE, warning=FALSE, include=FALSE}
 ## AF
-tm_AF_VP_AREA <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_VP_AREA),] %>%
-  filter(prop_VP_AREA >= 0) %>%
+tm_AF_VPdivAREA <- 
+microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
   filter(TIPOLOGIA == "AF") %>%
-tm_shape() +
-  tm_fill(col = "prop_VP_AREA", 
-          title = "Valor da produção<br/>nos estabelecimentos<br/>- AF", 
-          id = "LOCALIZACAO", palette="BuGn", 
-          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+          id = "LOCALIZACAO", palette="BuGn",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
   tm_view(view.legend.position = c("left", "bottom")) +
-tm_shape(SHP_Estados) +
+  tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
+
 
 ## MP
-tm_MP_VP_AREA <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_VP_AREA),] %>%
-  filter(prop_VP_AREA >= 0) %>%
-  filter(TIPOLOGIA == "MP") %>%  
-tm_shape() +
-  tm_fill(col = "prop_VP_AREA", title = "Valor da produção<br/>nos estabelecimentos -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
-          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+tm_MP_VPdivAREA <- 
+  microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
+  filter(TIPOLOGIA == "MP") %>%
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- MP", 
+          id = "LOCALIZACAO", palette="Oranges",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          #legend.format=list(digits=0),
+          style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
   tm_view(view.legend.position = c("left", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
+
 ## GP
-tm_GP_VP_AREA <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_VP_AREA),] %>%
-  filter(prop_VP_AREA >= 0) %>%
+tm_GP_VPdivAREA <- 
+  microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
+  
+  filter(VPdivAREA < 15000) %>%
   filter(TIPOLOGIA == "GP") %>%
-tm_shape() +
-  tm_fill(col = "prop_VP_AREA", title = "Valor da produção<br/>nos estabelecimentos -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
-          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- GP", 
+          id = "LOCALIZACAO", palette="Purples",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
   tm_view(view.legend.position = c("left", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
+
+##TT
+tm_TT_VPdivAREA <- 
+  microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>%
+  filter(VPdivAREA >= 0) %>%
+  filter(TIPOLOGIA == "TT") %>%
+  tm_shape() +
+  tm_fill(col = "VPdivAREA", 
+          title = "Valor da produção por hectare (VP/ha)<br/>- Total", 
+          id = "LOCALIZACAO", palette="Greys",
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "quantile") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)
 
 ```
 
 ```{r mapaPLOT ESTABELECIMENTOS - Valor da produção por área, echo=FALSE, message=FALSE, warning=FALSE}
-tmap_arrange(tm_AF_VP_AREA, tm_MP_VP_AREA, tm_GP_VP_AREA, 
+tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
              sync = TRUE, 
-             nrow = 1)
+             nrow = 2)
 ```
 
 
