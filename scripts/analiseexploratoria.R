@@ -1069,6 +1069,10 @@ microrregioes_pct_pivot3 %>% filter(!is.na(prop3_REC_PROG)) %>%
     facet_grid(vars(), vars(COD_REGIAO)) +
     coord_flip()
   
+#### Tabela legal #####
+
+library(kableExtra)
+
 teste <- 
   microrregioes_pct_pivot3 %>%
   drop_na(prop3_REC_PROD) %>%
@@ -1077,14 +1081,14 @@ teste <-
             MP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "MP"], na.rm = TRUE),
             GP_prod = 100*mean(prop3_REC_PROD[TIPOLOGIA == "GP"], na.rm = TRUE),
             AF_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            MP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            GP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            AF_outr = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            MP_outr = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            GP_outr = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            AF_prog = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            MP_prog = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE),
-            GP_prog = 100*mean(prop3_REC_FORA[TIPOLOGIA == "AF"], na.rm = TRUE)) %>%
+            MP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_fora = 100*mean(prop3_REC_FORA[TIPOLOGIA == "GP"], na.rm = TRUE),
+            AF_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_outr = 100*mean(prop3_REC_OUTR[TIPOLOGIA == "GP"], na.rm = TRUE),
+            AF_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "AF"], na.rm = TRUE),
+            MP_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "MP"], na.rm = TRUE),
+            GP_prog = 100*mean(prop3_REC_PROG[TIPOLOGIA == "GP"], na.rm = TRUE)) %>%
   pivot_longer( 
                cols = c(3:14),
                names_to = "names") %>%
@@ -1105,15 +1109,15 @@ teste <-
                 "MP_prog" = "Programas e políticas",
                 "GP_prog" = "Programas e políticas")) %>%
   select(-names) %>%
+  arrange(TIPOLOGIA)
+
+
+kable(teste, digits = 2) %>% 
+  pack_rows(index = table(teste$TIPOLOGIA))
 
 
 
-  
-
-pivot_wider(names_from = Variable, 
-            values_from = all_values)
-
-# Multiple variables stored in column names
+TES# Multiple variables stored in column names
 microrregioes_novasvar_pivot <- 
   microrregioes_novasvar %>%
   pivot_longer(

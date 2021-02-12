@@ -308,7 +308,22 @@ SHP_Micro_join <- SHP_Microrregioes %>%
 # A ser usado na hora de gerar o mapa
 margens <- list(b = 50, t = 115)
 
+# make some bbox magic
+bbox_new <- st_bbox(SHP_Micro_join) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+ bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+ bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
 ```
+
 
 Para representar os valores das receitas ou rendas obtidas nos estabelecimentos agropecuários optou-se por duas formas de representação, sendo uma mais generalizada e a outra com as receitas subdivididas em quatro grupos distintos.
 
@@ -347,7 +362,7 @@ _Receita.T_ = Rendas totais (mil reais) nos estabelecimentos agropecuários na m
 REC_TOT <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_REC_TOT)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_REC_TOT, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação", title = "Receitas obtidas") +
+  labs(x = "", y = "", title = "Receitas obtidas") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position='none',
@@ -400,7 +415,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -414,7 +429,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -433,19 +448,7 @@ tm_shape(bbox = bbox_new) +
   tm_borders(lwd = 1) 
 
 
-# make some bbox magic
-bbox_new <- st_bbox(SHP_Micro_join) # current bounding box
 
-xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
-yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
-
-# bbox_new[1] <- bbox_new[1] - (0.25 * xrange) # xmin - left
-# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
- bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
-#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
-
-bbox_new <- bbox_new %>%  # take the bounding box ...
-  st_as_sfc() # ... and make it a sf polygon
 
 ```
 ```{r mapaPLOT RENDAS - Total, echo=FALSE, message=FALSE, warning=FALSE}
@@ -547,7 +550,7 @@ Para ver de forma detalhada cada um dos grupos de obtenção de renda, acesse o 
 ##### *Grupo 1* - Receitas da produção do estabelecimento {.tabset .tabset-fade .tabset-pills}
 
 
-###### Proporção da receita pelo total de receitas de cada tipo de estabelecimento
+###### Proporção da receita de produção pelo total de receitas de cada tipo de estabelecimento
 
 Para o cálculo da proporção das rendas da produção em cada tipo (composição das rendas), foi utilizado:
 
@@ -576,126 +579,135 @@ _Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura fa
 _Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
 _Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
 
-```{r graf RENDAS - Rendas da produção, message=FALSE, warning=FALSE, include=FALSE}
+```{r graf RENDAS - Rendas da produção3, message=FALSE, warning=FALSE, include=FALSE}
 
 # REC_PROD - pct tipo 3 ####
 REC3_PROD <- 
-  microrregioes_pct_pivot3 %>% filter(!is.na(prop3_REC_PROD)) %>% ggplot(aes(x = TIPOLOGIA, y = prop3_REC_PROD,
+  microrregioes_pct_pivot3 %>% filter(!is.na(prop3_REC_PROD)) %>% filter(prop3_REC_PROD < 1) %>% 
+  ggplot(aes(x = TIPOLOGIA, y = prop3_REC_PROD,
                  color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação", title = "Participação das receitas de produção (animal e vegetal) na composição das rendas", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
+  labs(x = "", y = "", title = "Participação das receitas de produção (animal e vegetal) na composição das rendas", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
     plot.title = element_text(hjust = 0.5),
     plot.subtitle = element_text(hjust = 0.5),
-    panel.spacing = unit(1, "lines")) +
+    panel.spacing = unit(1, "lines"),
+    axis.title.x = element_text(margin = margin(t = 31, "cm"))) +
   facet_grid(vars(), vars(COD_REGIAO)) +
   geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
   geom_jitter(alpha = .25, width = .3) +
   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.01, color="gray39") +
-  scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
-                     labels=function(x) paste0(x*100,"%")) +
+   scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
+                      labels=function(x) paste0(x*100,"%")) +
   scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
 
-```{r grafPLOT RENDAS - Rendas da produção PLOT, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
-ggREC2_PROD <- ggplotly(REC3_PROD, tooltip = c("label", "y")) %>%
+```{r grafPLOT RENDAS - Rendas da produção3 PLOT, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggREC3_PROD <- ggplotly(REC3_PROD, tooltip = c("label", "y")) %>%
   layout(margin = margens,
     title = list(text = paste0('Receitas de produção nos estabelecimentos',
                                     '<br>',
                                     '<sup>',
                                     'Participação das receitas de produção (animal e vegetal) na composição das rendas',
-                                    '</sup>')))
+                                    '</sup>',
+                               '<br>', '<br>','<br>', '<br>','<br>', '<br>','<br>', '<br>','<br>', '<br>','<br>', '<br>','<br>', '<br>','<br>', '<br>','<br>','<br>',
+                               '<sup>',"Participação",'</sup>')))
 
-ggREC2_PROD
+ggREC3_PROD
 ```
 <br/>
 <br/>
-Questões principais:
+Questões principais: <br/>
 
-* Todas as regiões e tipologias de estabelecimentos possuem média de acima de 50%, ou seja, a maior parte da renda é composta pela produção 
-  + É possível verificar que, apesar das médias serem altas, algumas microrregiões possuem valores bastante inferiores a média
-* Em todas as regiões é a agricultura familiar que possui menor média, indicando que nessa tipologia outras formas de obtenção de renda também são relevantes na composição do valor total
+* Todas as regiões e tipologias de estabelecimentos, exceto a agricultura familiar no nordeste, possuem média acima de 50%, ou seja, a maior parte da renda é composta pela produção; <br/>
+  + A produção é responsável, em média, por 42% da composição da renda da AF no nordeste; <br/>
+  + É possível verificar que, apesar das médias serem altas, algumas microrregiões possuem valores bastante inferiores a média;
+* Em todas as regiões é a agricultura familiar que possui menor média, indicando que nessa tipologia outras formas de obtenção de renda também são relevantes na composição do valor total. <br/>
 <br/>
 <br/>
 
-```{r mapa RENDAS - Rendas da produção, message=FALSE, warning=FALSE, include=FALSE}
+
+
+```{r mapa RENDAS - Rendas da produção3, message=FALSE, warning=FALSE, include=FALSE}
 ## AF
-tm_AF_REC_PROD <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
-  filter(prop_REC_PROD > 0) %>%
+tm_AF_REC3_PROD <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROD),] %>%
+  filter(prop3_REC_PROD > 0) %>%
   filter(TIPOLOGIA == "AF") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_PROD", 
-          title = "Receitas da produção<br/>do estabelecimento - AF", 
+  tm_fill(col = "prop3_REC_PROD", 
+          title = "Receita da produção - AF", 
           id = "LOCALIZACAO", palette="BuGn", 
-          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
 ## MP
-tm_MP_REC_PROD <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
-  filter(prop_REC_PROD > 0) %>%
+tm_MP_REC3_PROD <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROD),] %>%
+  filter(prop3_REC_PROD > 0) %>%
   filter(TIPOLOGIA == "MP") %>%  
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
-          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_fill(col = "prop3_REC_PROD", title = "Receita da produção -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
 ## GP
-tm_GP_REC_PROD <-
-SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
-  filter(prop_REC_PROD > 0) %>%
+tm_GP_REC3_PROD <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROD),] %>%
+  filter(prop3_REC_PROD > 0) %>%
+  filter(prop3_REC_PROD < 1) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop3_REC_PROD", title = "Receita da produção -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
 ```
 
-```{r mapaPLOT RENDAS - Rendas da produção PLOT, echo=FALSE, message=FALSE, warning=FALSE}
-tmap_arrange(tm_AF_REC_PROD, tm_MP_REC_PROD, tm_GP_REC_PROD, 
+```{r mapaPLOT RENDAS - Rendas da produção3 PLOT, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+tmap_arrange(tm_AF_REC3_PROD, tm_MP_REC3_PROD, tm_GP_REC3_PROD, 
              sync = TRUE, 
              nrow = 1)
 ```
 
 
-###### Proporção da receita pelo total de cada tipo de receita
+###### Proporção da receita de produção por tipo de estabelecimento, pelo total da produção
 
+Para o cálculo da proporção das rendas da produção em cada tipo, ou seja, quanto cada tipo de estabelecimento contribui na composição do total das receitas de produção, foi utilizado:
 
-Para o cálculo da proporção das rendas da produção em cada tipo, foi utilizado:
-
-* Proporção das rendas da produção da agricultura familiar:
+* Proporção das rendas de produção advindas da agricultura familiar:
 
 $$\tiny
-prop.ReceitaProducao.AF = \frac {ReceitaProducao.AF} {ReceitaProducao.T} 
+prop2.ReceitaProducao.AF = \frac {ReceitaProducao.AF} {ReceitaProducao.T} 
 $$
 
-* Proporção das rendas da produção do médio produtor rural:
+* Proporção das rendas de produção advindas do médio produtor rural:
 
 $$\tiny
-prop.ReceitaProducao.MP = \frac {ReceitaProducao.MP} {ReceitaProducao.T} 
+prop2.ReceitaProducao.MP = \frac {ReceitaProducao.MP} {ReceitaProducao.T} 
 $$
 
-* Proporção das rendas da produção do grande produtor rural:
+* Proporção das rendas de produção advindas do grande produtor rural:
 
 $$\tiny
-prop.ReceitaProducao.GP = \frac {ReceitaProducao.GP} {ReceitaProducao.T} 
+prop2.ReceitaProducao.GP = \frac {ReceitaProducao.GP} {ReceitaProducao.T} 
 $$
 Onde:<br/>
 _ReceitaProducao.AF_ =  Rendas da produção (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
@@ -709,7 +721,7 @@ _ReceitaProducao.T_ = Rendas da produção (mil reais) nos estabelecimentos agro
 REC_PROD <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_REC_PROD)) %>% ggplot(aes(x = TIPOLOGIA, y = prop_REC_PROD,
                  color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação", title = "Receitas de produção (animal e vegetal)", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
+  labs(x = "", y = "", title = "Receitas de produção (animal e vegetal)", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -742,14 +754,14 @@ ggREC_PROD
 <br/>
 Questões principais:
 
-* Três regiões (Nordeste, Norte, Sul) apresentam a média da participação das receitas obtidas nos estabelecimentos de AF maior do que a dos estabelecimentos patronais
-* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior, com grande diferença, é a do Centro-Oeste 
-* Os três tipos de estabelecimentos possuem distribuições muito distintas
-* Enquando os dados do Centro-Oeste apontam para uma dominância da agricultura patronal (>60% das receitas obtidas em estabelecimentos patronais, ~30% de médios produtores e ~10% de agricultura familiar)
-	+ Em contraponto, a região Nordeste demonstra uma variância nas categorias que vai na contra-mão do Centro-Oeste, com ~50% das receitas tendo sido obtidas pela agricultura familiar, contra ~20% da patronal.
-* Agricultura familiar na região norte também apresenta destaque
-* Sobre a região Nordeste, é importante notar que até chegar em 60% de participação da AF, se faz presente um número de microrregiões com valores cada vez mais altos ao passo que, na mesma região, no tipo patronal, o número de microrregiões é decrescente
-	+ Essa observação é relevante para pensar a questão da concentração de renda em algumas microrregiões do Nordeste patronal
+* Três regiões (Nordeste, Norte, Sul) apresentam a média da participação das receitas obtidas nos estabelecimentos de AF maior do que a dos estabelecimentos patronais;
+* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior, com grande diferença, é a do Centro-Oeste; 
+* Os três tipos de estabelecimentos possuem distribuições muito distintas;
+* Enquando os dados do Centro-Oeste apontam para uma dominância da agricultura patronal (>60% das receitas obtidas em estabelecimentos patronais, ~30% de médios produtores e ~10% de agricultura familiar);
+	+ Em contraponto, a região Nordeste demonstra uma variância nas categorias que vai na contra-mão do Centro-Oeste, com ~50% das receitas tendo sido obtidas pela agricultura familiar, contra ~20% da patronal;
+* Agricultura familiar na região norte também apresenta destaque;
+* Sobre a região Nordeste, é importante notar que até chegar em 60% de participação da AF, se faz presente um número de microrregiões com valores cada vez mais altos ao passo que, na mesma região, no tipo patronal, o número de microrregiões é decrescente;
+	+ Essa observação é relevante para pensar a questão da concentração de renda em algumas microrregiões do Nordeste patronal.
 <br/>
 <br/>
 
@@ -766,7 +778,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -780,7 +792,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -794,7 +806,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -811,24 +823,161 @@ tmap_arrange(tm_AF_REC_PROD, tm_MP_REC_PROD, tm_GP_REC_PROD,
 
 
 ##### *Grupo 2* - Outras receitas do estabelecimento {.tabset .tabset-fade .tabset-pills}
-Para o cálculo da proporção das rendas do estabelecimento em cada tipo, foi utilizado:
+
+###### Proporção de outras receitas pelo total de receitas de cada tipo de estabelecimento
+ 
+Para o cálculo da proporção das outras rendas do estabelecimento em cada tipo (composição das rendas), foi utilizado:
+
+* Proporção de outras receitas do estabelecimento na agricultura familiar:
+
+$$\tiny
+prop1.ReceitaEstabelecimento.AF = \frac {ReceitaEstabelecimentoOutras.AF} {Receita.AF} 
+$$
+
+* Proporção de outras receitas do estabelecimento no médio produtor rural:
+
+$$\tiny
+prop1.ReceitaEstabelecimento.MP = \frac {ReceitaEstabelecimentoOutras.MP} {Receita.MP} 
+$$
+
+* Proporção de outras receitas do estabelecimento no grande produtor rural:
+
+$$\tiny
+prop1.ReceitaEstabelecimento.GP = \frac {ReceitaEstabelecimentoOutras.GP} {Receita.GP} 
+$$
+Onde:<br/>
+_ReceitaEstabelecimentoOutras.AF_ =  Outras rendas do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_ReceitaEstabelecimentoOutras.MP_ = Outras rendas do estabelecimento (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_ReceitaEstabelecimentoOutras.GP _ = Outras rendas do estabelecimento (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaEstabelecimento.T_ = Rendas do estabelecimento (mil reais) nos estabelecimentos agropecuários na microrregião; <br/>
+_Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural).<br/>
+
+
+```{r graf RENDAS - Rendas outras3, message=FALSE, warning=FALSE, include=FALSE}
+# REC_OUTR - pct tipo 1 ####
+REC3_OUTR <- 
+  microrregioes_pct_pivot3 %>% filter(!is.na(prop3_REC_OUTR)) %>% filter(prop3_REC_OUTR < 1) %>% 
+  ggplot(aes(x = TIPOLOGIA, y = prop3_REC_OUTR, color = TIPOLOGIA, label = LOCALIZACAO)) +
+  labs(x = "", y = "", title = "Outras* receitas do estabelecimento", subtitle = "Participação por tipologia outras* receitas do estabelecimento", caption = "* Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural, exploração mineral, atividade de artesanato, tecelagem, etc") +
+  scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
+  theme_light() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(color = "grey"),
+        panel.spacing = unit(1, "lines")) +
+  facet_grid(vars(), vars(COD_REGIAO)) +
+  geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
+  geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
+  scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
+                     labels=function(x) paste0(x*100,"%")) +
+  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  coord_flip()
+```
+
+```{r grafPLOT RENDAS - Rendas outras3 PLOT, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggREC3_OUTR <- ggplotly(REC3_OUTR, tooltip = c("label", "y")) %>%
+  layout(margin = margens,
+    title = list(text = paste0('Outras* receitas do estabelecimento',
+                                    '<br>',
+                                    '<sup>',
+                                    'Participação das outras receitas do estabelecimento na composição das rendas',
+                                    '</sup>')))
+
+ggREC3_OUTR
+```
+* Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural, exploração mineral, atividade de artesanato, tecelagem, etc
+
+<br/>
+<br/>
+Questões principais:
+
+* Os valores de participação das outras receitas dos estabelecimentos na composição da renda são extremamente baixos para todas as regiões e tipologias;<br/>
+  + Algumas poucas microrregiões possuem valores mais elevados que a média, podendo indicar localidades bastante específicas que exploram outras atividades possíveis para obtenção de renda nos estabelecimentos.<br/>
+<br/>
+<br/>
+
+```{r mapa RENDAS - Rendas outras, message=FALSE, warning=FALSE, include=FALSE}
+## AF
+tm_AF_REC3_OUTR <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_OUTR),] %>%
+  filter(prop3_REC_OUTR > 0) %>%
+  filter(prop3_REC_OUTR < 1) %>%
+  filter(TIPOLOGIA == "AF") %>%
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_OUTR", 
+          title = "Outras receitas<br/>do estabelecimento - AF", 
+          id = "LOCALIZACAO", palette="BuGn", 
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## MP
+tm_MP_REC3_OUTR <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_OUTR),] %>%
+  filter(prop3_REC_OUTR > 0) %>%
+  filter(prop3_REC_OUTR < 1) %>%
+  filter(TIPOLOGIA == "MP") %>%  
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## GP
+tm_GP_REC3_OUTR <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_OUTR),] %>%
+  filter(prop3_REC_OUTR > 0) %>%
+  filter(prop3_REC_OUTR < 1) %>%
+  filter(TIPOLOGIA == "GP") %>%
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+```{r mapaPLOT RENDAS - Rendas outras PLOT, echo=FALSE, message=FALSE, warning=FALSE}
+tmap_arrange(tm_AF_REC3_OUTR, tm_MP_REC3_OUTR, tm_GP_REC3_OUTR, 
+             sync = TRUE, 
+             nrow = 1)
+```
+
+
+
+
+###### Proporção de outras receitas por tipo de estabelecimento, pelo total da mesma categoria
+
+Para o cálculo da proporção das outras rendas em cada tipo, ou seja, quanto cada tipo de estabelecimento contribui na composição do total das outras rendas do estabelecimento, foi utilizado:
 
 * Proporção das rendas do estabelecimento da agricultura familiar:
 
 $$\tiny
-prop.ReceitaEstabelecimento.AF = \frac {ReceitaEstabelecimento.AF} {ReceitaEstabelecimento.T} 
+prop2.ReceitaEstabelecimento.AF = \frac {ReceitaEstabelecimento.AF} {ReceitaEstabelecimento.T} 
 $$
 
 * Proporção das rendas do estabelecimento do médio produtor rural:
 
 $$\tiny
-prop.ReceitaEstabelecimento.MP = \frac {ReceitaEstabelecimento.MP} {ReceitaEstabelecimento.T} 
+prop2.ReceitaEstabelecimento.MP = \frac {ReceitaEstabelecimento.MP} {ReceitaEstabelecimento.T} 
 $$
 
 * Proporção das rendas do estabelecimento do grande produtor rural:
 
 $$\tiny
-prop.ReceitaEstabelecimento.GP = \frac {ReceitaEstabelecimento.GP} {ReceitaEstabelecimento.T} 
+prop2.ReceitaEstabelecimento.GP = \frac {ReceitaEstabelecimento.GP} {ReceitaEstabelecimento.T} 
 $$
 Onde:<br/>
 _ReceitaEstabelecimento.AF_ =  Rendas do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
@@ -842,7 +991,7 @@ _ReceitaEstabelecimento.T_ = Rendas do estabelecimento (mil reais) nos estabelec
 REC_OUTR <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_REC_OUTR)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_REC_OUTR, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação", title = "Outras* receitas do estabelecimento", subtitle = "Participação por tipologia outras* receitas do estabelecimento", caption = "* Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural, exploração mineral, atividade de artesanato, tecelagem, etc") +
+  labs(x = "", y = "", title = "Outras* receitas do estabelecimento", subtitle = "Participação por tipologia outras* receitas do estabelecimento", caption = "* Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural, exploração mineral, atividade de artesanato, tecelagem, etc") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -865,7 +1014,7 @@ ggREC_OUTR <- ggplotly(REC_OUTR, tooltip = c("label", "y")) %>%
     title = list(text = paste0('Outras* receitas do estabelecimento',
                                     '<br>',
                                     '<sup>',
-                                    'Participação por tipologia outras* receitas do estabelecimento',
+                                    'Participação por tipologia nas outras receitas do estabelecimento nas microrregiões',
                                     '</sup>')))
 
 ggREC_OUTR
@@ -890,12 +1039,12 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_OUTR),] %>%
   filter(TIPOLOGIA == "AF") %>%
 tm_shape(bbox = bbox_new) +
   tm_fill(col = "prop_REC_OUTR", 
-          title = "Outras receitas<br/>do estalelecimento - AF", 
+          title = "Outras receitas<br/>do estabelecimento - AF", 
           id = "LOCALIZACAO", palette="BuGn", 
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -905,11 +1054,11 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_OUTR),] %>%
   filter(prop_REC_OUTR > 0) %>%
   filter(TIPOLOGIA == "MP") %>%  
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_OUTR", title = "Outras receitas<br/>do estalelecimento -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
+  tm_fill(col = "prop_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -919,11 +1068,11 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_OUTR),] %>%
   filter(prop_REC_OUTR > 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_OUTR", title = "Outras receitas<br/>do estalelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -941,24 +1090,161 @@ tmap_arrange(tm_AF_REC_OUTR, tm_MP_REC_OUTR, tm_GP_REC_OUTR,
 
 ##### *Grupo 3* - Receitas de atividades fora do estabelecimento {.tabset .tabset-fade .tabset-pills}
 
-Para o cálculo da proporção das rendas de atividades fora do estabelecimento em cada tipo, foi utilizado:
+###### Proporção de outras receitas pelo total de receitas de cada tipo de estabelecimento
+ 
+Para o cálculo da proporção das outras rendas do estabelecimento em cada tipo (composição das rendas), foi utilizado:
 
-* Proporção das rendas de atividades fora do estabelecimento da agricultura familiar:
+* Proporção de outras receitas do estabelecimento na agricultura familiar:
 
 $$\tiny
-prop.ReceitaFora.AF = \frac {ReceitaFora.AF} {ReceitaFora.T} 
+prop.ReceitaFora.AF = \frac {ReceitaFora.AF} {Receita.AF} 
 $$
 
 * Proporção das rendas de atividades fora do estabelecimento do médio produtor rural:
 
 $$\tiny
-prop.ReceitaFora.MP = \frac {ReceitaFora.MP} {ReceitaFora.T} 
+prop.ReceitaFora.MP = \frac {ReceitaFora.MP} {Receita.MP} 
 $$
 
 * Proporção das rendas de atividades fora do estabelecimento do grande produtor rural:
 
 $$\tiny
-prop.ReceitaFora.GP = \frac {ReceitaFora.GP} {ReceitaFora.T} 
+prop.ReceitaFora.GP = \frac {ReceitaFora.GP} {Receita.GP} 
+$$
+Onde:<br/>
+_ReceitaFora.AF_ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_ReceitaFora.MP_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_ReceitaFora.GP _ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaFora.T_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos agropecuários na microrregião; <br/>
+_Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural).<br/>
+
+
+
+```{r graf RENDAS - fora3, message=FALSE, warning=FALSE, include=FALSE}
+# prop3_REC_FORA - pct tipo 1 ####
+REC3_FORA <- 
+  microrregioes_pct_pivot3 %>% filter(!is.na(prop3_REC_FORA)) %>% filter(prop3_REC_FORA < 1) %>% 
+  ggplot(aes(x = TIPOLOGIA, y = prop3_REC_FORA, color = TIPOLOGIA, label = LOCALIZACAO)) +
+  labs(x = "", y = "", title = "Receitas obtidas fora do estabelecimento", subtitle = "Participação por tipologia de outras receitas do estabelecimento", caption = "* Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural, exploração mineral, atividade de artesanato, tecelagem, etc") +
+  scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
+  theme_light() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(color = "grey"),
+        panel.spacing = unit(1, "lines")) +
+  facet_grid(vars(), vars(COD_REGIAO)) +
+  geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
+  geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
+  scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
+                     labels=function(x) paste0(x*100,"%")) +
+  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  coord_flip()
+```
+
+```{r grafPLOT RENDAS - Rendas outras3 PLOT, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggREC3_FORA <- ggplotly(REC3_FORA, tooltip = c("label", "y")) %>%
+  layout(margin = margens,
+    title = list(text = paste0('Receitas obtidas fora do estabelecimento',
+                                    '<br>',
+                                    '<sup>',
+                                    'Participação das receitas obtidas fora do estabelecimento na composição das rendas',
+                                    '</sup>')))
+
+ggREC3_FORA
+```
+<br/>
+<br/>
+Questões principais:
+
+* Em todas as regiões, é o estabelecimento do médio produtor que possui média mais alta de obtenção de receitas fora do estabelecimento na composição da renda;<br/>
+* O tipo de estabelecimento com resultados mais dispersos é o do grande produtor (patronal), especialmente no Nordeste.<br/>
+<br/>
+<br/>
+
+```{r mapa RENDAS - Rendas fora3, message=FALSE, warning=FALSE, include=FALSE}
+## AF
+tm_AF_REC3_FORA <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_FORA),] %>%
+  filter(prop3_REC_FORA > 0) %>%
+  filter(prop3_REC_FORA < 1) %>%
+  filter(TIPOLOGIA == "AF") %>%
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_FORA", 
+          title = "Receitas fora<br/>do estabelecimento - AF", 
+          id = "LOCALIZACAO", palette="BuGn", 
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## MP
+tm_MP_REC3_FORA <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_FORA),] %>%
+  filter(prop3_REC_FORA > 0) %>%
+  filter(prop3_REC_FORA < 1) %>%
+  filter(TIPOLOGIA == "MP") %>%  
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_FORA", title = "Receitas fora<br/>do estabelecimento -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "kmeans") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## GP
+tm_GP_REC3_FORA <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_FORA),] %>%
+  filter(prop3_REC_FORA > 0) %>%
+  filter(prop3_REC_FORA < 1) %>%
+  filter(TIPOLOGIA == "GP") %>%
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_FORA", title = "Receitas fora<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "kmeans") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+```{r mapaPLOT RENDAS - Rendas outras PLOT, echo=FALSE, message=FALSE, warning=FALSE}
+tmap_arrange(tm_AF_REC3_FORA, tm_MP_REC3_FORA, tm_GP_REC3_FORA, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+
+###### Proporção de rendas obtidas fora do estabelecimento por tipo, pelo total da mesma categoria
+
+Para o cálculo da proporção das rendas fora do estabelecimento em cada tipo, ou seja, quanto cada tipo de estabelecimento contribui na composição do total das rendas fora do estabelecimento, foi utilizado:
+
+
+* Proporção das rendas de atividades fora do estabelecimento na agricultura familiar:
+
+$$\tiny
+prop2.ReceitaFora.AF = \frac {ReceitaFora.AF} {ReceitaFora.T} 
+$$
+
+* Proporção das rendas de atividades fora do estabelecimento no médio produtor rural:
+
+$$\tiny
+prop2.ReceitaFora.MP = \frac {ReceitaFora.MP} {ReceitaFora.T} 
+$$
+
+* Proporção das rendas de atividades fora do estabelecimento no grande produtor rural:
+
+$$\tiny
+prop2.ReceitaFora.GP = \frac {ReceitaFora.GP} {ReceitaFora.T} 
 $$
 Onde:<br/>
 _ReceitaFora.AF_ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
@@ -972,7 +1258,7 @@ _ReceitaFora.T_ = rendas de Rendas de atividades fora do estabelecimento (mil re
 REC_FORA <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_REC_FORA)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_REC_FORA, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação", title = "Rendas obtidas em atividades fora do estabelecimento", subtitle = "Participação por tipologia nas rendas obtidas em atividades fora do estabelecimento") +
+  labs(x = "", y = "", title = "Rendas obtidas em atividades fora do estabelecimento", subtitle = "Participação por tipologia nas rendas obtidas em atividades fora do estabelecimento") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -994,7 +1280,7 @@ ggREC_FORA <- ggplotly(REC_FORA, tooltip = c("label", "y")) %>%
     title = list(text = paste0('Rendas obtidas fora do estabelecimento',
                                     '<br>',
                                     '<sup>',
-                                    'Participação por tipologia nas rendas obtidas em atividades fora do estabelecimento',
+                                    'Participação por tipologia nas rendas obtidas em atividades fora do estabelecimento nas microrregiões',
                                     '</sup>')))
 
 ggREC_FORA
@@ -1023,7 +1309,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1037,7 +1323,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1051,7 +1337,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1069,42 +1355,185 @@ tmap_arrange(tm_AF_REC_FORA, tm_MP_REC_FORA, tm_GP_REC_FORA,
 
 ##### *Grupo 4* - Outras receitas do produtor {.tabset .tabset-fade .tabset-pills}
 
+###### Proporção de outras receitas do produtor pelo total de receitas de cada tipo de estabelecimento
 
-Para o cálculo da proporção das rendas de programas e políticas em cada tipo, foi utilizado:
+As outras receitas do produtor são compostas por programas sociais, aposentadorias e prêmios.
+Para o cálculo da proporção das outras rendas do produtor em cada tipo de estabelecimento (composição das rendas), foi utilizado:
 
-* Proporção das rendas de atividades programas e políticas do produtor da agricultura familiar:
+* Proporção de outras receitas do produtor na agricultura familiar:
 
 $$\tiny
-prop.ReceitaProgPoli.AF = \frac {ReceitaProgPoli.AF} {ReceitaProgPoli.T} 
+prop1.ReceitaProgPoli.AF = \frac {ReceitaProgPoli.AF} {Receita.AF} 
 $$
 
-* Proporção das rendas de programas e políticas do médio produtor rural:
+* Proporção de outras receitas do produtor para o médio produtor rural:
 
 $$\tiny
-prop.ReceitaProgPoli.MP = \frac {ReceitaProgPoli.MP} {ReceitaProgPoli.T} 
+prop1.ReceitaProgPoli.MP = \frac {ReceitaProgPoli.AF} {Receita.MP} 
 $$
 
-* Proporção das rendas de programas e políticas do grande produtor rural:
+* Proporção das rendas de atividades fora do estabelecimento para o grande produtor rural:
 
 $$\tiny
-prop.ReceitaProgPoli.GP = \frac {ReceitaProgPoli.GP} {ReceitaProgPoli.T} 
+prop1.ReceitaProgPoli.GP = \frac {ReceitaProgPoli.AF} {Receita.GP} 
 $$
 Onde:<br/>
 _ReceitaProgPoli.AF_ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos da agricultura familiar da microrregião;<br/>
 _ReceitaProgPoli.MP_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos do médio produtor rural da microrregião;<br/>
 _ReceitaProgPoli.GP _ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
 _ReceitaProgPoli.T_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos agropecuários na microrregião. <br/>
+_Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural).<br/>
 
 
+
+```{r graf RENDAS - PROG3, message=FALSE, warning=FALSE, include=FALSE}
+# prop3_REC_FORA - pct tipo 1 ####
+REC3_PROG <- 
+  microrregioes_pct_pivot3 %>% filter(!is.na(prop3_REC_PROG)) %>% filter(prop3_REC_PROG < 1) %>% 
+  ggplot(aes(x = TIPOLOGIA, y = prop3_REC_PROG, color = TIPOLOGIA, label = LOCALIZACAO)) +
+  labs(x = "", y = "", title = "Receitas de programas e políticas", subtitle = "Participação por tipologia de receiras de programas e políticas no estabelecimento") +
+  scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
+  theme_light() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(color = "grey"),
+        panel.spacing = unit(1, "lines")) +
+  facet_grid(vars(), vars(COD_REGIAO)) +
+  geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
+  geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
+  scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
+                     labels=function(x) paste0(x*100,"%")) +
+  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  coord_flip()
+```
+
+```{r grafPLOT RENDAS - Rendas PROG3 PLOT, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggREC3_PROG <- ggplotly(REC3_PROG, tooltip = c("label", "y")) %>%
+  layout(margin = margens,
+    title = list(text = paste0('Receitas obtidas por programas e políticas',
+                                    '<br>',
+                                    '<sup>',
+                                    'Participação das receitas obtidas em programas sociais, aposentadorias e prêmios na composição das rendas',
+                                    '</sup>')))
+
+ggREC3_PROG
+```
+<br/>
+<br/>
+Questões principais:
+
+* As rendas obtidas em programas e políticas são maiores no tipo de estabelecimento da agricultura familiar em todas as regiões e preticamente em todas as microrregiões; <br/>
+* Na região Nordeste a média é maior que o mesmo de cada tipo em outras regiões para todos os tipos de estabelecimento
+  + Na região nordeste, a agricultura familiar é a única que possui média que ultrapassa 50%, ou seja, a composição principal da renda nos estabelecimentos de AF das microrregiões do nordestes é dada por programas sociais, aposentadorias ou prêmios. <br/>
+<br/>
+<br/>
+<br/>
+
+```{r mapa RENDAS - Rendas PROG3, message=FALSE, warning=FALSE, include=FALSE}
+## AF
+tm_AF_REC3_PROG <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROG),] %>%
+  filter(prop3_REC_PROG > 0) %>%
+  filter(prop3_REC_PROG < 1) %>%
+  filter(TIPOLOGIA == "AF") %>%
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_PROG", 
+          title = "Receitas de<br/>programas e políticas - AF", 
+          id = "LOCALIZACAO", palette="BuGn", 
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "quantile") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## MP
+tm_MP_REC3_PROG <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROG),] %>%
+  filter(prop3_REC_PROG > 0) %>%
+  filter(prop3_REC_PROG < 1) %>%
+  filter(TIPOLOGIA == "MP") %>%  
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_PROG", title = "Receitas de<br/>programas e políticas -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "quantile") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+## GP
+tm_GP_REC3_PROG <-
+SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROG),] %>%
+  filter(prop3_REC_PROG > 0) %>%
+  filter(prop3_REC_PROG < 1) %>%
+  filter(TIPOLOGIA == "GP") %>%
+tm_shape(bbox = bbox_new) +
+  tm_fill(col = "prop3_REC_PROG", title = "Receitas de<br/>programas e políticas -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "fixed", breaks = c(0, 0, 0.01, 0.05, 0.25)) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+```{r mapaPLOT RENDAS - Rendas outras PLOT, echo=FALSE, message=FALSE, warning=FALSE}
+tmap_arrange(tm_AF_REC3_PROG, tm_MP_REC3_PROG, tm_GP_REC3_PROG, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+
+
+###### Proporção de outras rendas do produtor por tipo, pelo total das receitas da categoria
 
 As outras receitas do produtor são compostas por programas sociais, aposentadorias e prêmios.
+Para o cálculo da proporção das outras rendas do produtor em cada tipo, ou seja, quanto cada tipo de estabelecimento contribui na composição do total das outras rendas do produtor, foi utilizado:
+
+
+* Proporção das rendas de programas e políticas do produtor na agricultura familiar:
+
+$$\tiny
+prop2.ReceitaProgPoli.AF = \frac {ReceitaProgPoli.AF} {ReceitaProgPoli.T} 
+$$
+
+* Proporção das rendas de programas e políticas no médio produtor rural:
+
+$$\tiny
+prop2.ReceitaProgPoli.MP = \frac {ReceitaProgPoli.MP} {ReceitaProgPoli.T} 
+$$
+
+* Proporção das rendas de programas e políticas no grande produtor rural:
+
+$$\tiny
+prop2.ReceitaProgPoli.GP = \frac {ReceitaProgPoli.GP} {ReceitaProgPoli.T} 
+$$
+Onde:<br/>
+_ReceitaProgPoli.AF_ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos da agricultura familiar da microrregião;<br/>
+_ReceitaProgPoli.MP_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos do médio produtor rural da microrregião;<br/>
+_ReceitaProgPoli.GP _ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaProgPoli.T_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos agropecuários na microrregião. <br/>
+<br/>
+<br/>
+
+
+
 ```{r graf RENDAS - Outras receitas do produtor (prog. sociais/aposentadorias/premios), message=FALSE, warning=FALSE, include=FALSE}
 
 # REC_PROG - pct tipo 1 ####
 REC_PROG <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_REC_PROG)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_REC_PROG, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação ", title = "Outras receitas do produtor", subtitle = "Participação por tipologia em outras receitas do produtor (programas sociais/aposentadorias/premios)") +
+  labs(x = "", y = "", title = "Outras receitas do produtor", subtitle = "Participação por tipologia em outras receitas do produtor (programas sociais/aposentadorias/premios)") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -1130,14 +1559,17 @@ ggREC_PROG <- ggplotly(REC_PROG, tooltip = c("label", "y")) %>%
                                     'Participação por tipologia nas outras receitas do produtor (prog. sociais/aposentadorias/premios)',
                                     '</sup>')))
 
+
 ggREC_PROG
+
 ```
 <br/>
 <br/>
 
 Questões principais:
 
-* Agricultura familiar é a que utiliza quase 100% da renda desta categoria, o que pode significar que as rendas advindas de programas sociais/aposentadorias nos estabelecimentos agropecuários têm um caráter muito mais imprescindível ao produtor da agricultura familiar do que das demais
+* Agricultura familiar é a que utiliza quase 100% da renda desta categoria, isso indica que há uma destinação maior de recursos de programas e políticas para todos os estabelecimentos desse tipo nas regiões;
+* Esse tipo de obtenção de renda tem pouca variância entre os estabelecimentos de microrregiões de mesmo tipo, ou seja, em todas as regiões os números para os três tipos de estabelecimentos são muito próximos, indicando um certo uníssono, quando uma microrregião utiliza o tipo de composição de renda, é provável que as do entorno também utilizarão.<br/>
 <br/>
 <br/>
 
@@ -1154,7 +1586,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1168,7 +1600,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1182,7 +1614,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=1, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1231,7 +1663,7 @@ _Estabelecimentos.Total_ = Total de estabelecimentos na microrregião;<br/>
 NEstab <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_NEstab)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_NEstab, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação ", title = "Proporção de estabelecimentos", subtitle = "Participação por tipologia no número de estabelecimentos") +
+  labs(x = "", y = "", title = "Proporção de estabelecimentos", subtitle = "Participação por tipologia no número de estabelecimentos") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -1279,7 +1711,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1293,7 +1725,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1307,7 +1739,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1357,7 +1789,7 @@ _AreaEstabelecimento.Total_ = Área total em hectares (ha) dos estabelecimentos 
 AREA <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_AREA)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_AREA, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação ", title = "Proporção de área total dos estabelecimentos", subtitle = "Participação por tipologia na área total dos estabelecimentos") +
+  labs(x = "", y = "", title = "Proporção de área total dos estabelecimentos", subtitle = "Participação por tipologia na área total dos estabelecimentos") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -1408,7 +1840,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1422,7 +1854,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1436,7 +1868,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1484,7 +1916,7 @@ _Numero.PessoalOcupado.T_ = Número total de pessoal ocupado nos estabelecimento
 OCU <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_OCU)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_OCU, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação ", title = "Proporção de pessoal ocupado nos estabelecimentos", subtitle = "Participação por tipologia no número de ocupados nos estabelecimentos") +
+  labs(x = "", y = "", title = "Proporção de pessoal ocupado nos estabelecimentos", subtitle = "Participação por tipologia no número de ocupados nos estabelecimentos") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -1536,7 +1968,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1550,7 +1982,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1564,7 +1996,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1613,7 +2045,7 @@ _ValorProducao.T_ = Valor da produção (mil reais) nos estabelecimentos agropec
 VP <- 
   microrregioes_pct_pivot3 %>% filter(!is.na(prop_VP)) %>% 
   ggplot(aes(x = TIPOLOGIA, y = prop_VP, color = TIPOLOGIA, label = LOCALIZACAO)) +
-  labs(x = "", y = "Participação ", title = "Proporção de valor da produção dos estabelecimentos", subtitle = "Participação por tipologia no valor da produção dos estabelecimentos") +
+  labs(x = "", y = "", title = "Proporção de valor da produção dos estabelecimentos", subtitle = "Participação por tipologia no valor da produção dos estabelecimentos") +
   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
   theme_light() +
   theme(legend.position = 'none',
@@ -1665,7 +2097,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
 tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1679,7 +2111,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1693,7 +2125,7 @@ tm_shape(bbox = bbox_new) +
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1852,7 +2284,7 @@ microrregioes_novasvar_shape[!is.na(microrregioes_novasvar_shape$VPdivAREA),] %>
           style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1871,7 +2303,7 @@ tm_MP_VPdivAREA <-
           style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1891,7 +2323,7 @@ tm_GP_VPdivAREA <-
           style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
 
@@ -1908,7 +2340,7 @@ tm_TT_VPdivAREA <-
           style = "quantile") +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("left", "bottom")) +
+  tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1)
 
@@ -1936,7 +2368,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 # REC_PROD2 <- 
 #   microrregioes_pct_pivot3 %>% filter(!is.na(prop2_REC_PROD)) %>% ggplot(aes(x = TIPOLOGIA, y = prop2_REC_PROD,
 #                                                                             color = TIPOLOGIA, label = LOCALIZACAO)) +
-#   labs(x = "", y = "Participação", title = "Receitas de produção (animal e vegetal)", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
+#   labs(x = "", y = "", title = "Receitas de produção (animal e vegetal)", subtitle = "Participação por tipologia nas receitas de produção nas microrregiões") +
 #   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
 #   theme_light() +
 #   theme(legend.position = 'none',
@@ -1955,7 +2387,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 # REC_OUTR2 <- 
 #   microrregioes_pct_pivot3 %>% filter(!is.na(prop2_REC_OUTR)) %>% 
 #   ggplot(aes(x = TIPOLOGIA, y = prop2_REC_OUTR, color = TIPOLOGIA, label = LOCALIZACAO)) +
-#   labs(x = "", y = "Participação", title = "Outras* receitas do estabelecimento", subtitle = "Participação por tipologia outras* receitas do estabelecimento", caption = "* Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural, exploração mineral, atividade de artesanato, tecelagem, etc") +
+#   labs(x = "", y = "", title = "Outras* receitas do estabelecimento", subtitle = "Participação por tipologia outras* receitas do estabelecimento", caption = "* Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural, exploração mineral, atividade de artesanato, tecelagem, etc") +
 #   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
 #   theme_light() +
 #   theme(legend.position = 'none',
@@ -1976,7 +2408,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 # REC_FORA2 <- 
 #   microrregioes_pct_pivot3 %>% filter(!is.na(prop2_REC_FORA)) %>% 
 #   ggplot(aes(x = TIPOLOGIA, y = prop2_REC_FORA, color = TIPOLOGIA, label = LOCALIZACAO)) +
-#   labs(x = "", y = "Participação", title = "Rendas obtidas em atividades fora do estabelecimento", subtitle = "Participação por tipologia nas rendas obtidas em atividades fora do estabelecimento") +
+#   labs(x = "", y = "", title = "Rendas obtidas em atividades fora do estabelecimento", subtitle = "Participação por tipologia nas rendas obtidas em atividades fora do estabelecimento") +
 #   scale_color_brewer(palette = "Dark2", direction=-1, guide = "none") +
 #   theme_light() +
 #   theme(legend.position = 'none',
