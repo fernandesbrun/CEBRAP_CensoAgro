@@ -145,30 +145,31 @@ microrregioes_pct <- microrregioes %>%
          AF_prop_REC_OUTR = R_VALOR_AF_2 / R_VALOR_T_2 ,
          AF_prop_REC_FORA = R_VALOR_AF_302 / R_VALOR_T_302 ,
          AF_prop_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) / (R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) ,
-         GP_prop_REC_PROD = (R_VALOR_T_1 - (R_VALOR_AF_1 + R_VALOR_MP_1)) / R_VALOR_T_1 ,
-         GP_prop_REC_OUTR = (R_VALOR_T_2 - (R_VALOR_AF_2 + R_VALOR_MP_2)) / R_VALOR_T_2 ,
-         GP_prop_REC_FORA = (R_VALOR_T_302 - (R_VALOR_AF_302 + R_VALOR_MP_302)) / R_VALOR_T_302 ,
-         GP_prop_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - ((R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) + (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307))) / (R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) ,
+         GP_prop_REC_PROD = (R_VALOR_T_1 - R_VALOR_AF_1) / R_VALOR_T_1,
+         GP_prop_REC_OUTR = (R_VALOR_T_2 - R_VALOR_AF_2) / R_VALOR_T_2,
+         GP_prop_REC_FORA = (R_VALOR_T_302 - R_VALOR_AF_302) / R_VALOR_T_302,
+         GP_prop_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / (R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307),
+GP_prop_REC_TOT = (R_VALOR_T_TOT - R_VALOR_AF_TOT) / R_VALOR_T_TOT,
          
          AF_prop_NEstab = PROD_AF / PROD_T ,
          MP_prop_NEstab = PROD_MP / PROD_T ,
-         GP_prop_NEstab = (PROD_T - (PROD_MP + PROD_AF)) / PROD_T ,
+         GP_prop_NEstab = (PROD_T - PROD_AF) / PROD_T ,
          
          AF_prop_AREA = AREA_AF / AREA_T ,
          MP_prop_AREA = AREA_MP / AREA_T ,
-         GP_prop_AREA = (AREA_T - (AREA_AF + AREA_MP)) / AREA_T ,
+         GP_prop_AREA = (AREA_T - AREA_AF) / AREA_T ,
          
          AF_prop_OCU = O_AF / O_T ,
          MP_prop_OCU = O_MP / O_T ,
-         GP_prop_OCU = (O_T - (O_AF + O_MP)) / O_T ,
+         GP_prop_OCU = (O_T - O_AF) / O_T ,
          
          AF_prop_VP = VP_AF / VP_T ,
          MP_prop_VP = VP_MP / VP_T ,
-         GP_prop_VP = (VP_T - (VP_AF + VP_MP)) / VP_T ,
+         GP_prop_VP = (VP_T - VP_AF) / VP_T ,
          
          MP_prop_REC_TOT = R_VALOR_MP_TOT / R_VALOR_T_TOT,
          AF_prop_REC_TOT = R_VALOR_AF_TOT / R_VALOR_T_TOT,
-         GP_prop_REC_TOT = (R_VALOR_T_TOT - ( R_VALOR_AF_TOT + R_VALOR_MP_TOT )) / R_VALOR_T_TOT,
+         GP_prop_REC_TOT = (R_VALOR_T_TOT - R_VALOR_AF_TOT) / R_VALOR_T_TOT,
          
          #porcentagem tipo 2, usando o total de tudo
          MP_prop2_REC_PROD = R_VALOR_MP_1 / R_VALOR_T_TOT ,
@@ -179,10 +180,10 @@ microrregioes_pct <- microrregioes %>%
          AF_prop2_REC_OUTR = R_VALOR_AF_2 / R_VALOR_T_TOT ,
          AF_prop2_REC_FORA = R_VALOR_AF_302 / R_VALOR_T_TOT ,
          AF_prop2_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_T_TOT ,
-         GP_prop2_REC_PROD = (R_VALOR_T_1 - (R_VALOR_AF_1 + R_VALOR_MP_1)) /  R_VALOR_T_TOT ,
-         GP_prop2_REC_OUTR = (R_VALOR_T_2 - (R_VALOR_AF_2 + R_VALOR_MP_2)) /  R_VALOR_T_TOT ,
-         GP_prop2_REC_FORA = (R_VALOR_T_302 - (R_VALOR_AF_302 + R_VALOR_MP_302)) /  R_VALOR_T_TOT ,
-         GP_prop2_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - ((R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) + (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307))) / R_VALOR_T_TOT ,
+         GP_prop2_REC_PROD	=	(R_VALOR_T_1 - R_VALOR_AF_1 ) /  R_VALOR_T_TOT,
+         GP_prop2_REC_OUTR	=	(R_VALOR_T_2 - R_VALOR_AF_2) /  R_VALOR_T_TOT ,
+         GP_prop2_REC_FORA	=	(R_VALOR_T_302 - R_VALOR_AF_302) /  R_VALOR_T_TOT ,
+         GP_prop2_REC_PROG	=	((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / R_VALOR_T_TOT  ,
          
         #porcentagem tipo 3, usando o total de cada tipologia 
         MP_prop3_REC_PROD = R_VALOR_MP_1 / R_VALOR_MP_TOT ,
@@ -193,10 +194,10 @@ microrregioes_pct <- microrregioes %>%
         AF_prop3_REC_OUTR = R_VALOR_AF_2 / R_VALOR_AF_TOT ,
         AF_prop3_REC_FORA = R_VALOR_AF_302 / R_VALOR_AF_TOT ,
         AF_prop3_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_AF_TOT ,   
-        GP_prop3_REC_PROD = (R_VALOR_T_1 - (R_VALOR_AF_1 + R_VALOR_MP_1)) /  (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT)) ,
-        GP_prop3_REC_OUTR = (R_VALOR_T_2 - (R_VALOR_AF_2 + R_VALOR_MP_2)) /  (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT)) ,
-        GP_prop3_REC_FORA = (R_VALOR_T_302 - (R_VALOR_AF_302 + R_VALOR_MP_302)) /  (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT)) ,
-        GP_prop3_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - ((R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) + (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307))) / (R_VALOR_T_TOT - (R_VALOR_AF_TOT + R_VALOR_MP_TOT))  
+        GP_prop3_REC_PROD = (R_VALOR_T_1 - R_VALOR_AF_1) /  (R_VALOR_T_TOT - R_VALOR_AF_TOT) ,
+        GP_prop3_REC_OUTR = (R_VALOR_T_2 - R_VALOR_AF_2) /  (R_VALOR_T_TOT - R_VALOR_AF_TOT) ,
+        GP_prop3_REC_FORA = (R_VALOR_T_302 - R_VALOR_AF_302) /  (R_VALOR_T_TOT - R_VALOR_AF_TOT) ,
+        GP_prop3_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / (R_VALOR_T_TOT - R_VALOR_AF_TOT)  
          
   )
 
@@ -244,11 +245,12 @@ Todos os gráficos e mapas foram agrupados de acordo com as tipologias dos estab
 
 * Estabelecimentos da agricultura familiar (AF);
 * Estabelecimentos de beneficiados pelo Pronamp - Programa Nacional de Apoio ao Médio Produtor Rural (MP);
-* Outros estabelecimentos que não são nem agricultura familiar, nem atendidos pelo Pronamp (GP)
-  + Nessa análise, a diferença entre o total dos estabelecimentos e a soma dos de agricultura familiar com os do médio produtor, foi considerada como de tipologia patronal: 
+  + Proprietários rurais, posseiros, arrendatários ou parceiros que tenham, no mínimo, 80% de sua renda bruta anual originária da atividade agropecuária ou extrativa vegetal e possuam renda bruta anual de até R$ 2 milhões;
+* Estabelecimentos não familiares - Agricultura Patronal (AP);
+  + Nessa análise, a diferença entre o total dos estabelecimentos e total dos estabelecimentos da agricultura familiar, foi considerada como de tipologia patronal.
   
 $$\tiny
-Estabelecimentos Patronais = {Estabelecimentos Totais}-{(EstabelecimentosAgriculturaFamiliar + EstabelecimentosMédioProdutor)}
+Estabelecimentos Patronais = {Estabelecimentos Totais}-{EstabelecimentosAgriculturaFamiliar}
 $$
 
 
@@ -284,6 +286,7 @@ microrregioes_pct_pivot3$TIPOLOGIA <- factor(microrregioes_pct_pivot3$TIPOLOGIA,
 
 colnames(microrregioes_pct_pivot3)
 ```
+
 ```{r mapas PREPARACAO, message=FALSE, warning=FALSE, include=FALSE}
 
 SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
@@ -334,21 +337,21 @@ $$\tiny
 prop.Receita.AF = \frac {Receita.AF} {Receita.T} 
 $$
 
-* Proporção das rendas totais do médio produtor rural:
+* Proporção das rendas totais do produtor beneficiado pelo Pronamp:
 
 $$\tiny
 prop.Receita.MP = \frac {Receita.MP} {Receita.T} 
 $$
 
-* Proporção das rendas totais do grande produtor rural:
+* Proporção das rendas totais da agricultura não familiar (patronal):
 
 $$\tiny
-prop.Receita.GP = \frac {Receita.GP} {Receita.T} 
+prop.Receita.AP = \frac {Receita.AP} {Receita.T} 
 $$
 Onde:<br/>
 _Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_Receita.AP _ =  Rendas totais (mil reais) nos estabelecimentos não familiares, considerados de agricultura patronal;<br/>
 _Receita.T_ = Rendas totais (mil reais) nos estabelecimentos agropecuários na microrregião. <br/>
 
 
@@ -373,7 +376,7 @@ REC_TOT <-
   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 ```
 ```{r grafPLOT RENDAS - Total, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
@@ -390,11 +393,10 @@ ggREC_TOT
 <br/>
 Questões principais:
 
-* Três regiões (Nordeste, Norte, Sul) apresentam a média da participação das receitas obtidas nos estabelecimentos de AF maior do que a dos estabelecimentos patronais
-* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior, com grande diferença, é a do Centro-Oeste 
-* Os três tipos de estabelecimentos possuem distribuições muito distintas
-* Enquando os dados do Centro-Oeste apontam para uma dominância da agricultura patronal (>60% das receitas obtidas em estabelecimentos patronais, ~30% de médios produtores e ~10% de agricultura familiar)
-	+ Em contraponto, a região Nordeste demonstra uma variância nas categorias que vai na contra-mão do Centro-Oeste, com ~50% das receitas tendo sido obtidas pela agricultura familiar, contra ~20% da patronal.
+* Apenas nos estabelecimentos da Agricultura Familiar da região Nordeste a média das receitas obtidas é maior do que a dos estabelecimentos patronais;
+  + Em todas as outras regiões a receita da agricultura patronal é maior do que da Agricultura Familiar ou dos beneficiários do Pronamp;
+* Apesar da receita da agricultura patronal ser maior em todas as regiões, exceto no Nordeste, é no Centro-Oeste que essa diferença entre o patronal e os da AF ou do Pronamp é mais exacerbada, com esse tipo de estabelecimento compondo quase 90% da renda da região;
+  + É também no Centro-Oeste que a agricultura familiar possui menor média de participação na composição das rendas, com pouco mais de 10%.
 <br/>
 <br/>
 
@@ -435,7 +437,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_TOT),] %>%
   filter(prop_REC_TOT > 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_TOT", title = "Receitas obtidas -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_REC_TOT", title = "Receitas obtidas -<br/>Agricultura não fam. (AP)", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -514,8 +516,8 @@ tabelaRECEITAS <-
                 "GP_prog" = "Programas e políticas"))) %>%
   mutate(TIPOLOGIA = recode(TIPOLOGIA, 
          "AF" = "Agricultura familiar",
-         "MP" = "Médio produtor",
-         "GP" = "Grande produtor*")) %>%
+         "MP" = "Pronamp",
+         "GP" = "Agricultura patronal*")) %>%
   select(-names) %>%
   dplyr::relocate("Origem da renda", .after = TIPOLOGIA) %>%
   arrange(desc(TIPOLOGIA))  %>%
@@ -533,7 +535,7 @@ kbl(tabelaRECEITAS, digits = 2, caption = "Origem da renda dos estabelecimentos 
   collapse_rows(columns = 1) %>%
   column_spec(column = c(3:6), width = "2.6cm") %>%
   row_spec(5:8, color = "black", background = "#f5f5f5") %>%
-  footnote(symbol = "Os valores dos grandes produtores são calculados a partir dos totais subtraídos dos valores da agricultura familiar e de beneficiados pelo Pronamp, por essa razão, nem sempre os valores obtidos representam exatidão.",
+  footnote(symbol = "Os estabelecimentos patronais consistem nos estabelecimentos não familiares.",
           footnote_as_chunk = T)
 ```
 
@@ -555,24 +557,24 @@ $$\tiny
 prop1.ReceitaProducao.AF = \frac {ReceitaProducao.AF} {Receita.AF} 
 $$
 
-* Proporção da renda de produção no médio produtor rural:
+* Proporção da renda de produção no produtor beneficiário do Pronamp:
 
 $$\tiny
 prop1.ReceitaProducao.MP = \frac {ReceitaProducao.MP} {Receita.MP} 
 $$
 
-* Proporção da renda de produção no grande produtor rural:
+* Proporção da renda de produção da agricultura não familiar (patronal):
 
 $$\tiny
-prop1.ReceitaProducao.GP = \frac {ReceitaProducao.GP} {Receita.GP} 
+prop1.ReceitaProducao.AP = \frac {ReceitaProducao.AP} {Receita.AP} 
 $$
 Onde:<br/>
 _ReceitaProducao.AF_ =  Rendas da produção (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaProducao.MP_ = Rendas da produção (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaProducao.GP _ =  Rendas da produção (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaProducao.MP_ = Rendas da produção (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaProducao.AP _ =  Rendas da produção (mil reais) nos estabelecimentos não familiares da microrregião (patronais);<br/>
 _Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_Receita.AP _ =  Rendas totais (mil reais) nos estabelecimentos não familiares (patronais).<br/>
 
 ```{r graf RENDAS - Rendas da produção3, message=FALSE, warning=FALSE, include=FALSE}
 
@@ -595,7 +597,7 @@ REC3_PROD <-
   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.01, color="gray39") +
    scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
                       labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
@@ -663,7 +665,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROD),] %>%
   filter(prop3_REC_PROD < 1) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop3_REC_PROD", title = "Receita da produção -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop3_REC_PROD", title = "Receita da produção -<br/>Agricultura não fam. (AP)", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -692,21 +694,21 @@ $$\tiny
 prop2.ReceitaProducao.AF = \frac {ReceitaProducao.AF} {ReceitaProducao.T} 
 $$
 
-* Proporção das rendas de produção advindas do médio produtor rural:
+* Proporção das rendas de produção advindas do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop2.ReceitaProducao.MP = \frac {ReceitaProducao.MP} {ReceitaProducao.T} 
 $$
 
-* Proporção das rendas de produção advindas do grande produtor rural:
+* Proporção das rendas de produção advindas da agricultura não familiar (patronal):
 
 $$\tiny
-prop2.ReceitaProducao.GP = \frac {ReceitaProducao.GP} {ReceitaProducao.T} 
+prop2.ReceitaProducao.AP = \frac {ReceitaProducao.AP} {ReceitaProducao.T} 
 $$
 Onde:<br/>
 _ReceitaProducao.AF_ =  Rendas da produção (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaProducao.MP_ = Rendas da produção (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaProducao.GP _ =  Rendas da produção (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaProducao.MP_ = Rendas da produção (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaProducao.AP _ =  Rendas da produção (mil reais) nos estabelecimentos não familiares (patronais);<br/>
 _ReceitaProducao.T_ = Rendas da produção (mil reais) nos estabelecimentos agropecuários na microrregião. <br/>
 
 ```{r graf RENDAS - Rendas da produção, message=FALSE, warning=FALSE, include=FALSE}
@@ -728,7 +730,7 @@ REC_PROD <-
   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.01, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
@@ -747,12 +749,12 @@ ggREC_PROD
 <br/>
 Questões principais:
 
-* Três regiões (Nordeste, Norte, Sul) apresentam a média da participação das receitas obtidas nos estabelecimentos de AF maior do que a dos estabelecimentos patronais;
-* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior, com grande diferença, é a do Centro-Oeste; 
+* Três regiões (Nordeste, Norte, Sul) apresentam a média da participação das receitas obtidas nos estabelecimentos de AF mais próximo da média das outras duas tipologias, apesar de ainda inferiores;
+* A única região na qual as receitas obtidas nos estabelecimentos patronais é maior com grande diferença, é a do Centro-Oeste; 
 * Os três tipos de estabelecimentos possuem distribuições muito distintas;
-* Enquando os dados do Centro-Oeste apontam para uma dominância da agricultura patronal (>60% das receitas obtidas em estabelecimentos patronais, ~30% de médios produtores e ~10% de agricultura familiar);
-	+ Em contraponto, a região Nordeste demonstra uma variância nas categorias que vai na contra-mão do Centro-Oeste, com ~50% das receitas tendo sido obtidas pela agricultura familiar, contra ~20% da patronal;
-* Agricultura familiar na região norte também apresenta destaque;
+* Enquando os dados do Centro-Oeste apontam para uma dominância da agricultura patronal (>90% das receitas obtidas em estabelecimentos patronais, ~30% de beneficiários do Pronamp e ~10% de agricultura familiar);
+	+ Em contraponto, a região Nordeste demonstra uma variância nas categorias que vai na contra-mão do Centro-Oeste, com ~45% das receitas tendo sido obtidas pela agricultura familiar, contra ~55% da patronal;
+* Agricultura familiar na região norte também recebe destaque, apresentando uma diferença ainda menor entre a agricultura familiar e a não familiar (patronal), com médias de ~47% e 52%, respectivamente;
 * Sobre a região Nordeste, é importante notar que até chegar em 60% de participação da AF, se faz presente um número de microrregiões com valores cada vez mais altos ao passo que, na mesma região, no tipo patronal, o número de microrregiões é decrescente;
 	+ Essa observação é relevante para pensar a questão da concentração de renda em algumas microrregiões do Nordeste patronal.
 <br/>
@@ -795,7 +797,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROD),] %>%
   filter(prop_REC_PROD > 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_REC_PROD", title = "Receitas da produção<br/>do estabelecimento -<br/>Agricultura não fam. (AP)", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -829,25 +831,25 @@ $$\tiny
 prop1.ReceitaEstabelecimento.AF = \frac {ReceitaEstabelecimentoOutras.AF} {Receita.AF} 
 $$
 
-* Proporção de outras receitas do estabelecimento no médio produtor rural:
+* Proporção de outras receitas do estabelecimento do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop1.ReceitaEstabelecimento.MP = \frac {ReceitaEstabelecimentoOutras.MP} {Receita.MP} 
 $$
 
-* Proporção de outras receitas do estabelecimento no grande produtor rural:
+* Proporção de outras receitas do estabelecimento não familiar (patronal):
 
 $$\tiny
-prop1.ReceitaEstabelecimento.GP = \frac {ReceitaEstabelecimentoOutras.GP} {Receita.GP} 
+prop1.ReceitaEstabelecimento.AP = \frac {ReceitaEstabelecimentoOutras.AP} {Receita.AP} 
 $$
 Onde:<br/>
 _ReceitaEstabelecimentoOutras.AF_ =  Outras rendas do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaEstabelecimentoOutras.MP_ = Outras rendas do estabelecimento (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaEstabelecimentoOutras.GP _ = Outras rendas do estabelecimento (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaEstabelecimentoOutras.MP_ = Outras rendas do estabelecimento (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaEstabelecimentoOutras.AP _ = Outras rendas do estabelecimento (mil reais) nos estabelecimentos que não da agricultura familiar (patronais);<br/>
 _ReceitaEstabelecimento.T_ = Rendas do estabelecimento (mil reais) nos estabelecimentos agropecuários na microrregião; <br/>
 _Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural).<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_Receita.AP _ =  Rendas totais (mil reais) nos estabelecimentos que não são da agricultura familiar (patronais).<br/>
 
 
 ```{r graf RENDAS - Rendas outras3, message=FALSE, warning=FALSE, include=FALSE}
@@ -866,9 +868,9 @@ REC3_OUTR <-
   facet_grid(vars(), vars(COD_REGIAO)) +
   geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
-  scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
+  scale_y_continuous(breaks=seq(0, 0.4, by = 0.2), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 ```
 
@@ -889,9 +891,8 @@ Outras receitas do estabelecimento: desinvestimentos, serviço de turismo rural,
 Questões principais:
 
 * Embora o valor advindo de outras receitas no estabelecimento seja baixo na composição da renda da maior parte dos estabelecimentos das microrregiões, algumas poucas localidades demonstram valores mais elevados que a média, podendo indicar de forma bastante específica que aquela microrregião explora melhor outras atividades possíveis para a obtenção de renda. 
-	- Uma localidade importante a ser observada é a região Sudeste e Nordeste, onde a dispersão (variância) nessa categoria de renda é maior para os estabelecimentos patronais.
-	- Apesar dos estabelecimentos patronais apresentarem, no geral, uma média ligeiramente maior que os demais quando se trata de rendimentos de outras atividades no estabelecimento para a composição da renda, são o médio produtor (no Centro-Oeste e Sudeste) e a agricultura familiar (no Nordeste, Norte e Sul) que utilizam uma porção maior da receita total das atividades que não são produção; ou seja, apesar de estar nos estabelecimentos da AF e da MP uma parcela maior desse tipo de rendimento, no total das receitas de cada um a categoria já não é tão significativa;
- 
+	- As médias são muito similares para as cinco regiões, em todos os tipos de estabelecimentos; 
+* Pelas porcentagens serem muito pequenas (menos de 5%) no total das receitas de cada um, a categoria não se mostra tão significativa, exceto para aquelas microrregiões específicas que apresentam valores altos; 
 * Apesar dos rendimentos de outras atividades do estabelecimento terem alguns pontos específicos em que essa renda compõe a renda total dos estabelecimentos de forma considerável, não é possível observar uma rede entre microrregiões.
 	
 	<br/>
@@ -938,7 +939,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_OUTR),] %>%
   filter(prop3_REC_OUTR < 1) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop3_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop3_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Agricultura Patronal (AP)", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -969,21 +970,21 @@ $$\tiny
 prop2.ReceitaEstabelecimento.AF = \frac {ReceitaEstabelecimento.AF} {ReceitaEstabelecimento.T} 
 $$
 
-* Proporção das rendas do estabelecimento do médio produtor rural:
+* Proporção das rendas do estabelecimento do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop2.ReceitaEstabelecimento.MP = \frac {ReceitaEstabelecimento.MP} {ReceitaEstabelecimento.T} 
 $$
 
-* Proporção das rendas do estabelecimento do grande produtor rural:
+* Proporção das rendas do estabelecimento não familiar (patronal):
 
 $$\tiny
-prop2.ReceitaEstabelecimento.GP = \frac {ReceitaEstabelecimento.GP} {ReceitaEstabelecimento.T} 
+prop2.ReceitaEstabelecimento.AP = \frac {ReceitaEstabelecimento.AP} {ReceitaEstabelecimento.T} 
 $$
 Onde:<br/>
 _ReceitaEstabelecimento.AF_ =  Rendas do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaEstabelecimento.MP_ = Rendas do estabelecimento (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaEstabelecimento.GP _ =  Rendas do estabelecimento (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaEstabelecimento.MP_ = Rendas do estabelecimento (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaEstabelecimento.AP _ =  Rendas do estabelecimento (mil reais) nos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _ReceitaEstabelecimento.T_ = Rendas do estabelecimento (mil reais) nos estabelecimentos agropecuários na microrregião. <br/>
 
 
@@ -1005,7 +1006,7 @@ REC_OUTR <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 ```
 
@@ -1025,9 +1026,8 @@ ggREC_OUTR
 <br/>
 Questões principais:
 
-* Todas as regiões da tipologia de estabelecimento patronal possuem um formato de grande afunilamento no sentido da maior participação na variável. Novamente, isso pode significar que pouquíssimas microrregiões possuem estabelecimentos patronais que têm atividades que geram receita no estabelecimento para além da produção agropecuária;
-* No Centro-Oeste e no Sudeste a média mais alta é a dos estabelecimentos médios;
-* No Nordeste as microrregiões de destaque na categoria de agricultura familiar são as litorâneas, enquanto que as patronais são as interioranas, que fazem divisa com a região Norte e Centro-Oeste
+* No Sul, Norte e Nordeste a participação da agricultura familiar na composição das outras rendas dos estabelecimentos é superior às outras tipologias;
+* No Nordeste as microrregiões de destaque na categoria de agricultura familiar são as litorâneas, enquanto que as patronais são as interioranas, especialmente no Centro-Oeste.
 <br/>
 <br/>
 
@@ -1068,7 +1068,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_OUTR),] %>%
   filter(prop_REC_OUTR > 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_REC_OUTR", title = "Outras receitas<br/>do estabelecimento -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -1100,25 +1100,25 @@ $$\tiny
 prop.ReceitaFora.AF = \frac {ReceitaFora.AF} {Receita.AF} 
 $$
 
-* Proporção das rendas de atividades fora do estabelecimento do médio produtor rural:
+* Proporção das rendas de atividades fora do estabelecimento do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop.ReceitaFora.MP = \frac {ReceitaFora.MP} {Receita.MP} 
 $$
 
-* Proporção das rendas de atividades fora do estabelecimento do grande produtor rural:
+* Proporção das rendas de atividades fora do estabelecimento não familiar (patronal):
 
 $$\tiny
-prop.ReceitaFora.GP = \frac {ReceitaFora.GP} {Receita.GP} 
+prop.ReceitaFora.AP = \frac {ReceitaFora.AP} {Receita.AP} 
 $$
 Onde:<br/>
 _ReceitaFora.AF_ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaFora.MP_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaFora.GP _ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaFora.MP_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaFora.AP _ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronais);<br/>
 _ReceitaFora.T_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos agropecuários na microrregião; <br/>
 _Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural).<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_Receita.AP _ =  Rendas totais (mil reais) nos estabelecimentos que não são de agricultura familiar (patronais).<br/>
 
 
 
@@ -1140,7 +1140,7 @@ REC3_FORA <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 ```
 
@@ -1159,7 +1159,8 @@ ggREC3_FORA
 Questões principais:
 
 * Em todas as regiões, é o estabelecimento do médio produtor que possui média mais alta de obtenção de receitas fora do estabelecimento na composição da renda;<br/>
-* O tipo de estabelecimento com resultados mais dispersos é o do grande produtor (patronal), especialmente no Nordeste.<br/>
+* Em todas as regiões, a média da agricultura familiar é muito baixa; <br/>
+* O tipo de estabelecimento com resultados mais dispersos é o do produtor não familiar (patronal), especialmente no Nordeste.<br/>
 <br/>
 <br/>
 
@@ -1204,7 +1205,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_FORA),] %>%
   filter(prop3_REC_FORA < 1) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop3_REC_FORA", title = "Receitas fora<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop3_REC_FORA", title = "Receitas fora<br/>do estabelecimento -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
           style = "kmeans") +
   tm_borders(lwd = 0.2) +
@@ -1235,21 +1236,21 @@ $$\tiny
 prop2.ReceitaFora.AF = \frac {ReceitaFora.AF} {ReceitaFora.T} 
 $$
 
-* Proporção das rendas de atividades fora do estabelecimento no médio produtor rural:
+* Proporção das rendas de atividades fora do estabelecimento do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop2.ReceitaFora.MP = \frac {ReceitaFora.MP} {ReceitaFora.T} 
 $$
 
-* Proporção das rendas de atividades fora do estabelecimento no grande produtor rural:
+* Proporção das rendas de atividades fora do estabelecimento não familiar (patronal):
 
 $$\tiny
-prop2.ReceitaFora.GP = \frac {ReceitaFora.GP} {ReceitaFora.T} 
+prop2.ReceitaFora.AP = \frac {ReceitaFora.AP} {ReceitaFora.T} 
 $$
 Onde:<br/>
 _ReceitaFora.AF_ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaFora.MP_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaFora.GP _ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaFora.MP_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaFora.AP _ =  rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _ReceitaFora.T_ = rendas de Rendas de atividades fora do estabelecimento (mil reais) nos estabelecimentos agropecuários na microrregião. <br/>
 
 
@@ -1270,7 +1271,7 @@ REC_FORA <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não familiar (patronal)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 ```
 
@@ -1288,9 +1289,8 @@ ggREC_FORA
 <br/>
 
 Questões principais:
-
-* Estabelecimentos do médio produtor com valores acima de 50% em todas as regiões, com grande destaque para o sertão nordestino, com média de 80% de participação da composição da renda dos estabelecimentos agropecuários nas microrregiões adivinda de atividades fora do estabelecimento
-* Os demais tipos não ultrapaçam 20% de média na participação da variável, exceto os estabelecimentos patronais do Centro-Oeste, com média de quase 40%
+* Nessa seção, apesar da AP não ter ocupado um papel de tanto destaque quando se trata das rendas advindas de fora do estabelecimento na composição total da renda do estabelecimento, essa tipologia é a que apresenta porcentagens mais altas no total de rendas obtidas nessas atividades;
+* Os estabelecimentos do médio produtor possuem valores valores acima de 50% em todas as regiões, com grande destaque para o sertão nordestino, com média de 80% de participação da composição da renda dos estabelecimentos agropecuários nas microrregiões adivinda de atividades fora do estabelecimento;
 * O norte do Estado do Rio Grande do Sul também apresenta uma concentração de valores mais altos em estabelecimentos de agricultura familiar, em microrregiões muito próximas entre si, fato que não se repete para a mesma tipologia (AF) no restante do Brasil.
 <br/>
 <br/>
@@ -1332,7 +1332,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_FORA),] %>%
   filter(prop_REC_FORA > 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_FORA", title = "Receitas obtidas fora<br/>do estabelecimento -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_REC_FORA", title = "Receitas obtidas fora<br/>do estabelecimento -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -1369,25 +1369,25 @@ $$\tiny
 prop1.ReceitaProgPoli.AF = \frac {ReceitaProgPoli.AF} {Receita.AF} 
 $$
 
-* Proporção de outras receitas do produtor para o médio produtor rural:
+* Proporção de outras receitas do produtor para o produtor beneficiário do Pronamp:
 
 $$\tiny
 prop1.ReceitaProgPoli.MP = \frac {ReceitaProgPoli.AF} {Receita.MP} 
 $$
 
-* Proporção das rendas de atividades fora do estabelecimento para o grande produtor rural:
+* Proporção das rendas de atividades fora do estabelecimento não familiar (patronal):
 
 $$\tiny
-prop1.ReceitaProgPoli.GP = \frac {ReceitaProgPoli.AF} {Receita.GP} 
+prop1.ReceitaProgPoli.AP = \frac {ReceitaProgPoli.AF} {Receita.AP} 
 $$
 Onde:<br/>
 _ReceitaProgPoli.AF_ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaProgPoli.MP_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaProgPoli.GP _ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaProgPoli.MP_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaProgPoli.AP _ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _ReceitaProgPoli.T_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos agropecuários na microrregião. <br/>
 _Receita.AF_ =  Rendas totais (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_Receita.GP _ =  Rendas totais (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural).<br/>
+_Receita.MP_ = Rendas totais (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_Receita.AP _ =  Rendas totais (mil reais) nos estabelecimentos que não são de agricultura familiar (patronais).<br/>
 
 
 
@@ -1409,7 +1409,7 @@ REC3_PROG <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 ```
 
@@ -1476,7 +1476,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop3_REC_PROG),] %>%
   filter(prop3_REC_PROG < 1) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop3_REC_PROG", title = "Receitas de<br/>programas e políticas -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop3_REC_PROG", title = "Receitas de<br/>programas e políticas -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
           style = "fixed", breaks = c(0, 0, 0.01, 0.05, 0.25)) +
   tm_borders(lwd = 0.2) +
@@ -1511,21 +1511,21 @@ $$\tiny
 prop2.ReceitaProgPoli.AF = \frac {ReceitaProgPoli.AF} {ReceitaProgPoli.T} 
 $$
 
-* Proporção das rendas de programas e políticas no médio produtor rural:
+* Proporção das rendas de programas e políticas do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop2.ReceitaProgPoli.MP = \frac {ReceitaProgPoli.MP} {ReceitaProgPoli.T} 
 $$
 
-* Proporção das rendas de programas e políticas no grande produtor rural:
+* Proporção das rendas de programas e políticas do produtor da agricultura não familiar (patronal):
 
 $$\tiny
-prop2.ReceitaProgPoli.GP = \frac {ReceitaProgPoli.GP} {ReceitaProgPoli.T} 
+prop2.ReceitaProgPoli.AP = \frac {ReceitaProgPoli.AP} {ReceitaProgPoli.T} 
 $$
 Onde:<br/>
 _ReceitaProgPoli.AF_ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ReceitaProgPoli.MP_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ReceitaProgPoli.GP _ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ReceitaProgPoli.MP_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ReceitaProgPoli.AP _ =  Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _ReceitaProgPoli.T_ = Rendas de programas e políticas (mil reais) do produtor nos estabelecimentos agropecuários na microrregião. <br/>
 <br/>
 <br/>
@@ -1550,7 +1550,7 @@ REC_PROG <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
@@ -1618,7 +1618,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_REC_PROG),] %>%
   filter(prop_REC_PROG > 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_REC_PROG", title = "Outras receitas do produtor -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_REC_PROG", title = "Outras receitas do produtor -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=1, format="f"), "%")),
           n = 3,
           style = "quantile") +
@@ -1640,8 +1640,6 @@ tmap_arrange(tm_AF_REC_PROG, tm_MP_REC_PROG, tm_GP_REC_PROG,
 
 
 
-
-
 ### **Var 2 ** - Número de estabelecimentos agropecuários {.tabset .tabset-fade}
 
 Para o cálculo da proporção de estabelecimentos em cada tipo, foi utilizado:
@@ -1652,21 +1650,21 @@ $$\tiny
 prop.Estabelecimentos.AF = \frac {Numero.Estabelecimentos.AF} {Estabelecimentos.Total}
 $$
 
-* Proporção de estabelecimentos do médio produtor rural:
+* Proporção de estabelecimentos dos produtores beneficiários do Pronamp:
 
 $$\tiny
 prop.Estabelecimentos.MP = \frac {Numero.Estabelecimentos.MP} {Estabelecimentos.Total}
 $$
 
-* Proporção de estabelecimentos do grande produtor rural:
+* Proporção de estabelecimentos não familiares (patronais):
 
 $$\tiny
-prop.Estabelecimentos.GP = \frac {Numero.Estabelecimentos.GP} {Estabelecimentos.Total}
+prop.Estabelecimentos.AP = \frac {Numero.Estabelecimentos.AP} {Estabelecimentos.Total}
 $$
 Onde:<br/>
 _Numero.Estabelecimentos.AF_ = Estabelecimentos da agricultura familiar da microrregião;<br/>
-_Numero.Estabelecimentos.MP_ = Estabelecimentos do médio produtor rural da microrregião;<br/>
-_Numero.Estabelecimentos.GP_ = Estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_Numero.Estabelecimentos.MP_ = Estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_Numero.Estabelecimentos.AP_ = Estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _Estabelecimentos.Total_ = Total de estabelecimentos na microrregião;<br/>
 
 
@@ -1686,7 +1684,7 @@ NEstab <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
@@ -1707,7 +1705,7 @@ gg_NEstab
 Questões principais:
 
 * O tipo com maior número de estabelecimentos nas microrregiões é a Agricultura Familiar
-* Apesar de uma média de participação baixa no geral, é importante apontar o aumento da proporção de estabelecimentos do médio produtor, e a consequente redução (quando comparado com o restante do Brasil) dos da agricultura familiar no Centro-Oeste
+* Apesar de uma média de participação baixa quando comparado aos da AP, no geral, é importante apontara maior porcentagens de estabelecimentos da AP e de beneficiários do Pronamp, além da consequente menor porcentagem da AF nessa região.
 
 
 ```{r mapa ESTABELECIMENTOS - Prop de estabelecimentos, message=FALSE, warning=FALSE, include=FALSE}
@@ -1747,7 +1745,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_NEstab),] %>%
   filter(prop_NEstab >= 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_NEstab", title = "Proporção de estabelecimentos -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_NEstab", title = "Proporção de estabelecimentos -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -1779,21 +1777,21 @@ $$\tiny
 prop.AreaEstabelecimento.AF = \frac {AreaEstabelecimento.AF} {AreaEstabelecimento.Total}
 $$
 
-* Proporção de área dos estabelecimentos do médio produtor rural:
+* Proporção de área dos estabelecimentos do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop.AreaEstabelecimento.MP = \frac {AreaEstabelecimento.MP} {AreaEstabelecimento.Total}
 $$
 
-* Proporção de área dos estabelecimentos do grande produtor rural:
+* Proporção de área dos estabelecimentos não familiares (patronais):
 
 $$\tiny
-prop.AreaEstabelecimento.GP = \frac {AreaEstabelecimento.GP} {AreaEstabelecimento.Total}
+prop.AreaEstabelecimento.AP = \frac {AreaEstabelecimento.AP} {AreaEstabelecimento.Total}
 $$
 Onde:<br/>
 _AreaEstabelecimento.AF_ = Área em hectares (ha) dos estabelecimentos da agricultura familiar da microrregião;<br/>
-_AreaEstabelecimento.MP_ = Área em hectares (ha) dos estabelecimentos do médio produtor rural da microrregião;<br/>
-_AreaEstabelecimento.GP_ = Área em hectares (ha) dos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_AreaEstabelecimento.MP_ = Área em hectares (ha) dos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_AreaEstabelecimento.AP_ = Área em hectares (ha) dos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _AreaEstabelecimento.Total_ = Área total em hectares (ha) dos estabelecimentos na microrregião;<br/>
 
 
@@ -1813,7 +1811,7 @@ AREA <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
@@ -1832,8 +1830,9 @@ gg_AREA
 <br/>
 Questões principais:
 
-* Apesar dos estabelecimentos do médio produtor apresentar altos valores de participação na área total dos estabelecimentos, a categoria não aparenta ter uma significante concentração espacial em uma região específica;
-	+ A agricultura familiar e a patronal, apesar de apresentarem médias de participações por região com valores não tão discrepantes entre si, a primeira concentra sua alta participação mais no sertão nordestino, na região do Rio Negro no Amazonas e no norte do Rio Grande do Sul, enquanto que a segunda tem maior participação no Centro-Oeste e no interior dos estados de São Paulo e Paraná
+* Apesar dos estabelecimentos de beneficiários do Pronamp apresentarem altos valores de participação na área total dos estabelecimentos, a categoria não aparenta ter uma significante concentração espacial em uma região específica;
+* A agricultura não familiar (patronal) é a tipologia que apresenta valores mais altos, indicando uma proporção de área maior para esse tipo de estabelecimento;
+  - Entretando, é necessário notar na diferença entre a AP e a AF nas diversas regiões: No Centro-Oeste a diferença entre essas duas é muito grande, com quase a totalidade das áreas das microrregiões sendo ocupadas por estabelecimentos não familiares. Já nas regiões Nordeste e Norte, apesar da porcentagem dos estabelecimentos da AP ainda ser maior, a diferença para os da AF é muito menor, estando mais próximo um equilíbrio entre a área ocupada por essas duas classes.
 	<br/>
 	<br/>
 	
@@ -1875,9 +1874,9 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_AREA),] %>%
   filter(prop_AREA >= 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_AREA", title = "Proporção de área total<br/>dos estabelecimentos -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_AREA", title = "Proporção de área total<br/>dos estabelecimentos -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
-          style = "fixed", breaks = c(0, 0.15, 0.3, 0.5, 0.92)) +
+          style = "fixed", breaks = c(0, 0.3, 0.5, 0.7, 1)) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
   tm_view(view.legend.position = c("right", "bottom")) +
@@ -1906,21 +1905,21 @@ $$\tiny
 prop.PessoalOcupado.AF = \frac {Numero.PessoalOcupado.AF} {Numero.PessoalOcupado.T} 
 $$
 
-* Proporção de pessoal ocupado do médio produtor rural:
+* Proporção de pessoal ocupado do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop.PessoalOcupado.MP = \frac {Numero.PessoalOcupado.MP} {Numero.PessoalOcupado.T} 
 $$
 
-* Proporção de pessoal ocupado do grande produtor rural:
+* Proporção de pessoal ocupado nos estabelecimentos não familiares (patronais):
 
 $$\tiny
-prop.PessoalOcupado.GP = \frac {Numero.PessoalOcupado.GP} {Numero.PessoalOcupado.T} 
+prop.PessoalOcupado.AP = \frac {Numero.PessoalOcupado.AP} {Numero.PessoalOcupado.T} 
 $$
 Onde:<br/>
 _Numero.PessoalOcupado.AF_ = Número de pessoal ocupado nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_Numero.PessoalOcupado.MP_ = Número de pessoal ocupado nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_Numero.PessoalOcupado.GP _ =  Número de pessoal ocupado nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_Numero.PessoalOcupado.MP_ = Número de pessoal ocupado nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_Numero.PessoalOcupado.AP _ =  Número de pessoal ocupado nos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _Numero.PessoalOcupado.T_ = Número total de pessoal ocupado nos estabelecimentos agropecuários na microrregião. <br/>
 
 
@@ -1942,7 +1941,7 @@ OCU <-
   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
@@ -1961,9 +1960,9 @@ gg_OCU
 <br/>
 Questões principais:
 
-* Em todas as regiões, a maior parte de pessoas ocupadas nos estabelecimentos agropecuários é da agricultura familiar, chegando a média de 78% no Norte do país
-* Com exceção do Centro-Oeste, menos de 15% dos ocupados nos estabelecimentos agropecuários fazem parte do tipo patronal
-* Embora possua média superior a patronal e inferior a da agricultura familiar, os estabelecimentos do médio produtor possuem a menor variância de ocupados dentre as microrregiões
+* Em nas regiões, exceto Centro-Oeste e Sudeste, a maior parte de pessoas ocupadas nos estabelecimentos agropecuários é da agricultura familiar, chegando a média de 78% no Norte do país e 72% no Nordeste;
+* Na agricultura não familiar (patronal), são os estabelecimentos do Centro-Oeste e do Sudeste que mais empregam;
+* Embora possua média no geral inferior tanto a patronal quanto a familiar, os estabelecimentos do produtor atendido pelo Pronamp possuem a menor variância de ocupados dentre as microrregiões.
 
 <br/>
 <br/>
@@ -2008,7 +2007,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_OCU),] %>%
   filter(prop_OCU >= 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_OCU", title = "Proporção de pessoal ocupado<br/>nos estabelecimentos -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_OCU", title = "Proporção de pessoal ocupado<br/>nos estabelecimentos -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
           style = "quantile",
           n = 4) +
@@ -2028,8 +2027,6 @@ tmap_arrange(tm_AF_OCU, tm_MP_OCU, tm_GP_OCU,
 
 
 
-
-
 ### **Var 5** - Valor da produção nos estabelecimentos agropecuários {.tabset .tabset-fade}
 
 
@@ -2041,21 +2038,21 @@ $$\tiny
 prop.ValorProducao.AF = \frac {ValorProducao.AF} {ValorProducao.T} 
 $$
 
-* Proporção do valor da produção do médio produtor rural:
+* Proporção do valor da produção do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop.ValorProducao.MP = \frac {ValorProducao.MP} {ValorProducao.T} 
 $$
 
-* Proporção do valor da produção do grande produtor rural:
+* Proporção do valor da produção do produtor não familiar (patronal):
 
 $$\tiny
-prop.ValorProducao.GP = \frac {ValorProducao.GP} {ValorProducao.T} 
+prop.ValorProducao.AP = \frac {ValorProducao.AP} {ValorProducao.T} 
 $$
 Onde:<br/>
 _ValorProducao.AF_ = Valor da produção (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ValorProducao.MP_ = Valor da produção (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ValorProducao.GP _ =  Valor da produção (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ValorProducao.MP_ = Valor da produção (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ValorProducao.AP _ =  Valor da produção (mil reais) nos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _ValorProducao.T_ = Valor da produção (mil reais) nos estabelecimentos agropecuários na microrregião. <br/>
 
 
@@ -2076,7 +2073,7 @@ VP <-
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
                      labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Agricultura não fam. (AP)", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 ```
 
@@ -2094,11 +2091,12 @@ gg_VP
 <br/>
 Questões principais:
 
-* Em três regiões, Nordeste, Norte e Sul, a média do VP na agricultura familiar foi superior a dos outros tipos de estabelecimento;
-  + Nas duas regiões em que a AF não é a com maior proporção de valor da produção, o estabelecimento patronal é predominante: com larga diferença no Centro-Oeste (65% dos patronais e 10% da AF) e menor vantagem no Sudeste (40% dos patronais e 30% da AF);
- 
-* A média da proporção do VP nos estabelecimentos do médio produtor é relativamente estável em todas as regiões, apresentando uma menor variância entre os valores, ou seja, os estabelecimentos médios possuem uma geração de valor da produção bastante próximos entre si;
-  + Esse fenômeno ocorre apenas para os estabelecimentos médios, nos da AF e patronais os resultados das microrregiões são mais dispersos, contando com valores muito altos, mas também muito baixos dentro de cada região.
+* A proporção dos valores do VP nos três tipos de estabelecimentos varia muito de acordo com a região;
+  + Apesar da AF possuir um maior número de estabelecimentos em todas as regiões, no Centro-Oeste o valor dela é muito inferior ao da AP, seguido por uma diferença menor, mas ainda muito grande, no Sudeste e, depois, Sul;
+  + Já na região Norte e Nordeste a diferença entre a AF e a AP é praticamente inexistente, indicando que nesses locais, em média, o valor da produção dos estabelecimentos familiares e patronais foi muito similar;
+
+* A média da proporção do VP nos estabelecimentos dos beneficiários do Pronamp é relativamente estável em todas as regiões, apresentando uma menor variância entre os valores, ou seja, os estabelecimentos médios possuem uma geração de valor da produção bastante próximos entre si;
+  + Esse fenômeno ocorre apenas para os estabelecimentos médios, nos da AF e patronais os resultados das microrregiões são mais dispersos, contando com valores muito altos, mas também muito baixos dentro de cada região, exceto no Centro-Oeste, onde a variância interna é baixa.
 
 
 <br/>
@@ -2130,7 +2128,9 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_VP),] %>%
   filter(TIPOLOGIA == "MP") %>%  
 tm_shape(bbox = bbox_new) +
   tm_fill(col = "prop_VP", title = "Valor da produção<br/>nos estabelecimentos -<br/>Pronamp", id = "LOCALIZACAO", palette="Oranges",
-          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
+          legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%")),
+          style = "quantile",
+          n=5) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
   tm_view(view.legend.position = c("right", "bottom")) +
@@ -2143,7 +2143,7 @@ SHP_Micro_join[!is.na(SHP_Micro_join$prop_VP),] %>%
   filter(prop_VP >= 0) %>%
   filter(TIPOLOGIA == "GP") %>%
 tm_shape(bbox = bbox_new) +
-  tm_fill(col = "prop_VP", title = "Valor da produção<br/>nos estabelecimentos -<br/>Outros (patronal)", id = "LOCALIZACAO", palette="Purples",
+  tm_fill(col = "prop_VP", title = "Valor da produção<br/>nos estabelecimentos -<br/>Agricultura Patronal", id = "LOCALIZACAO", palette="Purples",
           legend.format=list(fun=function(x) paste0(formatC(x*100, digits=0, format="f"), "%"))) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -2172,33 +2172,33 @@ $$\tiny
 prop.ValorProducaoArea.AF = \frac {ValorProducao.AF} {AreaEstabelecimento.AF} 
 $$
 
-* Valor da produção por hectare do médio produtor rural:
+* Valor da produção por hectare do produtor beneficiário do Pronamp:
 
 $$\tiny
 prop.ValorProducaoArea.MP = \frac {ValorProducao.MP} {AreaEstabelecimento.MP} 
 $$
 
-* Valor da produção por hectare do grande produtor rural:
+* Valor da produção por hectare do produtor não familiar (patronal):
 
 $$\tiny
-prop.ValorProducaoArea.GP = \frac {ValorProducao.GP} {AreaEstabelecimento.GP} 
+prop.ValorProducaoArea.AP = \frac {ValorProducao.AP} {AreaEstabelecimento.AP} 
 $$
 Onde:<br/>
 _ValorProducao.AF_ = Valor da produção (mil reais) nos estabelecimentos da agricultura familiar da microrregião;<br/>
-_ValorProducao.MP_ = Valor da produção (mil reais) nos estabelecimentos do médio produtor rural da microrregião;<br/>
-_ValorProducao.GP _ =  Valor da produção (mil reais) nos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_ValorProducao.MP_ = Valor da produção (mil reais) nos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_ValorProducao.AP _ =  Valor da produção (mil reais) nos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _ValorProducao.T_ = Valor da produção (mil reais) nos estabelecimentos agropecuários na microrregião. <br/>
 _AreaEstabelecimento.AF_ = Área em hectares (ha) dos estabelecimentos da agricultura familiar da microrregião;<br/>
-_AreaEstabelecimento.MP_ = Área em hectares (ha) dos estabelecimentos do médio produtor rural da microrregião;<br/>
-_AreaEstabelecimento.GP_ = Área em hectares (ha) dos estabelecimentos que não são nem agricultura familiar, nem médio produtor da microrregião (patronal/grande produtor rural);<br/>
+_AreaEstabelecimento.MP_ = Área em hectares (ha) dos estabelecimentos do produtor beneficiado pelo Pronamp da microrregião;<br/>
+_AreaEstabelecimento.AP_ = Área em hectares (ha) dos estabelecimentos que não são de agricultura familiar (patronais);<br/>
 _AreaEstabelecimento.Total_ = Área total em hectares (ha) dos estabelecimentos na microrregião;<br/>
 
 ```{r Preparação dos dados, message=FALSE, warning=FALSE, include=FALSE}
 microrregioes_novasvar <- microrregioes %>%
   
   mutate(
-    VP_GP = (VP_T) - ((VP_AF) + (VP_MP)),
-    AREA_GP = (AREA_T - (AREA_AF + AREA_MP))
+    VP_GP = (VP_T - VP_AF),
+    AREA_GP = (AREA_T - AREA_AF)
   )
 
 microrregioes_novasvar[microrregioes_novasvar < 0] <- NA
@@ -2267,7 +2267,7 @@ VP_AREA <-
   geom_violin(fill = "gray80", size = 0.5, alpha = .5) +
   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
   #scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), labels=function(x) paste0(x*100,"%")) +
-  scale_x_discrete(labels=c("Todos os estab.", "Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+  scale_x_discrete(labels=c("Todos os estab.", "Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
   coord_flip()
 
 ```
@@ -2282,10 +2282,11 @@ gg_VP_AREA
 <br/>
 Questões principais:
 
-* No geral, o valor da produção por hectare é maior nas regiões Sul e Sudeste;
- 
-* Em todas as regiões, o valor da produção por hectare dos estabelecimentos patronais é maior do que dos outros tipos de estabelecimento;
-  + Um destaque maior é dado para a região nordeste, onde o valor da produção toma mais distância dos valores da AF e do médio produtor. Importante ressaltar que são poucas as microrregiões nordestinas que possuem o VP/ha alto nos estabelecimentos patronais, o que eleva a média desse tipo na região são localidades separadas, sem um contínuo espacial.
+* A média do valor da produção por hectare é muito maior nas regiões Sul e Sudeste;
+
+* Em todas as regiões, exceto no Centro-Oeste, o valor da produção por hectare da AF é maior do que da AP (com pouca diferença); 
+
+* Algumas poucas microrregiões apresentam valores muito altos de VP/ha em todas as regiões.
 
 <br/>
 <br/>
@@ -2380,11 +2381,6 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 
 
 
-
-
-
-
-
 ```{r graf RENDAS2 - Total2, message=FALSE, warning=FALSE, include=FALSE}
 # # REC_PROD - pct tipo 2 ####
 # REC_PROD2 <- 
@@ -2402,7 +2398,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 #   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
 #   scale_y_continuous(#limits=c(0,1), breaks=seq(0, 1, by = 0.25), 
 #     labels=function(x) paste0(x*100,"%")) +
-#   scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+#   scale_x_discrete(labels=c("Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
 #   coord_flip()
 # 
 # # REC_OUTR - pct tipo 2 ####
@@ -2422,7 +2418,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 #   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
 #   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
 #                      labels=function(x) paste0(x*100,"%")) +
-#   scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+#   scale_x_discrete(labels=c("Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
 #   coord_flip()
 # 
 # 
@@ -2442,7 +2438,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 #   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
 #   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
 #                      labels=function(x) paste0(x*100,"%")) +
-#   scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+#   scale_x_discrete(labels=c("Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
 #   coord_flip()
 # 
 # 
@@ -2462,7 +2458,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 #   geom_jitter(alpha = .25, width = .3) +   stat_summary(fun= mean, fun.min=mean, fun.max=mean, geom="crossbar", width=0.8, size = 0.2, color="gray39") +
 #   scale_y_continuous(limits=c(0,1), breaks=seq(0, 1, by = 0.3), 
 #                      labels=function(x) paste0(x*100,"%")) +
-#   scale_x_discrete(labels=c("Outros (patronal)", "Pronamp", "Agricultura Familiar")) +
+#   scale_x_discrete(labels=c("Agricultura não familiar", "Pronamp", "Agricultura Familiar")) +
 #   coord_flip()
 # 
 # 
@@ -2532,7 +2528,7 @@ tmap_arrange(tm_AF_VPdivAREA, tm_MP_VPdivAREA, tm_GP_VPdivAREA, tm_TT_VPdivAREA,
 
 
 
-o
+
 
 
 
@@ -2548,21 +2544,21 @@ o
 
 ## Alguns apontamentos {.tabset .tabset-fade}
 
-* Os dados patronais não são muito confiáveis para análise: somando a AF e a MP nas microrregiões, em diversos casos o resultado é superior ao total, tornando o valor das grandes propriedades negativos. A hipótese é de que existe um erro no dado original, visto que, em teoria, deveria ser impossível que a soma de duas tipologias que não acontecem concomitantemente fosse superior ao total.
-  - Qual seria a solução então para trabalhar com dados patronais? É possível descartar esses casos onde o valor é claramente errado, mas enfraquece um pouco a metodologia manter apenas os dados que "parecem" corretos, sem necessariamente uma confirmação que estão corretos ou não.
+* Apesar de corrigido o erro quanto ao cálculo dos estabelecimentos patronais, tornando-os sinônimo de não familiar, algumas questões sobre essa categoria permanecem:
+  + Nesse método de considerar a agricultura patronal, me parece que muitos estabelecimentos distintos entre si estão sendo colocados juntos em uma mesma categoria; a maioria das variáveis mostra uma dispersão grande nos dados dessa tipologia, levantando o questionamento de ser necessário ou não trabalhar em cima desta classe de estabelecimento para distrincha-la em duas categorias distintas.
   
 * Agricultura familiar, Pronamp e Patronal funcionam de maneiras bastante distintas, tanto espacialmente quanto estatisticamente
-	+ Enquanto que para a AF os valores proporcionais costumam ser mais elevados na região Norte, Nordeste e Sul, os valores para o Pronamp (médios produtores) parecem apresentar uma menor correlação espacial (valores similares estão mais dispersos por toda a extensão do território), ao passo que o Centro-Oeste se destaca como região para altos valores proporcionais em todos os recortes de estabelecimentos patronais
-	+ A partir dessa exploração, não recomendaria a junção das classes de AF com MP ou de MP com patronal para o prosseguimento do trabalho
-	
+	+ Enquanto que para a AF os valores proporcionais costumam ser mais elevados na região Norte, Nordeste e Sul, os valores para o Pronamp parecem apresentar uma menor correlação espacial (valores similares estão mais dispersos por toda a extensão do território), ao passo que o Centro-Oeste (e, em alguns casos, o Sudeste e Sul) se destaca como região para altos valores proporcionais em praticamente todos os recortes de estabelecimentos patronais; 
+	+ Os valores do Pronamp possuem menor variância entre si, ou seja, estão próximos entre si, sem grandes 'outliers' em nenhuma região, diferentemente dos valores da AF ou da AP, que por vezes possuem microrregiões com valores muito altos e muito baixos;
+	+ A partir dessa exploração, não recomendo a junção das classes de AF com do Pronamp ou do Pronamp com não familiar (patronal) para o prosseguimento do trabalho.
+
 * Sobre a predominância de tipologias (em área):
-	+ Os grandes estabelecimentos predominam em algumas porções do Rio Grande do Sul (a leste do estado), no interior do estado de São Paulo, no Centro-Oeste (exceto Mato Grosso do Sul) e na divisa entre os estados do Tocantins, Maranhão, Piauí e Bahia.
-	+ Os estabelecimentos do Pronamp dividem espaço com os patronais no sul do Rio Grande do Sul, Santa Catarina e Paraná, mas ganham uma predominância de acima de 80% em área em toda a faixa próxima ao litoral no estado de São Paulo e Rio de Janeiro; em Minas Gerais, enquanto os estabelecimentos patronais dividem espaço mais na porção oeste, sentido o Centro-Oeste, os médios prevalecem na faixa central do estado e perdem força a leste, dividindo ali a região com a agricultura familiar; na região Norte, as microrregiões mais próximas da divisa com o Mato Grosso são as que predominam os estabelecimentos do médio produtor, além disso, ao extremo norte, nas microrregiões em Roraima e no Amapá, a proporção desses estabelecimentos é superior a 80%;
-	+ Para a agricultura familiar, apenas uma microrregião, a do Rio Negro no Amazonas, possui predominância acima de 80% em área; na região Sul, no norte do Rio Grande do Sul e oeste do Paraná, a AF possui predominância de 40% a 60% em área dos estabelecimentos; outra região significativa para essa tipologia é a nordeste, que possui uma concentração de microrregiões com valores acima de 40%.
-	
-* A hipótese de que adicionar a variável de valor da produção auxiliaria em resultados mais precisos sobre a agricultura familiar para a clusterização é confirmada na comparação entre a distribuição espacial desta, da receita da produção e do valor da produção/ha. Resultando em áreas de enfoque com diferentes regiões, essa variável auxiliará no melhor detalhamento e diferenciação dos estabelecimentos da AF nas diferentes regiões;
-	+ Diferentemente da variável de participação da receita da produção na receita do estabelecimento, que forma uma grande faixa com valores acima de 50% do Sul ao Norte (exceto Norteste e estado do Amazonas, Acre e Roraima), ou a variável de participação da AF no total das receitas, que forma uma faixa da região norte a nordeste, com focos específicos na sul, mostra que no Nordeste, apesar da renda da produção ser baixa quando comparada às demais regiões, o valor da produção não é; além disso, a região Sul não aparece mais de forma tão dominante na AF;
-	+ No valor da produção por hectare (VP/ha) os destaques são ainda mais diferentes: no geral, a região Sul e Sudeste possui um VP/ha maior que as demais regiões; o noroeste do estado do Amazonas também se destaca aqui nos estabelecimentos da AF e do médio produtor.
+	+ Para a agricultura familiar, apenas uma microrregião, a do Rio Negro no Amazonas, possui predominância acima de 80% em área; na região Sul, no norte do Rio Grande do Sul e oeste do Paraná, a AF possui predominância de 40% a 60% em área dos estabelecimentos; outra região significativa para essa tipologia é a nordeste, que possui uma concentração de microrregiões com valores acima de 40%;
+	+ Com exceção de algumas áreas do norte, nordeste, leste de Minas Gerais, e porções dos estados do Rio Grande do Sul e Paraná, os estabelecimentos não familiares possuem larga predominância na proporção de áreas. Ainda assim, mesmo considerando a baixa quantidade de áreas da AF onde mais de 70% da área é ocupada por AP, em alguns desses locais a receita desse tipo de estabelecimento ainda consegue ser considerável, exceto no Centro-Oeste, onde a AF parece possuir muito menos força em todas as variáveis;
+	+ Os estabelecimentos do Pronamp dividem espaço com os não familiares no sul do Rio Grande do Sul, Santa Catarina e Paraná, mas ganham uma predominância de acima de 80% em área em toda a faixa próxima ao litoral no estado de São Paulo e Rio de Janeiro; em Minas Gerais, enquanto os estabelecimentos patronais dividem espaço mais na porção oeste, sentido o Centro-Oeste, os médios prevalecem na faixa central do estado e perdem força a leste, dividindo ali a região com a agricultura familiar; na região Norte, as microrregiões mais próximas da divisa com o Mato Grosso são as que predominam os estabelecimentos do médio produtor, além disso, ao extremo norte, nas microrregiões em Roraima e no Amapá, a proporção desses estabelecimentos é superior a 80%;
+
+* Com a correção da categoria de estabelecimentos patronais, a hipótese de que adicionar a variável de valor da produção auxiliaria em resultados mais precisos sobre a agricultura familiar para a clusterização ainda é confirmada, apesar de possuir menos discrepâncias com a variável de valor total das receitas. Com diferenças presentes, mas mais sutis entre as variáveis de VP e valor das receitas, a variável ainda pode auxiliar no melhor detalhamento e diferenciação dos estabelecimentos da AF, especialmente na utilização da variável de VP/ha;
+	+ No valor da produção por hectare (VP/ha) os destaques são distintos dos destaqueas do VP ou do valor das receitas: no geral, a região Sul e Sudeste possui um VP/ha maior que as demais regiões; o noroeste do estado do Amazonas também se destaca aqui nos estabelecimentos da AF e do produtor do Pronamp.
 
 <br/>
 
@@ -2571,7 +2567,7 @@ __* Sobre próximos passos:__
 1. Acredito que, para iniciar, seria interessante refazer a clusterização realizada pelo Pedro Cavalcante apenas com as variáveis da Agricultura Familiar, com a adição do valor da produção e valor da produção por hectare;
 
 2. Em seguida, possuo três propostas de caminhos distintos para o trabalho:
-  a) Após essa primeira aproximação, apesar da caracterização da agricultura familiar ser o interesse principal, penso que poderia ser relevante realizar a clusterização utilizando também os dados dos estabelecimentos do Pronamp (médios) e, talvez, os patronais (devido o problema apresentado no primeiro tópico, existe uma confiabilidade menor na utilização dos dados patronais, mas podemos pensar se valeria a pena fazer uma limpeza nos valores impossíveis, como valores de área negativos, e utilizar essa categoria mesmo assim); A ideia aqui seria fazer três clusterizações distintas, uma com variáveis da AF, outra com do Pronamp e outra com dos patronais e, a partir desses três resultados, fazer uma última clusterização que teria como objetivo caracterizar não apenas os três tipos de estabelecimentos agropecuários, como também entender as relações/coexistências entre eles;
+  a) Após essa primeira aproximação, apesar da caracterização da agricultura familiar ser o interesse principal, penso que poderia ser relevante realizar a clusterização utilizando também os dados dos estabelecimentos do Pronamp (médios) e os patronais; A ideia aqui seria fazer três clusterizações distintas, uma com variáveis da AF, outra com do Pronamp e outra com dos patronais e, a partir desses três resultados, fazer uma última clusterização que teria como objetivo caracterizar não apenas os três tipos de estabelecimentos agropecuários, como também entender as relações/coexistências entre eles;
   
   b) Uma outra alternativa, que depende do direcionamento que se deseja dar ao trabalho, é realizar apenas a clusterização inicial com os dados da agricultura familiar e, para refinar a análise, adicionar as variáveis socioeconômicas de interesse advindas de outras fontes de dados (que seja possível agregar para o recorte da microrregião, como dados do Censo Demográfico). Refazendo a clusterização com um conjunto de novas variáveis provavelmente seria necessário adicionar a etapa de análise de componentes principais (para reduzir o conjunto das variáveis em grupos) e a partir disso realizar a clusterização;
   
