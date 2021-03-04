@@ -1,0 +1,1025 @@
+---
+title: "Análise de clusters <br/>Variáveis do Censo Agro 2017"
+output:
+  rmdformats::html_docco:
+  prettydoc::html_pretty: default
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+               cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+```{r Pacotes, message=FALSE, warning=FALSE, include=FALSE}
+#pacotes
+
+#install.packages(c("ggthemes", "ggpubr", "readr", "readxl", "rstatix", "sp", "sf", "tmap", "leaflet", "arsenal", "knitr", "plotly", "kableExtra", "prettydoc", "rmdformats", "knitr", "scales", "esquisse", "pacman"))
+
+#install.packages(c(	"broom", "cli", "crayon" , "dbplyr", "dplyr", "forcats", "ggplot2", "haven", "hms", "httr", "jsonlite", "lubridate", "magrittr", "modelr", "pillar", "purrr", "readr", "readxl", "reprex", "rlang", "rstudioapi", "rvest", "stringr", "tibble", "tidyr", "xml2"))
+
+##install.packages("factoextra")
+##install.packages("qwraps2")
+
+pacman::p_load(ggthemes, ggpubr, tidyverse, readr, readxl, esquisse, rstatix, sp, sf, tmap, leaflet, arsenal, knitr, plotly, kableExtra, prettydoc, rmdformats, knitr, scales, broom, cli, crayon , dbplyr, dplyr, forcats, ggplot2, haven, hms, httr, jsonlite, lubridate, magrittr, modelr, pillar, purrr, readr, readxl, reprex, rlang, rstudioapi, rvest, stringr, tibble, tidyr, xml2, factoextra, qwraps2) 
+
+
+
+options(scipen=999)
+
+```
+
+```{r COD_Tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### TABELAS -----------------
+TABELA1 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6778_condicaodoprodutor+niveis.xlsx", na = "X") 
+TABELA1$COD[TABELA1$NIVEL == "BR"] <- 000 #alterando o código do Brasil que está igual ao da região Norte
+
+TABELA2 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6878_areaestabelecimentos+niveis.xlsx", na = "X") 
+TABELA2$COD[TABELA2$NIVEL == "BR"] <- 000
+TABELA2 <- TABELA2 %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA3 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6884_estabelecimentos_pessoalocupadolacoparentesco+niveis.xlsx", na = "X") 
+TABELA3$COD[TABELA3$NIVEL == "BR"] <- 000
+TABELA3 <- TABELA3 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA4 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6884_pessoalocupado+niveis.xlsx", na = "X") 
+TABELA4$COD[TABELA4$NIVEL == "BR"] <- 000
+TABELA4 <- TABELA4 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA5 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6884_pessoalocupadolacoparentesco+niveis.xlsx", na = "X") 
+TABELA5$COD[TABELA5$NIVEL == "BR"] <- 000
+TABELA5 <- TABELA5 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA6 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6898_valordaproducao+niveis.xlsx", na = "X") 
+TABELA6$COD[TABELA6$NIVEL == "BR"] <- 000
+TABELA6 <- TABELA6 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA7 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6901_num-estab-rendas+niveis.xlsx", na = "X") 
+TABELA7$COD[TABELA7$NIVEL == "BR"] <- 000
+TABELA7 <- TABELA7 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA8 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6901_valorreceitas+niveis.xlsx", na = "X") 
+TABELA8$COD[TABELA8$NIVEL == "BR"] <- 000
+TABELA8 <- TABELA8 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA9 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6882_areapreservacao+niveis.xlsx", na = "X") 
+TABELA9$COD[TABELA9$NIVEL == "BR"] <- 000
+TABELA9 <- TABELA9 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+```
+
+```{r COD_Procedimentos com as tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### PROCEDIMENTOS COM AS TABELAS -----------------
+
+#PARA VER (se) QUAIS LINHAS ESTÃO DUPLICADAS
+TABELA1[duplicated(TABELA1$COD) | duplicated(TABELA1$COD, fromLast = TRUE), ]
+
+
+#Join de todas as tabelas 
+todastabelas <- TABELA1 %>% 
+  left_join(., TABELA2, by = "COD") %>%
+  left_join(., TABELA3, by = "COD") %>%
+  left_join(., TABELA4, by = "COD") %>%
+  left_join(., TABELA5, by = "COD") %>%
+  left_join(., TABELA6, by = "COD") %>%
+  left_join(., TABELA7, by = "COD") %>%
+  left_join(., TABELA8, by = "COD") %>%
+  left_join(., TABELA9, by = "COD") 
+
+
+#Filtragem por recorte geográfico
+microrregioes <- todastabelas %>% filter(NIVEL == "MI")
+mesorregioes <- todastabelas %>% filter(NIVEL == "ME")
+estados <- todastabelas %>% filter(NIVEL == "UF")
+macrorregioes <- todastabelas %>% filter(NIVEL == "GR")
+brasil <- todastabelas %>% filter(NIVEL == "BR")
+
+
+#Criando colunas de código do estado e da região 
+microrregioes <- microrregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+microrregioes$COD_ESTADO <- substr(microrregioes$COD_ESTADO, 0, 2)
+microrregioes$COD_REGIAO <- substr(microrregioes$COD_REGIAO, 0, 1)
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "1"] <- "Norte"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "2"] <- "Nordeste"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "3"] <- "Sudeste"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "4"] <- "Sul"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+
+mesorregioes <- mesorregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+mesorregioes$COD_ESTADO <- substr(mesorregioes$COD_ESTADO, 0, 2)
+mesorregioes$COD_REGIAO <- substr(mesorregioes$COD_REGIAO, 0, 1)
+
+
+```
+
+```{r COD_Novas colunas, message=FALSE, warning=FALSE, include=FALSE}
+#### CÁLCULO DAS PORCENTAGENS -----------------
+microrregioes_pct <- microrregioes %>%
+  mutate(MP_prop_REC_PROD = R_VALOR_MP_1 / R_VALOR_T_1 ,
+         MP_prop_REC_OUTR = R_VALOR_MP_2 / R_VALOR_T_2 ,
+         MP_prop_REC_FORA = R_VALOR_MP_302 / R_VALOR_T_302 ,
+         MP_prop_REC_PROG = (R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) / (R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) ,
+         AF_prop_REC_PROD = R_VALOR_AF_1 / R_VALOR_T_1 ,
+         AF_prop_REC_OUTR = R_VALOR_AF_2 / R_VALOR_T_2 ,
+         AF_prop_REC_FORA = R_VALOR_AF_302 / R_VALOR_T_302 ,
+         AF_prop_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) / (R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) ,
+         GP_prop_REC_PROD = (R_VALOR_T_1 - R_VALOR_AF_1) / R_VALOR_T_1,
+         GP_prop_REC_OUTR = (R_VALOR_T_2 - R_VALOR_AF_2) / R_VALOR_T_2,
+         GP_prop_REC_FORA = (R_VALOR_T_302 - R_VALOR_AF_302) / R_VALOR_T_302,
+         GP_prop_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / (R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307),
+GP_prop_REC_TOT = (R_VALOR_T_TOT - R_VALOR_AF_TOT) / R_VALOR_T_TOT,
+         
+         AF_prop_NEstab = PROD_AF / PROD_T ,
+         MP_prop_NEstab = PROD_MP / PROD_T ,
+         GP_prop_NEstab = (PROD_T - PROD_AF) / PROD_T ,
+         
+         AF_prop_AREA = AREA_AF / AREA_T ,
+         MP_prop_AREA = AREA_MP / AREA_T ,
+         GP_prop_AREA = (AREA_T - AREA_AF) / AREA_T ,
+         
+         AF_prop_OCU = O_AF / O_T ,
+         MP_prop_OCU = O_MP / O_T ,
+         GP_prop_OCU = (O_T - O_AF) / O_T ,
+         
+         AF_prop_VP = VP_AF / VP_T ,
+         MP_prop_VP = VP_MP / VP_T ,
+         GP_prop_VP = (VP_T - VP_AF) / VP_T ,
+         
+         MP_prop_REC_TOT = R_VALOR_MP_TOT / R_VALOR_T_TOT,
+         AF_prop_REC_TOT = R_VALOR_AF_TOT / R_VALOR_T_TOT,
+         GP_prop_REC_TOT = (R_VALOR_T_TOT - R_VALOR_AF_TOT) / R_VALOR_T_TOT,
+         
+         #porcentagem tipo 2, usando o total de tudo
+         MP_prop2_REC_PROD = R_VALOR_MP_1 / R_VALOR_T_TOT ,
+         MP_prop2_REC_OUTR = R_VALOR_MP_2 / R_VALOR_T_TOT ,
+         MP_prop2_REC_FORA = R_VALOR_MP_302 / R_VALOR_T_TOT ,
+         MP_prop2_REC_PROG = (R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) / R_VALOR_T_TOT ,
+         AF_prop2_REC_PROD = R_VALOR_AF_1 / R_VALOR_T_TOT ,
+         AF_prop2_REC_OUTR = R_VALOR_AF_2 / R_VALOR_T_TOT ,
+         AF_prop2_REC_FORA = R_VALOR_AF_302 / R_VALOR_T_TOT ,
+         AF_prop2_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_T_TOT ,
+         GP_prop2_REC_PROD	=	(R_VALOR_T_1 - R_VALOR_AF_1 ) /  R_VALOR_T_TOT,
+         GP_prop2_REC_OUTR	=	(R_VALOR_T_2 - R_VALOR_AF_2) /  R_VALOR_T_TOT ,
+         GP_prop2_REC_FORA	=	(R_VALOR_T_302 - R_VALOR_AF_302) /  R_VALOR_T_TOT ,
+         GP_prop2_REC_PROG	=	((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / R_VALOR_T_TOT  ,
+         
+        #porcentagem tipo 3, usando o total de cada tipologia 
+        MP_prop3_REC_PROD = R_VALOR_MP_1 / R_VALOR_MP_TOT ,
+        MP_prop3_REC_OUTR = R_VALOR_MP_2 / R_VALOR_MP_TOT ,
+        MP_prop3_REC_FORA = R_VALOR_MP_302 / R_VALOR_MP_TOT ,
+        MP_prop3_REC_PROG = (R_VALOR_MP_301 + R_VALOR_MP_303 + R_VALOR_MP_304 + R_VALOR_MP_305 + R_VALOR_MP_306 + R_VALOR_MP_307) / R_VALOR_MP_TOT ,
+        AF_prop3_REC_PROD = R_VALOR_AF_1 / R_VALOR_AF_TOT ,
+        AF_prop3_REC_OUTR = R_VALOR_AF_2 / R_VALOR_AF_TOT ,
+        AF_prop3_REC_FORA = R_VALOR_AF_302 / R_VALOR_AF_TOT ,
+        AF_prop3_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_AF_TOT ,   
+        GP_prop3_REC_PROD = (R_VALOR_T_1 - R_VALOR_AF_1) /  (R_VALOR_T_TOT - R_VALOR_AF_TOT) ,
+        GP_prop3_REC_OUTR = (R_VALOR_T_2 - R_VALOR_AF_2) /  (R_VALOR_T_TOT - R_VALOR_AF_TOT) ,
+        GP_prop3_REC_FORA = (R_VALOR_T_302 - R_VALOR_AF_302) /  (R_VALOR_T_TOT - R_VALOR_AF_TOT) ,
+        GP_prop3_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / (R_VALOR_T_TOT - R_VALOR_AF_TOT)  
+         
+  )
+
+# microrregioes_pct <- microrregioes_pct %>%
+#   select(-(4:162))
+```
+
+```{r COD_Renomeando pra trabalhar no item 7, message=FALSE, warning=FALSE, include=FALSE}
+microrregioes_renamed <- microrregioes_pct %>%
+  rename(
+    TT_R_NEST = R_NEST_T_TOT , TT_R_NEST_1 = R_NEST_T_1 , TT_R_NEST_101 = R_NEST_T_101 , TT_R_NEST_102 = R_NEST_T_102 , TT_R_NEST_103 = R_NEST_T_103 , TT_R_NEST_2 = R_NEST_T_2 , TT_R_NEST_201 = R_NEST_T_201 , TT_R_NEST_202 = R_NEST_T_202 , TT_R_NEST_203 = R_NEST_T_203 , TT_R_NEST_204 = R_NEST_T_204 , TT_R_NEST_205 = R_NEST_T_205 , TT_R_NEST_3 = R_NEST_T_3 , TT_R_NEST_301 = R_NEST_T_301 , TT_R_NEST_302 = R_NEST_T_302 , TT_R_NEST_303 = R_NEST_T_303 , TT_R_NEST_304 = R_NEST_T_304 , TT_R_NEST_305 = R_NEST_T_305 , TT_R_NEST_306 = R_NEST_T_306 , TT_R_NEST_307 = R_NEST_T_307 , AF_R_NEST = R_NEST_AF_TOT , AF_R_NEST_1 = R_NEST_AF_1 , AF_R_NEST_101 = R_NEST_AF_101 , AF_R_NEST_102 = R_NEST_AF_102 , AF_R_NEST_103 = R_NEST_AF_103 , AF_R_NEST_2 = R_NEST_AF_2 , AF_R_NEST_201 = R_NEST_AF_201 , AF_R_NEST_202 = R_NEST_AF_202 , AF_R_NEST_203 = R_NEST_AF_203 , AF_R_NEST_204 = R_NEST_AF_204 , AF_R_NEST_205 = R_NEST_AF_205 , AF_R_NEST_3 = R_NEST_AF_3 , AF_R_NEST_301 = R_NEST_AF_301 , AF_R_NEST_302 = R_NEST_AF_302 , AF_R_NEST_303 = R_NEST_AF_303 , AF_R_NEST_304 = R_NEST_AF_304 , AF_R_NEST_305 = R_NEST_AF_305 , AF_R_NEST_306 = R_NEST_AF_306 , AF_R_NEST_307 = R_NEST_AF_307 , MP_R_NEST = R_NEST_MP_TOT , MP_R_NEST_1 = R_NEST_MP_1 , MP_R_NEST_101 = R_NEST_MP_101 , MP_R_NEST_102 = R_NEST_MP_102 , MP_R_NEST_103 = R_NEST_MP_103 , MP_R_NEST_2 = R_NEST_MP_2 , MP_R_NEST_201 = R_NEST_MP_201 , MP_R_NEST_202 = R_NEST_MP_202 , MP_R_NEST_203 = R_NEST_MP_203 , MP_R_NEST_204 = R_NEST_MP_204 , MP_R_NEST_205 = R_NEST_MP_205 , MP_R_NEST_3 = R_NEST_MP_3 , MP_R_NEST_301 = R_NEST_MP_301 , MP_R_NEST_302 = R_NEST_MP_302 , MP_R_NEST_303 = R_NEST_MP_303 , MP_R_NEST_304 = R_NEST_MP_304 , MP_R_NEST_305 = R_NEST_MP_305 , MP_R_NEST_306 = R_NEST_MP_306 , MP_R_NEST_307 = R_NEST_MP_307 , TT_R_VALOR = R_VALOR_T_TOT , TT_R_VALOR_1 = R_VALOR_T_1 , TT_R_VALOR_101 = R_VALOR_T_101 , TT_R_VALOR_102 = R_VALOR_T_102 , TT_R_VALOR_103 = R_VALOR_T_103 , TT_R_VALOR_2 = R_VALOR_T_2 , TT_R_VALOR_201 = R_VALOR_T_201 , TT_R_VALOR_202 = R_VALOR_T_202 , TT_R_VALOR_203 = R_VALOR_T_203 , TT_R_VALOR_204 = R_VALOR_T_204 , TT_R_VALOR_205 = R_VALOR_T_205 , TT_R_VALOR_3 = R_VALOR_T_3 , TT_R_VALOR_301 = R_VALOR_T_301 , TT_R_VALOR_302 = R_VALOR_T_302 , TT_R_VALOR_303 = R_VALOR_T_303 , TT_R_VALOR_304 = R_VALOR_T_304 , TT_R_VALOR_305 = R_VALOR_T_305 , TT_R_VALOR_306 = R_VALOR_T_306 , TT_R_VALOR_307 = R_VALOR_T_307 , AF_R_VALOR = R_VALOR_AF_TOT , AF_R_VALOR_1 = R_VALOR_AF_1 , AF_R_VALOR_101 = R_VALOR_AF_101 , AF_R_VALOR_102 = R_VALOR_AF_102 , AF_R_VALOR_103 = R_VALOR_AF_103 , AF_R_VALOR_2 = R_VALOR_AF_2 , AF_R_VALOR_201 = R_VALOR_AF_201 , AF_R_VALOR_202 = R_VALOR_AF_202 , AF_R_VALOR_203 = R_VALOR_AF_203 , AF_R_VALOR_204 = R_VALOR_AF_204 , AF_R_VALOR_205 = R_VALOR_AF_205 , AF_R_VALOR_3 = R_VALOR_AF_3 , AF_R_VALOR_301 = R_VALOR_AF_301 , AF_R_VALOR_302 = R_VALOR_AF_302 , AF_R_VALOR_303 = R_VALOR_AF_303 , AF_R_VALOR_304 = R_VALOR_AF_304 , AF_R_VALOR_305 = R_VALOR_AF_305 , AF_R_VALOR_306 = R_VALOR_AF_306 , AF_R_VALOR_307 = R_VALOR_AF_307 , MP_R_VALOR = R_VALOR_MP_TOT , MP_R_VALOR_1 = R_VALOR_MP_1 , MP_R_VALOR_101 = R_VALOR_MP_101 , MP_R_VALOR_102 = R_VALOR_MP_102 , MP_R_VALOR_103 = R_VALOR_MP_103 , MP_R_VALOR_2 = R_VALOR_MP_2 , MP_R_VALOR_201 = R_VALOR_MP_201 , MP_R_VALOR_202 = R_VALOR_MP_202 , MP_R_VALOR_203 = R_VALOR_MP_203 , MP_R_VALOR_204 = R_VALOR_MP_204 , MP_R_VALOR_205 = R_VALOR_MP_205 , MP_R_VALOR_3 = R_VALOR_MP_3 , MP_R_VALOR_301 = R_VALOR_MP_301 , MP_R_VALOR_302 = R_VALOR_MP_302 , MP_R_VALOR_303 = R_VALOR_MP_303 , MP_R_VALOR_304 = R_VALOR_MP_304 , MP_R_VALOR_305 = R_VALOR_MP_305 , MP_R_VALOR_306 = R_VALOR_MP_306 , MP_R_VALOR_307 = R_VALOR_MP_307 , TT_O_LACO = O_LACO_T , AF_O_LACO = O_LACO_AF , MP_O_LACO = O_LACO_MP , TT_O = O_T , AF_O = O_AF , MP_O = O_MP , TT_O_NEST_LACO_T = O_NEST_LACO_T , AF_O_NEST_LACO = O_NEST_LACO_AF , MP_O_NEST_LACO = O_NEST_LACO_MP , TT_AREA = AREA_T , AF_AREA = AREA_AF , MP_AREA = AREA_MP , TT_PROD = PROD_T , TT_PROD_01 = PROD_T_01 , TT_PROD_02 = PROD_T_02 , TT_PROD_03 = PROD_T_03 , TT_PROD_04 = PROD_T_04 , TT_PROD_05 = PROD_T_05 , TT_PROD_06 = PROD_T_06 , TT_PROD_07 = PROD_T_07 , AF_PROD = PROD_AF , AF_PROD_01 = PROD_AF_01 , AF_PROD_02 = PROD_AF_02 , AF_PROD_03 = PROD_AF_03 , AF_PROD_04 = PROD_AF_04 , AF_PROD_05 = PROD_AF_05 , AF_PROD_06 = PROD_AF_06 , AF_PROD_07 = PROD_AF_07 , MP_PROD = PROD_MP , MP_PROD_01 = PROD_MP_01 , MP_PROD_02 = PROD_MP_02 , MP_PROD_03 = PROD_MP_03 , MP_PROD_04 = PROD_MP_04 , MP_PROD_05 = PROD_MP_05 , MP_PROD_06 = PROD_MP_06 , MP_PROD_07 = PROD_MP_07 , TT_VP = VP_T , TT_VP_AN = VP_T_AN , TT_VP_VG = VP_T_VG , AF_VP = VP_AF , AF_VP_AN = VP_AF_AN , AF_VP_VG = VP_AF_VG , MP_VP = VP_MP , MP_VP_AN = VP_MP_AN , MP_VP_VG = VP_MP_VG 
+  )
+
+
+microrregioes_pct <- microrregioes_pct %>%
+  select(-(4:162))
+
+```
+
+```{r COD_Pivot longer, message=FALSE, warning=FALSE, include=FALSE}
+# Multiple variables stored in column names
+microrregioes_pct_pivot <- 
+  microrregioes_pct %>%
+  pivot_longer(
+    cols = -c(1:5),
+  names_to = c("TIPOLOGIA", ".value"),
+  names_pattern = "(..)_(.......+)"
+  )
+
+
+microrregioes_pct_pivot[microrregioes_pct_pivot < 0] <- NA
+is.na(microrregioes_pct_pivot) <- do.call(cbind,lapply(microrregioes_pct_pivot, is.infinite))
+is.na(microrregioes_pct_pivot) <- do.call(cbind,lapply(microrregioes_pct_pivot, is.nan))
+```
+
+```{r COD_graf PREPARACAO, message=FALSE, warning=FALSE, include=FALSE}
+microrregioes_pct_pivot3 <- microrregioes_pct_pivot
+
+microrregioes_pct_pivot3$TIPOLOGIA <- factor(microrregioes_pct_pivot3$TIPOLOGIA, levels = c("GP", "MP", "AF"))
+
+colnames(microrregioes_pct_pivot3)
+```
+
+```{r COD_mapas PREPARACAO, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+
+# tmap_mode("plot") #> tmap mode set to plotting
+
+
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+# Juntando o shape e a tabela
+SHP_Micro_join <- SHP_Microrregioes %>%
+  left_join(., microrregioes_pct_pivot3, by = "COD")
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# # make some bbox magic
+# bbox_new <- st_bbox(SHP_Micro_join) # current bounding box
+# 
+# xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+# yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+# 
+#  bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# # bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+#  bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+# #bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+# 
+# bbox_new <- bbox_new %>%  # take the bounding box ...
+#   st_as_sfc() # ... and make it a sf polygon
+
+```
+
+```{r COD_Preparação dos dados area, message=FALSE, warning=FALSE, include=FALSE}
+microrregioes_VPha <- microrregioes %>%
+  
+  mutate(
+    VP_GP = (VP_T - VP_AF),
+    AREA_GP = (AREA_T - AREA_AF)
+  )
+
+microrregioes_VPha[microrregioes_VPha < 0] <- NA
+
+microrregioes_VPha <- microrregioes_VPha %>%
+  mutate(
+    #Valor da produção por área
+    TT_VPdivAREA = round((VP_T*1000) / AREA_T, 2), 
+    AF_VPdivAREA = round((VP_AF*1000) / AREA_AF, 2),
+    MP_VPdivAREA = round((VP_MP*1000) / AREA_MP, 2),
+    GP_VPdivAREA = round((VP_GP*1000) / AREA_GP, 2)
+    ) %>%
+  
+  select(1:3, COD_ESTADO, COD_REGIAO, TT_VPdivAREA:GP_VPdivAREA, VP_T:VP_MP, VP_GP, AREA_T:AREA_MP, AREA_GP)
+
+microrregioes_VPha$GP_VPdivAREA[is.nan(microrregioes_VPha$GP_VPdivAREA)] = NA
+microrregioes_VPha[microrregioes_VPha < 0] <- NA
+is.na(microrregioes_VPha) <- do.call(cbind,lapply(microrregioes_VPha, is.infinite))
+
+#Renda da produção por estabelecimento
+
+microrregioes_VPha_pivot <- 
+  microrregioes_VPha %>%
+  select(1:5, TT_VPdivAREA:GP_VPdivAREA) %>%
+  pivot_longer(
+    cols = -c(1:5),
+    names_to = c("TIPOLOGIA", ".value"),
+    names_pattern = "(..)_(.........+)"
+  )
+microrregioes_VPha_pivot <- na.omit(microrregioes_VPha_pivot) 
+
+microrregioes_VPha_pivot %>%
+  ggplot() +
+  aes(x = TIPOLOGIA, weight = VPdivAREA, fill = TIPOLOGIA) +
+  geom_bar() +
+  scale_color_hue() +
+  theme_minimal() +
+  coord_flip() +
+  facet_wrap(vars(COD_REGIAO), ncol = 1)
+
+
+# Juntando o shape e a tabela
+microrregioes_VPha_shape <- SHP_Microrregioes %>%
+  left_join(., microrregioes_VPha_pivot, by = "COD")
+```
+
+```{r COD_Preparação dos dados area util, message=FALSE, warning=FALSE, include=FALSE}
+microrregioes_VPhaUTIL <- microrregioes %>%
+  
+  mutate(
+    VP_GP = (VP_T - VP_AF),
+    AREA_GP = (AREA_T - AREA_AF)
+  )
+
+microrregioes_VPhaUTIL[microrregioes_VPhaUTIL < 0] <- NA
+
+microrregioes_VPhaUTIL <- microrregioes_VPhaUTIL %>%
+  mutate(
+    #Valor da produção por área
+    TT_VPdivAREA = round((VP_T*1000) / (AREA_T - AREAPRESERV_T), 2), 
+    AF_VPdivAREA = round((VP_AF*1000) / (AREA_AF - AREAPRESERV_AF), 2),
+    MP_VPdivAREA = round((VP_MP*1000) / (AREA_MP - AREAPRESERV_MP), 2),
+    GP_VPdivAREA = round((VP_GP*1000) / (AREA_GP - AREAPRESERV_GP), 2)
+    ) %>%
+  
+  select(1:3, COD_ESTADO, COD_REGIAO, TT_VPdivAREA:GP_VPdivAREA, VP_T:VP_MP, VP_GP, AREA_T:AREA_MP, AREA_GP)
+
+microrregioes_VPhaUTIL$GP_VPdivAREA[is.nan(microrregioes_VPhaUTIL$GP_VPdivAREA)] = NA
+microrregioes_VPhaUTIL[microrregioes_VPhaUTIL < 0] <- NA
+is.na(microrregioes_VPhaUTIL) <- do.call(cbind,lapply(microrregioes_VPhaUTIL, is.infinite))
+
+#Renda da produção por estabelecimento
+
+microrregioes_VPhaUTIL_pivot <- 
+  microrregioes_VPhaUTIL %>%
+  select(1:5, TT_VPdivAREA:GP_VPdivAREA) %>%
+  pivot_longer(
+    cols = -c(1:5),
+    names_to = c("TIPOLOGIA", ".value"),
+    names_pattern = "(..)_(.........+)"
+  )
+microrregioes_VPhaUTIL_pivot <- na.omit(microrregioes_VPhaUTIL_pivot) 
+
+microrregioes_VPhaUTIL_pivot %>%
+  ggplot() +
+  aes(x = TIPOLOGIA, weight = VPdivAREA, fill = TIPOLOGIA) +
+  geom_bar() +
+  scale_color_hue() +
+  theme_minimal() +
+  coord_flip() +
+  facet_wrap(vars(COD_REGIAO), ncol = 1)
+
+
+# Juntando o shape e a tabela
+microrregioes_VPhaUTIL_shape <- SHP_Microrregioes %>%
+  left_join(., microrregioes_VPhaUTIL_pivot, by = "COD")
+```
+
+
+
+A partir do observado na análise exploratória das variáveis do Censo Agropecuário de 2017, dez novas variáveis, organizadas em três grandes grupos, foram calculadas para essa etapa. 
+
+## Variáveis utilizadas
+
+* Para a identificação do predomínio ou alta expressão da agricultura familiar nas microrregiões: </br> 
+  + Proporção de área dos estabelecimentos da agricultura familiar, pelo total de área dos estabelecimentos nas microrregiões;
+
+* Para a identificação da distribuição da mão de obra na agricultura familiar e na patronal: </br> 
+  + Proporção de pessoas ocupadas na agricultura familiar, pelo total de ocupados nas microrregiões; </br> 
+  + Pessoas ocupadas por hectare útil da agricultura familiar nas microrregiões; </br> 
+  + Pessoas ocupadas por hectare útil da agricultura patronal (não familiar) nas microrregiões; 
+
+* Para a identificação de microrregiões com maior ou menor valor médio da produção por área utilizável: </br> 
+  + Valor da produção por hectare útil da agricultura familiar nas microrregiões; 
+  + Valor da produção por hectare útil da agricultura patronal (não familiar) nas microrregiões; 
+
+* Para a inclusão de questões relacionadas a renda e importância dos rendimentos obtidos por políticas públicas nos estabelecimentos: </br>
+  + Rendimentos dos estabelecimentos da agricultura familiar nas microrregiões; 
+  + Rendimentos dos estabelecimentos da agricultura patronal (não familiar) nas microrregiões; 
+  + Proporção da renda dos estabelecimentos da agricultura familiar composta por programas e políticas.
+
+
+Observação: Ao tratar de área utilizável dos estabelecimentos (hectare útil), o trabalho refere-se a totalidade das áreas dos estabelecimentos, excluídas as áreas de matas ou florestas naturais destinadas à preservação permanente ou reserva legal
+
+
+```{r Computando variaveis, message=FALSE, warning=FALSE, include=FALSE}
+# variaveis_clusters <- microrregioes %>%
+# mutate(
+#     AF_prop_AREA = (AREA_AF / AREA_T),
+#     GP_prop_AREA = (AREA_T - AREA_AF) / AREA_T ,
+#          
+#     AF_prop_OCU = (O_AF / R_NEST_AF_TOT),
+#     GP_prop_OCU = ((O_T - O_AF) / (R_NEST_T_TOT - R_NEST_AF_TOT)),
+#          
+#     TT_VPdivAREA = round((VP_T*1000) / (AREA_T - AREAPRESERV_T), 2), 
+#     AF_VPdivAREA = round((VP_AF*1000) / (AREA_AF - AREAPRESERV_AF), 2),
+#     GP_VPdivAREA = round(((VP_T - VP_AF)*1000) / ((AREA_T - AREA_AF) - AREAPRESERV_GP), 2),
+#     
+#     AF_prop3_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_AF_TOT ,   
+#     GP_prop3_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / (R_VALOR_T_TOT - R_VALOR_AF_TOT)  
+# ) %>%
+#   
+#   select(1:3, COD_ESTADO, COD_REGIAO, AF_prop_AREA, AF_prop_OCU, GP_prop_OCU, AF_VPdivAREA, GP_VPdivAREA, AF_prop3_REC_PROG, GP_prop3_REC_PROG) %>%
+#   filter(LOCALIZACAO != "Fernando de Noronha (PE)")
+#   #select(1:3, COD_ESTADO, COD_REGIAO, AF_prop_AREA, GP_prop_AREA, AF_prop_OCU, GP_prop_OCU, AF_VPdivAREA, GP_VPdivAREA, AF_prop3_REC_PROG, GP_prop3_REC_PROG)
+# 
+# 
+# ## outra tentativa
+# 
+# variaveis_clusters <- microrregioes %>%
+# mutate(
+#     AF_prop_AREA = (AREA_AF / AREA_T),
+#     GP_prop_AREA = (AREA_T - AREA_AF) / AREA_T ,
+#     
+#     AF_prop_OCU = (O_AF / O_T), #prop de pessoas ocupadas na AF
+#          
+#     AF_prop_OCUarea = (O_AF / (AREA_AF - AREAPRESERV_AF)), #prop de pessoas ocupadas por hectare da AF
+#     GP_prop_OCUarea = ((O_T - O_AF) / ((AREA_T - AREA_AF) - AREAPRESERV_GP)), #prop de pessoas ocupadas por hectare da AP
+#     
+#     # AF_prop_OCUestab = (O_AF / R_NEST_AF_TOT), #prop de pessoas ocupadas por estabelecimento da AF
+#     # GP_prop_OCUestab = ((O_T - O_AF) / (R_NEST_T_TOT - R_NEST_AF_TOT)),
+#          
+#     #TT_VPdivAREA = round((VP_T*1000) / (AREA_T - AREAPRESERV_T), 2), 
+#     AF_VPdivAREA = round((VP_AF*1000) / (AREA_AF - AREAPRESERV_AF), 2),
+#     GP_VPdivAREA = round(((VP_T - VP_AF)*1000) / ((AREA_T - AREA_AF) - AREAPRESERV_GP), 2),
+#     
+#     AF_prop3_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_AF_TOT ,   
+#     GP_prop3_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / (R_VALOR_T_TOT - R_VALOR_AF_TOT),
+#     
+#     AF_Receita = (R_VALOR_AF_TOT), #por mil
+#     GP_Receita = ((R_VALOR_T_TOT - R_VALOR_AF_TOT)) #por mil
+#     
+#     
+# ) %>%
+#   
+#   select(1:3, COD_ESTADO, COD_REGIAO, 
+#          AF_prop_AREA, 
+#         AF_prop_OCU,
+#          # AF_prop_OCUestab, GP_prop_OCUestab, 
+#          AF_prop_OCUarea, GP_prop_OCUarea, 
+#          AF_VPdivAREA, GP_VPdivAREA, 
+#          AF_prop3_REC_PROG, GP_prop3_REC_PROG,
+#         AF_Receita, GP_Receita) %>%
+#   filter(LOCALIZACAO != "Fernando de Noronha (PE)")
+#   #select(1:3, COD_ESTADO, COD_REGIAO, AF_prop_AREA, GP_prop_AREA, AF_prop_OCU, GP_prop_OCU, AF_VPdivAREA, GP_VPdivAREA, AF_prop3_REC_PROG, GP_prop3_REC_PROG)
+
+
+#### oooooooutra tentativa
+
+variaveis_clusters <- microrregioes %>%
+mutate(
+    AF_prop_AREA = (AREA_AF / AREA_T),
+    GP_prop_AREA = (AREA_T - AREA_AF) / AREA_T ,
+    
+    AF_prop_OCU = (O_AF / O_T), #prop de pessoas ocupadas na AF
+         
+    AF_prop_OCUarea = (O_AF / (AREA_AF - AREAPRESERV_AF)), #prop de pessoas ocupadas por hectare da AF
+    GP_prop_OCUarea = ((O_T - O_AF) / ((AREA_T - AREA_AF) - AREAPRESERV_GP)), #prop de pessoas ocupadas por hectare da AP
+    
+    # AF_prop_OCUestab = (O_AF / R_NEST_AF_TOT), #prop de pessoas ocupadas por estabelecimento da AF
+    # GP_prop_OCUestab = ((O_T - O_AF) / (R_NEST_T_TOT - R_NEST_AF_TOT)),
+         
+    #TT_VPdivAREA = round((VP_T*1000) / (AREA_T - AREAPRESERV_T), 2), 
+    AF_VPdivAREA = round((VP_AF*1000) / (AREA_AF - AREAPRESERV_AF), 2),
+    GP_VPdivAREA = round(((VP_T - VP_AF)*1000) / ((AREA_T - AREA_AF) - AREAPRESERV_GP), 2),
+    
+    AF_prop3_REC_PROG = (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307) /  R_VALOR_AF_TOT ,   
+    #GP_prop3_REC_PROG = ((R_VALOR_T_301 + R_VALOR_T_303 + R_VALOR_T_304 + R_VALOR_T_305 + R_VALOR_T_306 + R_VALOR_T_307) - (R_VALOR_AF_301 + R_VALOR_AF_303 + R_VALOR_AF_304 + R_VALOR_AF_305 + R_VALOR_AF_306 + R_VALOR_AF_307)) / (R_VALOR_T_TOT - R_VALOR_AF_TOT),
+    
+    AF_Receita = (R_VALOR_AF_TOT), #por mil
+    GP_Receita = ((R_VALOR_T_TOT - R_VALOR_AF_TOT)) #por mil
+    
+    
+) %>%
+  
+  select(1:3, COD_ESTADO, COD_REGIAO, 
+         AF_prop_AREA, 
+        AF_prop_OCU,
+         # AF_prop_OCUestab, GP_prop_OCUestab, 
+         AF_prop_OCUarea, GP_prop_OCUarea, 
+         AF_VPdivAREA, GP_VPdivAREA, 
+         AF_prop3_REC_PROG, #GP_prop3_REC_PROG,
+        AF_Receita, GP_Receita) %>%
+  filter(LOCALIZACAO != "Fernando de Noronha (PE)")
+  #select(1:3, COD_ESTADO, COD_REGIAO, AF_prop_AREA, GP_prop_AREA, AF_prop_OCU, GP_prop_OCU, AF_VPdivAREA, GP_VPdivAREA, AF_prop3_REC_PROG, GP_prop3_REC_PROG)
+
+```
+
+
+```{r Normalizando variaveis, message=FALSE, warning=FALSE, include=FALSE}
+variaveis_clusters[is.na(variaveis_clusters)] <- 0
+
+# Colocando a coluna de ID da micro como coluna 0, identificadora da linha, assim ela não é afetada pelo procedimento de padronização
+variaveis_clusters2 <- variaveis_clusters %>% remove_rownames %>% column_to_rownames(var="COD") %>% as.data.frame()
+
+# Padronização das escalas
+clusterizacao1_scale <- scale(variaveis_clusters2[,-c(1:4)])
+head(clusterizacao1_scale)
+
+```
+
+## Número ideal de clusters
+
+Após a normalização dos valores (com desvio padrão de 1 e média 0), uma vez que é necessário indicar previamente um número de clusters para iniciar o procedimento de clusterização das variáveis, foram verificados três métodos diferentes para determinar o número ideal de clusters, sendo eles:
+1. Método do cotovelo (Elbow method)
+2. Método de silhueta (Average Silhouette Method) 
+3. Método Gap (Gap Statistic Method)
+
+```{r Testes de tamanho de cluster, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+# Elbow method
+CLIDEAL_elbow <- fviz_nbclust(clusterizacao1_scale, kmeans, method = "wss") +
+    geom_vline(xintercept = 6, linetype = 2)+
+  labs(subtitle = "Elbow method")
+
+# Silhouette method
+CLIDEAL_silhou <- fviz_nbclust(clusterizacao1_scale, kmeans, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+
+# Gap statistic
+# nboot = 50 to keep the function speedy. 
+# recommended value: nboot= 500 for your analysis.
+# Use verbose = FALSE to hide computing progression.
+set.seed(123)
+CLIDEAL_gap <- fviz_nbclust(clusterizacao1_scale, kmeans, nstart = 25,  method = "gap_stat", nboot = 50)+
+  labs(subtitle = "Gap statistic method")
+
+ggarrange(CLIDEAL_elbow, CLIDEAL_silhou, CLIDEAL_gap)
+```
+
+Uma vez que os valores indicados são divergentes, optou-se pelo número de seis clusters, valor indicado no primeiro método e média das três opções.
+    
+```{r Criacao dos clusters, message=FALSE, warning=FALSE, include=FALSE}
+
+#CLUSTER COM 4
+set.seed(123)
+k4 <- kmeans(clusterizacao1_scale, centers = 4, nstart = 150)
+k5 <- kmeans(clusterizacao1_scale, centers = 5, nstart = 150)
+k6 <- kmeans(clusterizacao1_scale, centers = 6, nstart = 150)
+k7 <- kmeans(clusterizacao1_scale, centers = 7, nstart = 150)
+k8 <- kmeans(clusterizacao1_scale, centers = 8, nstart = 150)
+k9 <- kmeans(clusterizacao1_scale, centers = 9, nstart = 150)
+#print(k4)
+
+k4graph <- fviz_cluster(k4, geom = "point",  data = clusterizacao1_scale) + ggtitle("k = 4")
+k5graph <- fviz_cluster(k5, geom = "point",  data = clusterizacao1_scale) + ggtitle("k = 5")
+k6graph <- fviz_cluster(k6, geom = "point",  data = clusterizacao1_scale) + ggtitle("k = 6")
+k9graph <- fviz_cluster(k9, geom = "point",  data = clusterizacao1_scale) + ggtitle("k = 9")
+
+# Visualize silhouhette information
+# library(cluster)
+# #sil <- silhouette(k4$cluster, dist(clusterizacao1_scale))
+# teste <- fviz_silhouette(silhouette(k9$cluster, dist(clusterizacao1_scale)))
+
+```
+
+## Descrição dos clusters
+
+```{r Manipulacao tabelas clusters, message=FALSE, warning=FALSE, include=FALSE}
+df_clusters <- variaveis_clusters %>%
+  mutate(Cluster4 = k4$cluster,
+         Cluster5 = k5$cluster,
+         Cluster6 = k6$cluster,
+         Cluster7 = k7$cluster,
+         Cluster9 = k9$cluster) 
+
+
+df_clusters_k4_sumario <- variaveis_clusters %>%
+  mutate(Cluster4 = k4$cluster) %>%
+  group_by(Cluster4) %>%
+  summarise_all("mean") %>% 
+  mutate(Tamanho = k4$size) %>%
+  select(-c(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO))
+df_clusters_k4_centers <- as.data.frame(k4[["centers"]])
+
+
+df_clusters_k5_sumario <- variaveis_clusters %>%
+  mutate(Cluster5 = k5$cluster) %>%
+  group_by(Cluster5) %>%
+  summarise_all("mean") %>% 
+  mutate(Tamanho = k5$size) %>%
+  select(-c(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO))
+df_clusters_k5_centers <- as.data.frame(k5[["centers"]])
+
+df_clusters_k6_sumario <- variaveis_clusters %>%
+  mutate(Cluster6 = k6$cluster) %>%
+  group_by(Cluster6) %>%
+  summarise_all("mean") %>%
+  mutate(Tamanho = k6$size) %>%
+  select(-c(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO))
+df_clusters_k6_centers <- as.data.frame(k6[["centers"]])
+
+df_clusters_k7_sumario <- variaveis_clusters %>%
+  mutate(Cluster7 = k7$cluster) %>%
+  group_by(Cluster7) %>%
+  summarise_all("mean") %>%
+  mutate(Tamanho = k7$size) %>%
+  select(-c(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO))
+df_clusters_k7_centers <- as.data.frame(k7[["centers"]])
+
+df_clusters_k9_sumario <- variaveis_clusters %>%
+  mutate(Cluster9 = k9$cluster) %>%
+  group_by(Cluster9) %>%
+  summarise_all("mean") %>%
+  mutate(Tamanho = k9$size) %>%
+  select(-c(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO))
+
+
+df_clusters_k9_sumario_MD <- variaveis_clusters %>%
+  mutate(Cluster9 = k9$cluster) %>%
+  group_by(Cluster9) %>%
+  summarise_at(c(6:12), median) %>%
+  mutate(Tamanho = k9$size) 
+
+
+df_clusters_k9_centers <- as.data.frame(k9[["centers"]])
+
+```
+
+
+Sumário das médias das microrregiões para cada um dos clusters calculados
+
+```{r tabela sumario cl6, echo=FALSE, message=FALSE, warning=FALSE, results = "asis"}
+df_clusters_k6_sumarioPLOT <-
+  as.data.frame(t(df_clusters_k6_sumario)) %>%
+  rename("CL 1" = V1,
+         "CL 2" = V2,
+         "CL 3" = V3,
+         "CL 4" = V4,
+         "CL 5" = V5,
+         "CL 6" = V6) %>%
+  slice(-1)
+
+
+# mutate("Origem da renda" = (recode(names,
+#                 "AF_prod" = "Produção do estabelecimento",
+#                 "MP_prod" = "Produção do estabelecimento",
+#                 "GP_prod" = "Produção do estabelecimento",
+#                 "AF_fora" = "Fora do estabelecimento",
+#                 "MP_fora" = "Fora do estabelecimento",
+#                 "GP_fora" = "Fora do estabelecimento",
+#                 "AF_outr" = "Outras do estabelecimento",
+#                 "MP_outr" = "Outras do estabelecimento",
+#                 "GP_outr" = "Outras do estabelecimento",
+#                 "AF_prog" = "Programas e políticas",
+#                 "MP_prog" = "Programas e políticas",
+#                 "GP_prog" = "Programas e políticas"))) %>%
+#   mutate(TIPOLOGIA = recode(TIPOLOGIA, 
+#          "AF" = "Agricultura familiar",
+#          "MP" = "Pronamp",
+#          "GP" = "Agricultura patronal*")) %>%
+#   select(-names) %>%
+#   dplyr::relocate("Origem da renda", .after = TIPOLOGIA) %>%
+#   arrange(desc(TIPOLOGIA))  %>%
+#   rename(Tipologia = TIPOLOGIA)
+
+
+
+
+df_clusters_k6_sumarioPLOT <- df_clusters_k6_sumarioPLOT %>%
+rownames_to_column(var = "Variável")
+
+df_clusters_k6_sumarioPLOT[1,1] <- "Proporção de área AF" 
+df_clusters_k6_sumarioPLOT[2,1] <- "Proporção de ocupados na AF"
+df_clusters_k6_sumarioPLOT[3,1] <- "Ocupados por ha útil da AF"
+df_clusters_k6_sumarioPLOT[4,1] <- "Ocupados por ha útil da AP"
+df_clusters_k6_sumarioPLOT[5,1] <- "VP/ha da AF"
+df_clusters_k6_sumarioPLOT[6,1] <- "VP/ha da AP"
+df_clusters_k6_sumarioPLOT[7,1] <- "Prop. das rendas de programas/políticas na AF"
+df_clusters_k6_sumarioPLOT[8,1] <- "Rendimentos totais da AF"
+df_clusters_k6_sumarioPLOT[9,1] <- "Rendimentos totais da AP"
+df_clusters_k6_sumarioPLOT[10,1] <- "Nº de microrregiões"
+
+kbl(df_clusters_k6_sumarioPLOT, digits = 2, caption = "", align = "lcccccc") %>%
+  kable_paper("basic", full_width = F)
+
+```
+
+Representação espacial dos clusters
+```{r CODmapas PREPARACAO, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+
+# Juntando o shape e a tabela
+SHP_clusters <- SHP_Microrregioes %>%
+  left_join(., df_clusters, by = "COD")
+
+
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# make some bbox magic
+bbox_new <- st_bbox(SHP_Micro_join) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+ bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+ bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
+
+
+##### mapa
+
+# tm_AF_VPdivAREA <- 
+# microrregioes_VPha_shape[!is.na(microrregioes_VPha_shape$VPdivAREA),] %>%
+#   filter(VPdivAREA >= 0) %>%
+#   filter(TIPOLOGIA == "AF") %>%
+#   tm_shape(bbox = bbox_new) +
+#   tm_fill(col = "VPdivAREA", 
+#           title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+#           id = "LOCALIZACAO", palette="BuGn",
+#           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+#           style = "fixed", breaks = c(35, 500, 1500, 3500, 16000)) +
+#   tm_borders(lwd = 0.2) +
+#   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+#   tm_view(view.legend.position = c("right", "bottom")) +
+#   tm_shape(SHP_Estados) +
+#   tm_borders(lwd = 1) 
+
+
+```
+
+
+```{r Mapeando os clusters, message=FALSE, warning=FALSE, include=FALSE}
+### CLUSTER 4
+shp_cl4 <- SHP_clusters %>%
+  tm_shape() +
+  tm_fill(col = "Cluster4", 
+          title = "Clusters (n=4)", 
+          id = "LOCALIZACAO", palette="Accent",
+          #n=7
+          #legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "cat") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+shp_cl5 <- SHP_clusters %>%
+  tm_shape() +
+  tm_fill(col = "Cluster5", 
+          title = "Clusters (n=5)", 
+          id = "LOCALIZACAO", palette="Accent",
+          #n=7
+          #legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "cat") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### CLUSTER 6
+shp_cl6 <- SHP_clusters %>%
+  filter(!is.na(Cluster6)) %>%
+  tm_shape() +
+  tm_fill(col = "Cluster6", 
+          title = "Clusters", 
+          id = "LOCALIZACAO", palette="Accent",
+          #n=7
+          #legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "cat") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### CLUSTER 7
+shp_cl7 <- SHP_clusters %>%
+  filter(!is.na(Cluster7)) %>%
+  tm_shape() +
+  tm_fill(col = "Cluster7", 
+          title = "Clusters", 
+          id = "LOCALIZACAO", palette="Accent",
+          #n=7
+          #legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "cat") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### CLUSTER 9
+shp_cl9 <- SHP_clusters %>%
+  tm_shape() +
+  tm_fill(col = "Cluster9", 
+          title = "Clusters (n=9)", 
+          id = "LOCALIZACAO", palette="Accent",
+          #n=7
+          #legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+          style = "cat") +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+```{r Todos os mapas juntos, echo=FALSE, message=FALSE, warning=FALSE, fig.align="center"}
+
+# tmap_arrange(shp_cl4, shp_cl5, shp_cl6, shp_cl9,
+#              sync = TRUE,
+#              nrow = 1)
+
+
+# tmap_arrange(shp_cl6, shp_cl7,
+#              sync = TRUE,
+#              nrow = 1)
+
+
+shp_cl6
+```
+
+
+### Cluster 1 
+Predominantemente patronal, com média de 85% da área das microrregiões ocupada por essa tipologia, assim como todos os outros clusters, a média de pessoas ocupadas na AF é maior do que na AP. Apesar dos estabecimentos patronais apresentarem uma média das receitas obtidas nas microrregiões 5x maior do que as da agricultura familiar, é essa última que é ligeiramente mais rentável do que a primeira em termos de valor da produção por hectare útil dos estabelecimentos. Das pessoas ocupadas nesse cluster, a maioria se encontra nos estabelecimentos patronais, no entanto, na medida de pessoas ocupadas por hectare a agricultura familiar apresenta valor 4x superior a patronal.
+
+- Predominancia patronal, rentabilidade por hectare similar a familiar.
+
+
+### Cluster 2 
+Sem nítida predominância em área de uma das duas tipologias (em média 42% da área das microrregiões sendo familiar), a maioria das pessoas ocupadas (mais de 70%) é da AF. Esse cluster possui como média o menor valor da produção por hectare tanto para a AF quanto para a AP. Nesse cluster, tanto os valores de VP/ha quanto a média do total de receitas obtidas nas microrregiões são superiores na agricultura familiar, sendo cerca de 1,3x maior em ambos os casos. Esse é o único cluster no qual, em média, os estabelecimentos contam com 50% da sua renda advinda de programas e políticas.
+
++ Familiar com rendas de programas e políticas.
+
+
+### Cluster 3 
+No terceiro cluster gerado, a agricultura familiar é praticamente inexpressiva em área, mas ainda assim, dentro das microrregiões, a média das receitas é relativamente boa quando comparada com a dos demais clusters (não sendo superior apenas ao cluster 5). Esse cluster é dominado pelos estabelecimentos patronais (mais de 90% da área) e, apesar da média dos rendimentos da AP ser muito superior a da AF (aproximadamente 15x maior), o valor da produção por hectare da AF é apenas 1,5x menor do que na AP.
+
++ Quase exclusivamente patronal, mais rentável por hectare do que a familiar e geradora de grande receita.
+
+
+### Cluster 4 
+Tanto em área quanto em ocupadas na agricultura familiar, esse cluster apresenta valores muito próximos aos do cluster 2, as diferenças aqui são que: 1) não há uma importância da renda de programas e políticas na composição total da renda dos estabelecimentos; 2) apesar de seguir o mesmo padrão do segundo cluster, com o VP/ha da AF cerca de 1,3x maior que o da AP, a média para ambos os tipos de estabelecimento nesse cluster é superior, indicando que o cluster 4 uma maior rentabilidade por hectare. Fator importante a ser observado é que, apesar de gerar em média maior valor da produção por hectare na AF do que na AP, as receitas da AP são em média 1,2x superiores às da AF.
+
+-- Observação: É curioso a desimportância dos programas e políticas na composição das rendas dos estabelecimentos agropecuários, apesar da proximidade espacial com o cluster 2. 
+
+
+### Cluster 5 
+Sendo o único que, na média das microrregiões, predominam os estabelecimentos da AF em área (pouco mais de 50% da área sendo ocupada por estabelecimentos desse tipo), em termos de pessoal ocupado o Cluster 5 não difere muito dos clusters 2 e 4. O que diferencia esse cluster dos demais, especialmente dos aqui mencionados, que possuem alta expressão da AF, é o valor da produção por área muito maior do que em todos os demais clusters, com exceção do 6. Aqui, tanto a média do valor da produção por hectare, quanto a média do total das receitas é muito similar na AF e na AP, demonstrando um maior equilíbrio entre essas duas tipologias quando comparado com os demais clusters.
+
++ Equilíbrio familiar e patronal, com alta receita e valor da produção por hectare útil.
+
+
+### Cluster 6 
+Com média de 40% das áreas ocupadas por agricultura familiar, não sendo portanto tão dominante a agricultura patronal, esse cluster possui a média mais alta do VP/ha da AF (e o segundo mais alto da AP), mas apresenta a menor média de receitas dentre todos os clusters. Há muito mais ocupados por hectare do que todos os outros clusters (cerca de 5x mais tanto para a AF quanto para a AP), a agricultura familiar gera mais valor por hectare do que a patronal (1,4x mais), mas a média das receitas é extremamente baixa quando comparado com a média das receitas dos outros clusters, tanto na AF quanto na AP.
+
++ Sem uma clara predominância de tipologia, com altíssimo valor da produção por hectare para a AF e alto para a AP, mas baixíssima receita.
+
+
+
+
+
+
+### Tabela descritiva
+
+Sumário com médias, medianas, mínimos e máximos das microrregiões para cada um dos clusters calculados
+
+
+```{r Tabela de resumo, echo=FALSE, message=FALSE, warning=FALSE, results = "asis"}
+
+options(qwraps2_markup = 'markdown')
+our_summary1 <-
+  list("Proporção de área AF" =
+       list("min"       = ~ round(min(AF_prop_AREA), 2),
+            "Mediana"    = ~ round(median(AF_prop_AREA), 2),
+            "max"       = ~ round(max(AF_prop_AREA), 2),
+            "Média"      = ~ round(mean(AF_prop_AREA), 2)),
+       
+       "Proporção de ocupados na AF" =
+       list("min"       = ~ round(min(AF_prop_OCU), 2),
+            "Mediana"    = ~ round(median(AF_prop_OCU), 2),
+            "max"       = ~ round(max(AF_prop_OCU), 2),
+            "Média"      = ~ round(mean(AF_prop_OCU), 2)),
+       "Ocupados por ha útil da AF" =
+       list("min"       = ~ round(min(AF_prop_OCUarea), 2),
+            "Mediana"    = ~ round(median(AF_prop_OCUarea), 2),
+            "max"       = ~ round(max(AF_prop_OCUarea), 2),
+            "Média"      = ~ round(mean(AF_prop_OCUarea), 2)),
+       "Ocupados por ha útil da AP" =
+       list("min"       = ~ round(min(GP_prop_OCUarea), 2),
+            "Mediana"    = ~ round(median(GP_prop_OCUarea), 2),
+            "max"       = ~ round(max(GP_prop_OCUarea), 2),
+            "Média"      = ~ round(mean(GP_prop_OCUarea), 2)),
+       
+       "VP/ha da AF" =
+       list("min"       = ~ round(min(AF_VPdivAREA), 2),
+            "Mediana"    = ~ round(median(AF_VPdivAREA), 2),
+            "max"       = ~ round(max(AF_VPdivAREA), 2),
+            "Média"      = ~ round(mean(AF_VPdivAREA), 2)),
+       "VP/ha da AP" =
+       list("min"       = ~ round(min(GP_VPdivAREA), 2),
+            "Mediana"    = ~ round(median(GP_VPdivAREA), 2),
+            "max"       = ~ round(max(GP_VPdivAREA), 2),
+            "Média"      = ~ round(mean(GP_VPdivAREA), 2)),
+       
+       "Prop. das rendas de programas/políticas na AF" =
+       list("min"       = ~ round(min(AF_prop3_REC_PROG), 2),
+            "Mediana"    = ~ round(median(AF_prop3_REC_PROG), 2),
+            "max"       = ~ round(max(AF_prop3_REC_PROG), 2),
+            "Média"      = ~ round(mean(AF_prop3_REC_PROG), 2)),
+       "Rendimentos totais da AF" =
+       list("min"       = ~ round(min(AF_Receita), 2),
+            "Mediana"    = ~ round(median(AF_Receita), 2),
+            "max"       = ~ round(max(AF_Receita), 2),
+            "Média"      = ~ round(mean(AF_Receita), 2)),
+       "Rendimentos totais da AP" =
+       list("min"       = ~ round(min(GP_Receita), 2),
+            "Mediana"    = ~ round(median(GP_Receita), 2),
+            "max"       = ~ round(max(GP_Receita), 2),
+            "Média"      = ~ round(mean(GP_Receita), 2))
+  )
+
+
+# Variáveis que entraram:
+#   AF_prop_AREA, 
+#   AF_prop_OCU,
+#   AF_prop_OCUarea, GP_prop_OCUarea, 
+#   AF_VPdivAREA, GP_VPdivAREA, 
+#   AF_prop3_REC_PROG, #GP_prop3_REC_PROG,
+#   AF_Receita, GP_Receita
+ 
+
+tabelaresumo1 <- qwraps2::summary_table(df_clusters, our_summary1)
+#kbl(tabelaresumo1)
+
+tabelaresumo2 <- qwraps2::summary_table(dplyr::group_by(df_clusters, Cluster6), our_summary1)
+print(tabelaresumo2, rtitle = "Clusters")
+```
+
+
+
+
+
+      
+
+
+
+
+
+
+```{r so_para_exportar, message=FALSE, warning=FALSE, include=FALSE}
+
+
+
+# 
+# clusterizacao[is.na(clusterizacao)] <- 0
+# 
+# # Colocando a coluna de ID da micro como coluna 0, identificadora da linha, assim ela não é afetada pelo procedimento de padronização
+# clusterizacao1 <- clusterizacao %>% remove_rownames %>% column_to_rownames(var="COD") %>% as.data.frame()
+# 
+# # Padronização das escalas
+# clusterizacao1_scaleexport <- as.data.frame(scale(clusterizacao1[,5:11])) %>%
+#   rownames_to_column(var = "COD")
+# 
+# 
+# 
+# SHP_clustersscaleexport <- SHP_Microrregioes %>%
+#   left_join(., clusterizacao1_scaleexport, by = "COD")
+# 
+# 
+# #write_sf(SHP_clustersscaleexport, "clusterizacao1_scaleexport.shp")
+
+```
+  
+         
+         
+       
+         
+         
+Elaborado por Bruna Fernandes, 03/2021.
