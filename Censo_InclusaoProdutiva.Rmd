@@ -1,0 +1,1357 @@
+---
+title: "Inclusão/exclusão produtiva: Comparação entre<br>os Censos Agropecuários de 2006 e 2017"
+output:
+  rmdformats::html_docco:
+  prettydoc::html_pretty: default
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+               cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+
+
+```{r Pacotes, message=FALSE, warning=FALSE, include=FALSE}
+#pacotes
+
+#install.packages(c("ggthemes", "ggpubr", "readr", "readxl", "rstatix", "sp", "sf", "tmap", "leaflet", "arsenal", "knitr", "plotly", "kableExtra", "prettydoc", "rmdformats", "knitr", "scales", "esquisse", "pacman"))
+
+#install.packages(c(	"broom", "cli", "crayon" , "dbplyr", "dplyr", "forcats", "ggplot2", "haven", "hms", "httr", "jsonlite", "lubridate", "magrittr", "modelr", "pillar", "purrr", "readr", "readxl", "reprex", "rlang", "rstudioapi", "rvest", "stringr", "tibble", "tidyr", "xml2"))
+
+##install.packages("factoextra")
+##install.packages("qwraps2")
+
+pacman::p_load(ggthemes, ggpubr, tidyverse, readr, readxl, esquisse, rstatix, sp, sf, tmap, leaflet, arsenal, knitr, plotly, kableExtra, prettydoc, rmdformats, knitr, scales, broom, cli, crayon , dbplyr, dplyr, forcats, ggplot2, haven, hms, httr, jsonlite, lubridate, magrittr, modelr, pillar, purrr, readr, readxl, reprex, rlang, rstudioapi, rvest, stringr, tibble, tidyr, xml2, factoextra, qwraps2) 
+
+
+
+options(scipen=999)
+
+```
+
+
+```{r COD_Tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### TABELAS -----------------
+
+TABELA4 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6884_pessoalocupado+niveis.xlsx", na = "X") 
+TABELA4$COD[TABELA4$NIVEL == "BR"] <- 000
+
+TABELA7 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6901_num-estab-rendas+niveis.xlsx", na = "X") 
+TABELA7$COD[TABELA7$NIVEL == "BR"] <- 000
+TABELA7 <- TABELA7 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA8 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6901_valorreceitas+niveis.xlsx", na = "X") 
+TABELA8$COD[TABELA8$NIVEL == "BR"] <- 000
+TABELA8 <- TABELA8 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA10 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6788_totalestabelecimentos+niveis.xlsx", na = "X") 
+TABELA10$COD[TABELA10$NIVEL == "BR"] <- 000
+TABELA10 <- TABELA10 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA2 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/6878_areaestabelecimentos+niveis.xlsx", na = "X") 
+TABELA2$COD[TABELA2$NIVEL == "BR"] <- 000
+TABELA2 <- TABELA2 %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+
+TABELA4_06 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/2006_1113_ocupados.xlsx", na = "X") 
+TABELA4_06$COD[TABELA4_06$NIVEL == "BR"] <- 000
+TABELA4_06 <- TABELA4_06 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA8_06 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/2006_1116_rendimentosTODOS.xlsx", na = "X") 
+TABELA8_06$COD[TABELA8_06$NIVEL == "BR"] <- 000
+TABELA8_06 <- TABELA8_06 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA2_06 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/2006_1112_totalestabelecimentos+areas+niveis.xlsx", na = "X") 
+TABELA2_06$COD[TABELA2_06$NIVEL == "BR"] <- 000
+TABELA2_06 <- TABELA2_06 %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+```
+
+
+```{r COD_Procedimentos com as tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### PROCEDIMENTOS COM AS TABELAS -----------------
+
+#Join de todas as tabelas 
+IP_todastabelas <- TABELA4 %>% 
+  left_join(., TABELA7, by = "COD") %>%
+  left_join(., TABELA8, by = "COD") %>%
+  left_join(., TABELA10, by = "COD") %>%
+  left_join(., TABELA2, by = "COD") %>%
+  
+  left_join(., TABELA4_06, by = "COD") %>%
+  left_join(., TABELA8_06, by = "COD") %>%
+  left_join(., TABELA2_06, by = "COD") 
+
+
+#Filtragem por recorte geográfico
+
+IP_microrregioes <- IP_todastabelas %>% filter(NIVEL == "MI")
+IP_mesorregioes <- IP_todastabelas %>% filter(NIVEL == "ME")
+IP_estados <- IP_todastabelas %>% filter(NIVEL == "UF")
+IP_macrorregioes <- IP_todastabelas %>% filter(NIVEL == "GR")
+IP_brasil <- IP_todastabelas %>% filter(NIVEL == "BR")
+
+
+#Criando colunas de código do estado e da região 
+IP_microrregioes <- IP_microrregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+IP_microrregioes$COD_ESTADO <- substr(IP_microrregioes$COD_ESTADO, 0, 2)
+IP_microrregioes$COD_REGIAO <- substr(IP_microrregioes$COD_REGIAO, 0, 1)
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "1"] <- "Norte"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "2"] <- "Nordeste"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "3"] <- "Sudeste"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "4"] <- "Sul"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+
+IP_mesorregioes <- IP_mesorregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+IP_mesorregioes$COD_ESTADO <- substr(IP_mesorregioes$COD_ESTADO, 0, 2)
+IP_mesorregioes$COD_REGIAO <- substr(IP_mesorregioes$COD_REGIAO, 0, 1)
+
+
+```
+
+```{r COD_Novas colunas, message=FALSE, warning=FALSE, include=FALSE}
+#### CÁLCULO DAS PORCENTAGENS -----------------
+
+
+
+IP_microrregioes_final <- IP_microrregioes %>%
+  mutate(
+    NIVEL = NIVEL,
+    COD = COD,
+    COD_ESTADO = COD_ESTADO,
+    COD_REGIAO = COD_REGIAO,
+    LOCALIZACAO = LOCALIZACAO,
+    
+##a partir daqui, método para calcular os rendimentos dos estabelecimentos + RENDIMENTOS FORA DO ESTABELECIMENTO (SEM CONSIDERAR RENDAS DE PROGRAMAS E POLÍTICAS)
+
+    # R_NEST_T = R_NEST_T_TOT     ,
+    # R_NEST_NAF = R_NEST_T_TOT - R_NEST_AF_TOT     ,
+    # R_NEST_AF = R_NEST_AF_TOT     ,
+    # R_06_NEST_T = R_06_NEST_T     ,
+    # R_06_NEST_NAF = R_06_NEST_NAF     ,
+    # R_06_NEST_AF = R_06_NEST_AF     ,
+    # 
+    # 
+    # R_VALOR_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302) / 12 ,
+    # R_VALOR_NAF = (R_VALOR_T_1 - R_VALOR_AF_1 + R_VALOR_T_2 - R_VALOR_AF_2 + R_VALOR_T_302 - R_VALOR_AF_302) / 12 ,
+    # R_VALOR_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302) / 12 ,
+    # 
+    # 
+    # Rc_06_VALOR_T	=	((R_06_VALOR_T + R_06_VALOROTR_T6) / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    # Rc_06_VALOR_AF	=	((R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12)	*	1,8974051,
+    # Rc_06_VALOR_NAF	=	((R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12)	*	1,8974051,
+    # R_06_VALOR_T = (R_06_VALOR_T + R_06_VALOROTR_T6) / 12   ,
+    # R_06_VALOR_AF = (R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12  ,
+    # R_06_VALOR_NAF = (R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12   ,
+    # 
+    # NEST_T = NEST_T     ,
+    # NEST_NAF = NEST_NAF     ,
+    # NEST_AF = NEST_AF     ,
+    # NEST_06_T = NEST_06_T     ,
+    # NEST_06_NAF = NEST_06_NAF     ,
+    # NEST_06_AF = NEST_06_AF     ,
+    # AREA_T = AREA_T     ,
+    # AREA_NAF = AREA_T - AREA_AF     ,
+    # AREA_AF = AREA_AF     ,
+    # AREA_06_T = AREA_06_T     ,
+    # AREA_06_NAF = AREA_06_NAF     ,
+    # AREA_06_AF = AREA_06_AF     ,
+    # OCU_T = O_T     ,
+    # OCU_NAF = O_T - O_AF     ,
+    # OCU_AF = O_AF     ,
+    # OCU_06_T = OCU_06_T     ,
+    # OCU_06_NAF = OCU_06_Nfam     ,
+    # OCU_06_AF = OCU_06_AF  ,
+    
+
+##a partir daqui, método para calcular os rendimentos APENAS DOS ESTABELECIMENTOS
+    
+    R_NEST_T	=	R_NEST_T_TOT				,
+    R_NEST_NAF	=	R_NEST_T_TOT - R_NEST_AF_TOT				,
+    R_NEST_AF	=	R_NEST_AF_TOT				,
+    R_06_NEST_T	=	R_06_NEST_T				,
+    R_06_NEST_NAF	=	R_06_NEST_NAF				,
+    R_06_NEST_AF	=	R_06_NEST_AF				,
+
+
+    R_VALOR_T	=	(R_VALOR_T_1	+	R_VALOR_T_2) / 12, #como a variável é anual, aqui está sendo dividida por 12 para se ter o valor mensal médio
+    R_VALOR_NAF	=	(R_VALOR_T_1 - R_VALOR_AF_1	+	R_VALOR_T_2 - R_VALOR_AF_2) / 12		,
+    R_VALOR_AF	=	(R_VALOR_AF_1	+	R_VALOR_AF_2) / 12		,
+
+
+
+    Rc_06_VALOR_T	=	(R_06_VALOR_T / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    Rc_06_VALOR_NAF	=	(R_06_VALOR_NAF / 12)	*	1,8974051,
+    Rc_06_VALOR_AF	=	(R_06_VALOR_AF / 12)	*	1,8974051,
+    R_06_VALOR_T	=	(R_06_VALOR_T) / 12				,
+    R_06_VALOR_NAF	=	(R_06_VALOR_NAF) / 12				,
+    R_06_VALOR_AF	=	(R_06_VALOR_AF) / 12				,
+
+
+
+    NEST_T	=	NEST_T				,
+    NEST_NAF	=	NEST_NAF				,
+    NEST_AF	=	NEST_AF				,
+    NEST_06_T	=	NEST_06_T				,
+    NEST_06_NAF	=	NEST_06_NAF				,
+    NEST_06_AF	=	NEST_06_AF				,
+    AREA_T	=	AREA_T				,
+    AREA_NAF	=	AREA_T - AREA_AF				,
+    AREA_AF	=	AREA_AF				,
+    AREA_06_T	=	AREA_06_T				,
+    AREA_06_NAF	=	AREA_06_NAF				,
+    AREA_06_AF	=	AREA_06_AF				,
+    OCU_T	=	O_T				,
+    OCU_NAF	=	O_T - O_AF				,
+    OCU_AF	=	O_AF				,
+    OCU_06_T	=	OCU_06_T				,
+    OCU_06_NAF	=	OCU_06_Nfam				,
+    OCU_06_AF	=	OCU_06_AF	,
+
+    
+    .keep = c("none")
+
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+REND_ESTAB_T	=	(1000	*	R_VALOR_T)	/	NEST_T	,
+REND_ESTAB_NAF	=	(1000	*	R_VALOR_NAF)	/	NEST_NAF	,
+REND_ESTAB_AF	=	(1000	*	R_VALOR_AF)	/	NEST_AF	,
+REND_ESTAB_06_T	=	(1000	*	R_06_VALOR_T)	/	NEST_06_T	,
+REND_ESTAB_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	NEST_06_NAF	,
+REND_ESTAB_06_AF	=	(1000	*	R_06_VALOR_AF)	/	NEST_06_AF , 
+
+REND_OCU_T	=	(1000	*	R_VALOR_T)	/	OCU_T	,
+REND_OCU_NAF	=	(1000	*	R_VALOR_NAF)	/	OCU_NAF	,
+REND_OCU_AF	=	(1000	*	R_VALOR_AF)	/	OCU_AF	,
+REND_OCU_06_T	=	(1000	*	R_06_VALOR_T)	/	OCU_06_T	,
+REND_OCU_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	OCU_06_NAF	,
+REND_OCU_06_AF	=	(1000	*	R_06_VALOR_AF)	/	OCU_06_AF 
+  
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+
+Dif_NEST_T	=	(	NEST_T	-	NEST_06_T	)	/	NEST_06_T	,
+Dif_NEST_NAF	=	(	NEST_NAF	-	NEST_06_NAF	)	/	NEST_06_NAF	,
+Dif_NEST_AF	=	(	NEST_AF	-	NEST_06_AF	)	/	NEST_06_AF	,
+									
+Dif_OCU_T	=	(	OCU_T	-	OCU_06_T	)	/	OCU_06_T	,
+Dif_OCU_NAF	=	(	OCU_NAF	-	OCU_06_NAF	)	/	OCU_06_NAF	,
+Dif_OCU_AF	=	(	OCU_AF	-	OCU_06_AF	)	/	OCU_06_AF	,
+									
+Dif_REND_OCU_T	=	(	REND_OCU_T	-	REND_OCU_06_T	)	/	REND_OCU_06_T	,
+Dif_REND_OCU_NAF	=	(	REND_OCU_NAF	-	REND_OCU_06_NAF	)	/	REND_OCU_06_NAF	,
+Dif_REND_OCU_AF	=	(	REND_OCU_AF	-	REND_OCU_06_AF	)	/	REND_OCU_06_AF	,
+									
+Dif_REND_ESTAB_T	=	(	REND_ESTAB_T	-	REND_ESTAB_06_T	)	/	REND_ESTAB_06_T	,
+Dif_REND_ESTAB_NAF	=	(	REND_ESTAB_NAF	-	REND_ESTAB_06_NAF	)	/	REND_ESTAB_06_NAF	,
+Dif_REND_ESTAB_AF	=	(	REND_ESTAB_AF	-	REND_ESTAB_06_AF	)	/	REND_ESTAB_06_AF	,
+									
+Dif_AREA_T	=	(	AREA_T	-	AREA_06_T	)	/	AREA_06_T	,
+Dif_AREA_NAF	=	(	AREA_NAF	-	AREA_06_NAF	)	/	AREA_06_NAF	,
+Dif_AREA_AF	=	(	AREA_AF	-	AREA_06_AF	)	/	AREA_06_AF	,
+
+Dif_REND_T	=	(	R_VALOR_T	-	Rc_06_VALOR_T	)	/	Rc_06_VALOR_T	,
+Dif_REND_NAF	=	(	R_VALOR_NAF	-	Rc_06_VALOR_NAF	)	/	Rc_06_VALOR_NAF	,
+Dif_REND_AF	=	(	R_VALOR_AF	-	Rc_06_VALOR_AF	)	/	Rc_06_VALOR_AF	
+
+
+)
+
+is.na(IP_microrregioes_final) <- do.call(cbind,lapply(IP_microrregioes_final, is.nan))
+
+#mobilidade de renda por ocupados total
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU = case_when((REND_OCU_06_T < 120 & REND_OCU_T > 170) ~ "Saiu da pobreza",
+                            (REND_OCU_06_T > 120 & REND_OCU_T < 170) ~ "Entrou na pobreza",
+	            (REND_OCU_06_T < 120 & REND_OCU_T < 170) ~ "Permaneceu na pobreza",
+	            (REND_OCU_06_T > 120 & REND_OCU_T > 170) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU <- factor(IP_microrregioes_final$MOBILI_REND_OCU, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+#mobilidade de renda da AF por ocupados na AF
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU_AF = case_when((REND_OCU_06_AF < 120 & REND_OCU_AF > 170) ~ "Saiu da pobreza",
+                            (REND_OCU_06_AF > 120 & REND_OCU_AF < 170) ~ "Entrou na pobreza",
+	            (REND_OCU_06_AF < 120 & REND_OCU_AF < 170) ~ "Permaneceu na pobreza",
+	            (REND_OCU_06_AF > 120 & REND_OCU_AF > 170) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU_AF <- factor(IP_microrregioes_final$MOBILI_REND_OCU_AF, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+#mobilidade de renda da NAF por ocupados na NAF
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU_NAF = case_when((REND_OCU_06_NAF < 120 & REND_OCU_NAF > 170) ~ "Saiu da pobreza",
+                            (REND_OCU_06_NAF > 120 & REND_OCU_NAF < 170) ~ "Entrou na pobreza",
+	            (REND_OCU_06_NAF < 120 & REND_OCU_NAF < 170) ~ "Permaneceu na pobreza",
+	            (REND_OCU_06_NAF > 120 & REND_OCU_NAF > 170) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU_NAF <- factor(IP_microrregioes_final$MOBILI_REND_OCU_NAF, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+
+### Mobilidade de rendimentos por ocupados 2017
+# 1 = Quem estava abaixo em 06 e subiu em 17
+# 2 = Quem estava acima em 06 e desceu em 17
+# 3 = Quem estava abaixo em 06 e permaneceu abaixo em 17
+# 4 = Quem estava acima em 06 e permaneceu acima em 17
+
+
+```
+
+```{r CODmapas PREPARACAO, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+
+# Juntando o shape e a tabela
+SHP_IP_microrreg <- SHP_Microrregioes %>%
+  left_join(., IP_microrregioes_final, by = "COD")
+
+
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# make some bbox magic
+bbox_new <- st_bbox(SHP_IP_microrreg) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+ bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+ bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
+
+
+##### mapa
+
+# tm_AF_VPdivAREA <- 
+# microrregioes_VPha_shape[!is.na(microrregioes_VPha_shape$VPdivAREA),] %>%
+#   filter(VPdivAREA >= 0) %>%
+#   filter(TIPOLOGIA == "AF") %>%
+#   tm_shape(bbox = bbox_new) +
+#   tm_fill(col = "VPdivAREA", 
+#           title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+#           id = "LOCALIZACAO", palette="BuGn",
+#           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+#           style = "fixed", breaks = c(35, 500, 1500, 3500, 16000)) +
+#   tm_borders(lwd = 0.2) +
+#   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+#   tm_view(view.legend.position = c("right", "bottom")) +
+#   tm_shape(SHP_Estados) +
+#   tm_borders(lwd = 1) 
+
+
+```
+
+
+Esse trabalho utilizou três variáveis principais para comparação entre os Censos Agropecuários de 2006 e 2017, sendo elas:
+
+- Rendimentos dos estabelecimentos agropecuários
+	+ Os rendimentos do estabelecimento não consideram rendas obtidas fora do estabelecimento ou rendas de programas e políticas públicas (ver nota)
+- Ocupados nos estabelecimentos agropecuários
+- Número de estabelecimentos agropecuários
+
+
+
+# Rendimentos {.tabset .tabset-fade .tabset-pills}
+
+## Rendimentos mensais por pessoa ocupada nos estabelecimentos em 2006 e 2017  {.tabset .tabset-fade .tabset-pills}
+
+Para identificar as microrregiões com rendimentos por ocupados inferiores a linha de pobreza, adotou-se como patamar da extrema pobreza e da pobreza os valores determinados em decreto federal para o Programa Bolsa Família:
+
+- Para o Censo Agropecuário de 2006: "Art. 18. O Programa Bolsa Família atenderá às famílias em situação de pobreza e extrema pobreza, caracterizadas pela renda familiar mensal per capita de até R$ 120,00 (cento e vinte reais) e R$ 60,00 (sessenta reais), respectivamente." 
+  + Redação dada pelo Decreto Federal nº 5.749, de 2006. 
+- Para o Censo Agropecuário de 2017: "Art. 18.  O Programa Bolsa Família atenderá às famílias em situação de pobreza e extrema pobreza, caracterizadas pela renda familiar mensal per capita de até R\$ 170,00 (cento e setenta reais) e de R\$ 85,00 (oitenta e cinco reais), respectivamente."
+  + Redação dada pelo Decreto Federal nº 8.794, de 2016. 
+
+
+
+
+A correção dos valores do Bolsa Família de 2006 para 2017 foi inferior a inflação entre esses anos, portanto aqui foram mantidos os valores originais.
+
+Nos mapas abaixo, as duas primeiras classes representam a linha da pobreza extrema e da pobreza, respectivamente.
+
+```{r MAPAS_LinhaDaPobreza_TOTAIS2006, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+  
+### rendimentos dos estabelecimentos por ocupados 2006 - de 30 a 12mil
+plot_06RENDOCU <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_OCU_06_T)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_06_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", breaks = c(30, 60, 120, 240, 480, 1000, 3000, 5000, 12000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+```{r MAPAS_LinhaDaPobreza_TOTAIS2017, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+
+
+### rendimentos dos estabelecimentos por ocupados 2017
+plot_17RENDOCU <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(plot_06RENDOCU, plot_17RENDOCU,
+             sync = TRUE,
+             nrow = 1)
+
+```
+.
+<br>
+
+### Agricultura familiar
+
+```{r MAPAS_LinhaDaPobreza_AF2006, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+  
+
+### rendimentos dos estabelecimentos por ocupados 2006 - de 30 a 12mil
+plot_06RENDOCU_AF <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_OCU_06_AF)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_06_AF", palette = paleta1,
+          title = "Rendimentos mensais da AF por<br>pessoa ocupada na AF - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(20, 60, 120, 240, 480, 1000, 3000, 5000, 12000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+```{r MAPAS_LinhaDaPobreza_AF2017, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+
+### rendimentos dos estabelecimentos por ocupados 2017
+plot_17RENDOCU_AF <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_AF", palette = paleta1,
+          title = "Rendimentos mensais da AF por<br>pessoa ocupada na AF - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(20, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(plot_06RENDOCU_AF, plot_17RENDOCU_AF,
+             sync = TRUE,
+             nrow = 1)
+
+```
+.
+<br>
+
+### Agricultura não familiar
+
+```{r MAPAS_LinhaDaPobreza_NAF2006, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+  
+### rendimentos dos estabelecimentos por ocupados 2006 - de 30 a 12mil
+plot_06RENDOCU_NAF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_OCU_06_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_06_NAF", palette = paleta1,
+          title = "Rendimentos mensais não familiares por<br>pessoa ocupada em estabelecimentos<br>não familiares - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(25, 60, 120, 240, 480, 1000, 3000, 5000, 15000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+
+```{r MAPAS_LinhaDaPobreza_NAF2017, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+
+### rendimentos dos estabelecimentos por ocupados 2017
+plot_17RENDOCU_NAF <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_OCU_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_NAF", palette = paleta1,
+          title = "Rendimentos mensais não familiares por<br>pessoa ocupada em estabelecimentos<br>não familiares - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(65, 85, 170, 340, 680, 1500, 5000, 10000, 48000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(plot_06RENDOCU_NAF, plot_17RENDOCU_NAF,
+             sync = TRUE,
+             nrow = 1)
+
+```
+
+.
+
+------
+
+<br>
+<br>
+
+## Mobilidade de rendimentos por ocupados de 2006 para 2017  {.tabset .tabset-fade .tabset-pills}
+
+```{r MAPAS_Mobilidade_Pobreza_Renda, echo=FALSE, message=FALSE, warning=FALSE}
+
+### Mobilidade de rendimentos por ocupados de 2006 para 2017
+
+paleta2 <- c("#5e4fa2", "#9e0142", "#4d4d4d", "#e0e0e0")
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(MOBILI_REND_OCU)) %>%
+  tm_shape() +
+  tm_fill(col = "MOBILI_REND_OCU", 
+          palette = paleta2,
+          title = "Mobilidade de rendimentos<br>por ocupados de 2006 para 2017",
+          id = "LOCALIZACAO",
+          #n=7
+          #legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "cat", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+.
+<br>
+
+### Agricultura familiar
+
+Mobilidade de rendimentos por ocupados na agricultura familiar de 2006 para 2017
+
+```{r MAPAS_Mobilidade_Pobreza_RendaAF, echo=FALSE, message=FALSE, warning=FALSE}
+### Mobilidade de rendimentos por ocupados de 2006 para 2017 - AGRI FAMILIAR
+
+paleta2 <- c("#5e4fa2", "#9e0142", "#4d4d4d", "#e0e0e0")
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(MOBILI_REND_OCU_AF)) %>%
+  tm_shape() +
+  tm_fill(col = "MOBILI_REND_OCU_AF", 
+          palette = paleta2,
+          title = "Mobilidade de rendimentos da AF<br>por ocupados da AF de 2006 para 2017",
+          id = "LOCALIZACAO",
+          #n=7
+          #legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "cat", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+.
+<br>
+
+### Agricultura não familiar
+
+Mobilidade de rendimentos por ocupados na agricultura não familiar de 2006 para 2017
+
+```{r MAPAS_Mobilidade_Pobreza_RendaNAF, echo=FALSE, message=FALSE, warning=FALSE}
+### Mobilidade de rendimentos por ocupados de 2006 para 2017 - AGRI NÃO FAMILIAR
+
+paleta2 <- c("#5e4fa2", "#9e0142", "#4d4d4d", "#e0e0e0")
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(MOBILI_REND_OCU_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "MOBILI_REND_OCU_NAF", 
+          palette = paleta2,
+          title = "Mobilidade de rendimentos<br>por ocupados da não fam. de 2006 para 2017",
+          id = "LOCALIZACAO",
+          #n=7
+          #legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "cat", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+.
+
+------
+
+<br>
+<br>
+
+## Diferença percentual de rendimentos totais dos estabelecimentos de 2006 para 2017  {.tabset .tabset-fade .tabset-pills}
+
+*Para garantir a comparação entre valores, os rendimentos de 2006 foram corrigidos de acordo com a inflação do período correspondente (IGP-M).
+
+```{r MAPAS_DifPercent_RENDA, echo=FALSE, message=FALSE, warning=FALSE}
+### Diferença percentual de rendimentos totais dos estabelecimentos 
+
+palete3 <- c("#b2182b", "#ef8a62", "#e0e0e0", "#c7eae5", "#80cdc1", "#01665e")
+
+#Total
+SHP_IP_microrreg %>%
+  mutate(Dif_REND_T = Dif_REND_T * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_REND_T", 
+          title = "Alteração percentual nos rendimentos<br>dos estabelecimentos de 2006* para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-100, -50, -5, 5, 100, 500, 1200)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+.
+<br>
+
+### Agricultura familiar
+
+```{r MAPAS_DifPercent_RENDAAF, echo=FALSE, message=FALSE, warning=FALSE}
+### Diferença percentual de rendimentos totais dos estabelecimentos 
+
+palete3 <- c("#b2182b", "#ef8a62", "#e0e0e0", "#c7eae5", "#80cdc1", "#01665e")
+
+#AF
+SHP_IP_microrreg %>%
+  mutate(Dif_REND_AF = Dif_REND_AF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_REND_AF", 
+          title = "Alteração percentual nos<br>rendimentos dos estabelecimentos<br> da AF de 2006* para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-100, -50, -5, 5, 100, 500, 1200)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+```
+.
+<br>
+
+### Agricultura não familiar
+
+```{r MAPAS_DifPercent_RENDANAF, echo=FALSE, message=FALSE, warning=FALSE}
+### Diferença percentual de rendimentos totais dos estabelecimentos 
+
+palete3 <- c("#b2182b", "#ef8a62", "#e0e0e0", "#c7eae5", "#80cdc1", "#01665e")
+
+#AF
+SHP_IP_microrreg %>%
+  mutate(Dif_REND_NAF = Dif_REND_NAF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_REND_NAF", 
+          title = "Alteração percentual nos<br>rendimentos dos estabelecimentos<br> não fam. de 2006* para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-100, -50, -5, 5, 100, 500, 2600)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+```
+
+.
+
+------
+
+<br>
+<br>
+
+# Estabelecimentos  {.tabset .tabset-fade .tabset-pills}
+
+## Número de estabelecimentos  {.tabset .tabset-fade .tabset-pills}
+```{r NESTAB, echo=FALSE, message=FALSE, warning=FALSE}
+### Número de estabelecimentos 2006 - de 20 a 37mil
+plot_06NESTAB <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(R_06_NEST_T)) %>%
+  tm_shape() +
+  tm_fill(col = "R_06_NEST_T", palette = "BuPu",
+          title = "Total de estabelecimentos<br>com rendimentos - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "quantile", 
+          #breaks = c(20, 60, 120, 240, 480, 1000, 3000, 5000, 12000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### Número de estabelecimentos 2017 - de 20 a 50mil
+plot_17NESTAB <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "R_NEST_T", palette = "BuPu",
+          title = "Total de estabelecimentos<br>com rendimentos - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "quantile", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+tmap_arrange(plot_06NESTAB, plot_17NESTAB,
+              sync = TRUE,
+              nrow = 1)
+```
+.
+<br>
+
+### Agricultura familiar
+
+Número de estabelecimentos da agricultura familiar
+```{r NESTAB_AF, echo=FALSE, message=FALSE, warning=FALSE}
+plot_06NESTAB_AF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(R_06_NEST_AF)) %>%
+  tm_shape() +
+  tm_fill(col = "R_06_NEST_AF", palette = "BuPu",
+          title = "Total de estabelecimentos da AF<br>com rendimentos - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(5, 400, 1000, 5000, 10000, 32000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### Número de estabelecimentos 2017 - de 20 a 50mil
+plot_17NESTAB_AF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "R_NEST_AF", palette = "BuPu",
+          title = "Total de estabelecimentos da AF<br>com rendimentos - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(5, 400, 1000, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+tmap_arrange(plot_06NESTAB_AF, plot_17NESTAB_AF,
+              sync = TRUE,
+              nrow = 1)
+```
+.
+<br>
+
+### Agricultura não familiar
+
+Número de estabelecimentos que não são da agricultura familiar
+```{r NESTAB_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+plot_06NESTAB_NAF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(R_06_NEST_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "R_06_NEST_NAF", palette = "BuPu",
+          title = "Total de estabelecimentos<br>não familiares com<br>rendimentos - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(0, 400, 1000, 5000, 8000, 10000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### Número de estabelecimentos 2017 - de 20 a 50mil
+plot_17NESTAB_NAF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "R_NEST_NAF", palette = "BuPu",
+          title = "Total de estabelecimentos<br>não familiares com<br>rendimentos - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(0, 400, 1000, 5000, 8000, 14000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+tmap_arrange(plot_06NESTAB_NAF, plot_17NESTAB_NAF,
+              sync = TRUE,
+              nrow = 1)
+```
+
+.
+
+------
+
+<br>
+<br>
+
+## Diferença percentual no número de estabelecimentos  {.tabset .tabset-fade .tabset-pills}
+
+```{r NESTAB_DIF, echo=FALSE, message=FALSE, warning=FALSE}
+##Diferença percentual nos estabelecimentos
+palete4 <- c("#b2182b", "#ef8a62", "#e0e0e0", "#c7eae5", "#80cdc1", "#01665e")
+
+#Total - -47 a 387
+SHP_IP_microrreg %>%
+  mutate(Dif_NEST_T = Dif_NEST_T * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_NEST_T", 
+          title = "Alteração percentual no número de<br>estabelecimentos de 2006 para 2017", 
+          id = "LOCALIZACAO", palette=palete4,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-50, -10, -1, 1, 50, 250, 500)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+```
+.
+<br>
+
+### Agricultura familiar
+Diferença percentual no número de estabelecimentos da AF
+
+```{r NESTAB_DIF_AF, echo=FALSE, message=FALSE, warning=FALSE}
+#AF - -61 a 479
+SHP_IP_microrreg %>%
+  mutate(Dif_NEST_AF = Dif_NEST_AF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_NEST_AF", 
+          title = "Alteração percentual no número de<br>estabelecimentos da AF de 2006 para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-50, -10, -1, 1, 50, 250, 500)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+```
+.
+<br>
+
+### Agricultura não familiar
+Diferença percentual no número de estabelecimentos não familiares
+```{r NESTAB_DIF_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+
+SHP_IP_microrreg %>%
+  mutate(Dif_NEST_NAF = Dif_NEST_NAF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_NEST_NAF", 
+          title = "Alteração percentual no<br>número de estabelecimentos não<br>familiares de 2006 para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed",
+          breaks = c(-200, -10, -1, 1, 50, 250, 1200)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+.
+
+------
+
+<br>
+
+# Pessoal ocupado  {.tabset .tabset-fade .tabset-pills}
+
+## Número de pessoas ocupadas  {.tabset .tabset-fade .tabset-pills}
+```{r OCUPADOS, echo=FALSE, message=FALSE, warning=FALSE}
+plot_06OCUP <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(OCU_06_T)) %>%
+  tm_shape() +
+  tm_fill(col = "OCU_06_T", palette = "BuPu",
+          title = "Número de pessoas<br>ocupadas - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(40, 12000, 20000, 35000, 100000, 170000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### Número de estabelecimentos 2017 - de 20 a 50mil
+plot_17OCUP <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "OCU_T", palette = "BuPu",
+          title = "Número de pessoas<br>ocupadas - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed", 
+          breaks = c(40, 12000, 20000, 35000, 100000, 170000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+tmap_arrange(plot_06OCUP, plot_17OCUP,
+              sync = TRUE,
+              nrow = 1)
+```
+.
+<br>
+
+### Agricultura familiar
+Número de pessoas ocupadas na agricultura familiar
+```{r OCUPADOS_AF, echo=FALSE, message=FALSE, warning=FALSE}
+plot_06OCUP_AF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(OCU_06_AF)) %>%
+  tm_shape() +
+  tm_fill(col = "OCU_06_AF", palette = "BuPu",
+          title = "Número de pessoas<br>ocupadas na AF - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(40, 12000, 20000, 35000, 100000, 140000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### Número de estabelecimentos 2017 - de 20 a 50mil
+plot_17OCUP_AF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+    filter(!is.na(OCU_AF)) %>%
+  tm_shape() +
+  tm_fill(col = "OCU_AF", palette = "BuPu",
+          title = "Número de pessoas<br>ocupadas na AF - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(40, 12000, 20000, 35000, 100000, 140000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+tmap_arrange(plot_06OCUP_AF, plot_17OCUP_AF,
+              sync = TRUE,
+              nrow = 1)
+```
+.
+<br>
+
+### Agricultura não familiar
+Número de pessoas ocupadas em estabelecimentos não familiares
+```{r OCUPADOS_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+
+plot_06OCUP_NAF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(OCU_06_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "OCU_06_NAF", palette = "BuPu",
+          title = "Número de pessoas ocupadas<br>em estab. não familiar - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(0, 8000, 20000, 30000, 40000, 60000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+### Número de estabelecimentos 2017 - de 20 a 50mil
+plot_17OCUP_NAF <- 
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+    filter(!is.na(OCU_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "OCU_NAF", palette = "BuPu",
+          title = "Número de pessoas ocupadas<br>em estab. não familiar - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(0, 8000, 20000, 30000, 40000, 60000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+tmap_arrange(plot_06OCUP_NAF, plot_17OCUP_NAF,
+              sync = TRUE,
+              nrow = 1)
+
+```
+
+.
+
+------
+
+<br>
+<br>
+
+## Diferença percentual de ocupados nos estabelecimentos de 2006 para 2017 {.tabset .tabset-fade .tabset-pills}
+```{r OCUPADOS_DIF, echo=FALSE, message=FALSE, warning=FALSE}
+SHP_IP_microrreg %>%
+  mutate(Dif_OCU_T = Dif_OCU_T * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_OCU_T", 
+          title = "Diferença percentual de ocupados<br>nos estabelecimentos (2006/2017)", 
+          id = "LOCALIZACAO", palette=palete4,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"), "%")),
+          style = "fixed",
+          breaks = c(-100, -50, -5, 5, 50, 100, 270)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+```
+.
+<br>
+
+### Agricultura familiar
+
+Diferença percentual de ocupados nos estabelecimentos da agricultura familiar de 2006 para 2017 
+
+```{r OCUPADOS_DIF_AF, echo=FALSE, message=FALSE, warning=FALSE}
+SHP_IP_microrreg %>%
+  mutate(Dif_OCU_AF = Dif_OCU_AF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_OCU_AF", 
+          title = "Diferença percentual de ocupados<br>nos estabelecimentos da AF (2006/2017)", 
+          id = "LOCALIZACAO", palette=palete4,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"), "%")),
+          style = "fixed",
+          breaks = c(-75, -50, -5, 5, 50, 100, 340)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)
+```
+.
+<br>
+
+### Agricultura não familiar
+
+Diferença percentual de ocupados nos estabelecimentos não familiares de 2006 para 2017 
+
+```{r OCUPADOS_DIF_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+SHP_IP_microrreg %>%
+  mutate(Dif_OCU_NAF = Dif_OCU_NAF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_OCU_NAF", 
+          title = "Diferença percentual de<br>ocupados nos estabelecimentos<br>não familiares (2006/2017)", 
+          id = "LOCALIZACAO", palette=palete4,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"), "%")),
+          style = "fixed",
+          breaks = c(-85, -50, -5, 5, 50, 100, 685)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)
+
+```
+
+
+
+
+
+```{r teste com municípios}
+# TABELA4_06_mun <- read_excel("data/tabelas/municipios/2006_1113_ocupados_municipios.xlsx", na = "X") 
+# 
+# TABELA8_06_mun <- read_excel("data/tabelas/municipios/2006_1116_rendimentosESTAB_municipios.xlsx", na = "X") 
+# TABELA8_06_mun <- TABELA8_06_mun %>%
+#   select(., -NIVEL) %>% 
+#   select(., -LOCALIZACAO)
+# 
+# IP_municipios <- TABELA4_06_mun %>% 
+#   left_join(., TABELA8_06_mun, by = "COD")
+# 
+# 
+# #### CÁLCULO DAS PORCENTAGENS -----------------
+# IP_municipios_final <- IP_municipios %>%
+#   mutate(
+#     NIVEL = NIVEL,
+#     COD = COD,
+#     LOCALIZACAO = LOCALIZACAO,
+#  
+# R_06_VALOR_T	=	R_06_VALOR_T				,
+# R_06_VALOR_NAF	=	R_06_VALOR_AF				,
+# R_06_VALOR_AF	=	R_06_VALOR_NAF				,
+# OCU_06_T	=	OCU_06_T				,
+# OCU_06_NAF	=	OCU_06_Nfam				,
+# OCU_06_AF	=	OCU_06_AF	,			
+# 
+#     
+#     .keep = c("none")
+# 
+#   )
+# 
+# 
+# IP_municipios_final <- IP_municipios_final %>%
+#    mutate(
+# 
+# REND_OCU_06_T	=	(1000	*	R_06_VALOR_T)	/	OCU_06_T	,
+# REND_OCU_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	OCU_06_NAF	,
+# REND_OCU_06_AF	=	(1000	*	R_06_VALOR_AF)	/	OCU_06_AF 
+#   
+#   )
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
