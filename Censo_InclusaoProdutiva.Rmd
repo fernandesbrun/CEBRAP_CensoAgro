@@ -469,7 +469,17 @@ IP_microrregioes_sumario2 <- IP_microrregioes_final %>%
             pctREN_OCU_DIM = length(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T]) / length(R_VALOR_T),
             
             REN_ESTAB_DIM = length(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T]),
-            pctREN_ESTAB_DIM = length(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T]) / length(REND_ESTAB_T)
+            pctREN_ESTAB_DIM = length(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T]) / length(REND_ESTAB_T),
+            
+            POBREZA_Abaixo_06 = length(REND_OCU_06_T[REND_OCU_06_T < 120]),
+            pctPOBREZA_Abaixo_06 = length(REND_OCU_06_T[REND_OCU_06_T < 120]) / length(REND_OCU_06_T),
+            POBREZA_Sairam = length(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"]),
+            pctPOBREZA_Sairam = length(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"]) / length(MOBILI_REND_OCU),
+            POBREZA_Entraram = length(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"]),
+            pctPOBREZA_Entraram = length(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"]) / length(MOBILI_REND_OCU),
+            POBREZA_Abaixo_17 = length(REND_OCU_T[REND_OCU_T < 170]),
+            pctPOBREZA_Abaixo_17 = length(REND_OCU_T[REND_OCU_T < 170]) / length(REND_OCU_T)
+            
             ) %>%
   
   mutate(pctREN_DIM = scales::percent(pctREN_DIM, na.rm = TRUE),
@@ -477,7 +487,21 @@ IP_microrregioes_sumario2 <- IP_microrregioes_final %>%
          pctOCUP_DIM = scales::percent(pctOCUP_DIM, na.rm = TRUE),
          pctAREA_DIM = scales::percent(pctAREA_DIM, na.rm = TRUE),
          pctREN_OCU_DIM = scales::percent(pctREN_OCU_DIM, na.rm = TRUE),
-         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE))
+         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE),
+         
+         pctPOBREZA_Abaixo_06 = scales::percent(pctPOBREZA_Abaixo_06, na.rm = TRUE),
+         pctPOBREZA_Sairam = scales::percent(pctPOBREZA_Sairam, na.rm = TRUE),
+         pctPOBREZA_Entraram = scales::percent(pctPOBREZA_Entraram, na.rm = TRUE),
+         pctPOBREZA_Abaixo_17 = scales::percent(pctPOBREZA_Abaixo_17, na.rm = TRUE),
+         
+         
+         pctPOBREZA_Abaixo_06 = paste0(POBREZA_Abaixo_06, " (", pctPOBREZA_Abaixo_06, ")"),
+         pctPOBREZA_Sairam = paste0(POBREZA_Sairam, " (", pctPOBREZA_Sairam, ")"),
+         pctPOBREZA_Entraram = paste0(POBREZA_Entraram, " (", pctPOBREZA_Entraram, ")"),
+         pctPOBREZA_Abaixo_17 = paste0(POBREZA_Abaixo_17, " (", pctPOBREZA_Abaixo_17, ")")
+         
+         )
+
 
 IP_microrregioes_sumario2 <- as.data.frame(t(IP_microrregioes_sumario2)) %>%
   rename("Centro-Oeste" = 1,
@@ -486,7 +510,16 @@ IP_microrregioes_sumario2 <- as.data.frame(t(IP_microrregioes_sumario2)) %>%
          "Sudeste" = 4,
          "Sul" = 5) %>%
   slice(-1) %>%
-  rownames_to_column(var = "Resumo")
+  rownames_to_column(var = "Resumo") 
+
+IP_microrregioes_sumario2 <- IP_microrregioes_sumario2 %>%
+  filter(Resumo != "POBREZA_Abaixo_06") %>% 
+  filter(Resumo != "POBREZA_Sairam") %>% 
+  filter(Resumo != "POBREZA_Entraram") %>% 
+  filter(Resumo != "POBREZA_Abaixo_17")
+
+
+
 
 IP_microrregioes_sumario2[1,1] <- "Nº de microrregiões nas quais o rendimento diminuiu" 
 IP_microrregioes_sumario2[2,1] <- "Porcentagem de microrregiões nas quais o rendimento diminuiu"
@@ -500,6 +533,10 @@ IP_microrregioes_sumario2[9,1] <- "Nº de microrregiões nas quais a renda por o
 IP_microrregioes_sumario2[10,1] <- "Porcentagem de microrregiões nas quais a renda por ocupado diminuiu"
 IP_microrregioes_sumario2[11,1] <- "Nº de microrregiões nas quais a renda por estab. diminuiu"
 IP_microrregioes_sumario2[12,1] <- "Porcentagem de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario2[13,1] <- "Microrregiões abaixo da linha da pobreza em 2006"
+IP_microrregioes_sumario2[14,1] <- "Microrregiões que saíram da pobreza"
+IP_microrregioes_sumario2[15,1] <- "Microrregiões que entraram na pobreza"
+IP_microrregioes_sumario2[16,1] <- "Microrregiões abaixo da linha da pobreza em 2017"
 
 
 
@@ -512,10 +549,14 @@ kbl(IP_microrregioes_sumario2, digits = 2, caption = "", align = "lccccc") %>%
   pack_rows("Pessoas ocupadas", 5, 6) %>%
   pack_rows("Área total", 7, 8) %>%
   pack_rows("Rendimento por pessoal ocupado", 9, 10) %>%
-  pack_rows("Rendimento por estabelecimento", 11, 12)
+  pack_rows("Rendimento por estabelecimento", 11, 12) %>%
+  pack_rows("Mobilidade de renda", 13, 16)
 
 ```
+<br>
+Em número de microrregiões, a região que mais perdeu valores de 2006 para 2017 foi a Nordeste. Apesar do Sul apresentar porcentagem na região para a variável de número de estabelecimentos e número de pessoas ocupadas superior a do Nordeste, mesmo com a redução proporcional maior nesses dois valores, na região não houve redução no rendimento por pessoal ocupado e por estabelecimento em nenhuma microrregião.
 
+O Centro-Oeste também se destaca como região que não perdeu nenhum tipo de valor de rendimento (total, por pessoal ocupado ou por estabelecimento) em microrregiões. Entretanto, a área total dos estabelecimentos, de 2006 para 2017, reduziu em pelo menos 25% das microrregiões de cada região.
 <br>
 
 **Tabela completa**
@@ -935,7 +976,16 @@ IP_microrregioes_sumario_AF <- IP_microrregioes_final %>%
             pctREN_OCU_DIM = length(R_VALOR_AF[R_VALOR_AF < Rc_06_VALOR_AF]) / length(R_VALOR_AF),
             
             REN_ESTAB_DIM = length(REND_ESTAB_AF[REND_ESTAB_AF < RENDc_ESTAB_06_AF]),
-            pctREN_ESTAB_DIM = length(REND_ESTAB_AF[REND_ESTAB_AF < RENDc_ESTAB_06_AF]) / length(REND_ESTAB_AF)
+            pctREN_ESTAB_DIM = length(REND_ESTAB_AF[REND_ESTAB_AF < RENDc_ESTAB_06_AF]) / length(REND_ESTAB_AF),
+            
+            POBREZA_Abaixo_06 = length(REND_OCU_06_AF[REND_OCU_06_AF < 120]),
+            pctPOBREZA_Abaixo_06 = length(REND_OCU_06_AF[REND_OCU_06_AF < 120]) / length(REND_OCU_06_AF),
+            POBREZA_Sairam = length(MOBILI_REND_OCU_AF[MOBILI_REND_OCU_AF == "Saiu da pobreza"]),
+            pctPOBREZA_Sairam = length(MOBILI_REND_OCU_AF[MOBILI_REND_OCU_AF == "Saiu da pobreza"]) / length(MOBILI_REND_OCU_AF),
+            POBREZA_Entraram = length(MOBILI_REND_OCU_AF[MOBILI_REND_OCU_AF == "Entrou na pobreza"]),
+            pctPOBREZA_Entraram = length(MOBILI_REND_OCU_AF[MOBILI_REND_OCU_AF == "Entrou na pobreza"]) / length(MOBILI_REND_OCU_AF),
+            POBREZA_Abaixo_17 = length(REND_OCU_AF[REND_OCU_AF < 170]),
+            pctPOBREZA_Abaixo_17 = length(REND_OCU_AF[REND_OCU_AF < 170]) / length(REND_OCU_AF)
             ) %>%
   
   mutate(pctREN_DIM = scales::percent(pctREN_DIM, na.rm = TRUE),
@@ -943,7 +993,19 @@ IP_microrregioes_sumario_AF <- IP_microrregioes_final %>%
          pctOCUP_DIM = scales::percent(pctOCUP_DIM, na.rm = TRUE),
          pctAREA_DIM = scales::percent(pctAREA_DIM, na.rm = TRUE),
          pctREN_OCU_DIM = scales::percent(pctREN_OCU_DIM, na.rm = TRUE),
-         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE))
+         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE),
+         
+         
+         pctPOBREZA_Abaixo_06 = scales::percent(pctPOBREZA_Abaixo_06, na.rm = TRUE),
+         pctPOBREZA_Sairam = scales::percent(pctPOBREZA_Sairam, na.rm = TRUE),
+         pctPOBREZA_Entraram = scales::percent(pctPOBREZA_Entraram, na.rm = TRUE),
+         pctPOBREZA_Abaixo_17 = scales::percent(pctPOBREZA_Abaixo_17, na.rm = TRUE),
+         
+         pctPOBREZA_Abaixo_06 = paste0(POBREZA_Abaixo_06, " (", pctPOBREZA_Abaixo_06, ")"),
+         pctPOBREZA_Sairam = paste0(POBREZA_Sairam, " (", pctPOBREZA_Sairam, ")"),
+         pctPOBREZA_Entraram = paste0(POBREZA_Entraram, " (", pctPOBREZA_Entraram, ")"),
+         pctPOBREZA_Abaixo_17 = paste0(POBREZA_Abaixo_17, " (", pctPOBREZA_Abaixo_17, ")")
+         )
 
 IP_microrregioes_sumario_AF <- as.data.frame(t(IP_microrregioes_sumario_AF)) %>%
   rename("Centro-Oeste" = 1,
@@ -953,6 +1015,13 @@ IP_microrregioes_sumario_AF <- as.data.frame(t(IP_microrregioes_sumario_AF)) %>%
          "Sul" = 5) %>%
   slice(-1) %>%
   rownames_to_column(var = "Resumo")
+
+IP_microrregioes_sumario_AF <- IP_microrregioes_sumario_AF %>%
+  filter(Resumo != "POBREZA_Abaixo_06") %>% 
+  filter(Resumo != "POBREZA_Sairam") %>% 
+  filter(Resumo != "POBREZA_Entraram") %>% 
+  filter(Resumo != "POBREZA_Abaixo_17")
+
 
 IP_microrregioes_sumario_AF[1,1] <- "Nº de microrregiões nas quais o rendimento diminuiu" 
 IP_microrregioes_sumario_AF[2,1] <- "Porcentagem de microrregiões nas quais o rendimento diminuiu"
@@ -966,6 +1035,10 @@ IP_microrregioes_sumario_AF[9,1] <- "Nº de microrregiões nas quais a renda por
 IP_microrregioes_sumario_AF[10,1] <- "Porcentagem de microrregiões nas quais a renda por ocupado diminuiu"
 IP_microrregioes_sumario_AF[11,1] <- "Nº de microrregiões nas quais a renda por estab. diminuiu"
 IP_microrregioes_sumario_AF[12,1] <- "Porcentagem de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario_AF[13,1] <- "Microrregiões abaixo da linha da pobreza em 2006"
+IP_microrregioes_sumario_AF[14,1] <- "Microrregiões que saíram da pobreza"
+IP_microrregioes_sumario_AF[15,1] <- "Microrregiões que entraram na pobreza"
+IP_microrregioes_sumario_AF[16,1] <- "Microrregiões abaixo da linha da pobreza em 2017"
 
 kbl(IP_microrregioes_sumario_AF, digits = 2, caption = "", align = "lccccc") %>%
   kable_paper("basic", full_width = T) %>%
@@ -976,7 +1049,8 @@ kbl(IP_microrregioes_sumario_AF, digits = 2, caption = "", align = "lccccc") %>%
   pack_rows("Pessoas ocupadas", 5, 6) %>%
   pack_rows("Área total", 7, 8) %>%
   pack_rows("Rendimento por pessoal ocupado", 9, 10) %>%
-  pack_rows("Rendimento por estabelecimento", 11, 12)
+  pack_rows("Rendimento por estabelecimento", 11, 12) %>%
+  pack_rows("Mobilidade de renda", 13, 16)
 
 ```
 <br>
@@ -1387,7 +1461,16 @@ IP_microrregioes_sumario_NAF <- IP_microrregioes_final %>%
             pctREN_OCU_DIM = length(R_VALOR_NAF[R_VALOR_NAF < Rc_06_VALOR_NAF]) / length(R_VALOR_NAF),
             
             REN_ESTAB_DIM = length(REND_ESTAB_NAF[REND_ESTAB_NAF < RENDc_ESTAB_06_NAF]),
-            pctREN_ESTAB_DIM = length(REND_ESTAB_NAF[REND_ESTAB_NAF < RENDc_ESTAB_06_NAF]) / length(REND_ESTAB_NAF)
+            pctREN_ESTAB_DIM = length(REND_ESTAB_NAF[REND_ESTAB_NAF < RENDc_ESTAB_06_NAF]) / length(REND_ESTAB_NAF),
+            
+            POBREZA_Abaixo_06 = length(REND_OCU_06_NAF[REND_OCU_06_NAF < 120]),
+            pctPOBREZA_Abaixo_06 = length(REND_OCU_06_NAF[REND_OCU_06_NAF < 120]) / length(REND_OCU_06_NAF),
+            POBREZA_Sairam = length(MOBILI_REND_OCU_NAF[MOBILI_REND_OCU_NAF == "Saiu da pobreza"]),
+            pctPOBREZA_Sairam = length(MOBILI_REND_OCU_NAF[MOBILI_REND_OCU_NAF == "Saiu da pobreza"]) / length(MOBILI_REND_OCU_NAF),
+            POBREZA_Entraram = length(MOBILI_REND_OCU_NAF[MOBILI_REND_OCU_NAF == "Entrou na pobreza"]),
+            pctPOBREZA_Entraram = length(MOBILI_REND_OCU_NAF[MOBILI_REND_OCU_NAF == "Entrou na pobreza"]) / length(MOBILI_REND_OCU_NAF),
+            POBREZA_Abaixo_17 = length(REND_OCU_NAF[REND_OCU_NAF < 170]),
+            pctPOBREZA_Abaixo_17 = length(REND_OCU_NAF[REND_OCU_NAF < 170]) / length(REND_OCU_NAF)
             ) %>%
   
   mutate(pctREN_DIM = scales::percent(pctREN_DIM, na.rm = TRUE),
@@ -1395,7 +1478,19 @@ IP_microrregioes_sumario_NAF <- IP_microrregioes_final %>%
          pctOCUP_DIM = scales::percent(pctOCUP_DIM, na.rm = TRUE),
          pctAREA_DIM = scales::percent(pctAREA_DIM, na.rm = TRUE),
          pctREN_OCU_DIM = scales::percent(pctREN_OCU_DIM, na.rm = TRUE),
-         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE))
+         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE),
+         
+         
+         pctPOBREZA_Abaixo_06 = scales::percent(pctPOBREZA_Abaixo_06, na.rm = TRUE),
+         pctPOBREZA_Sairam = scales::percent(pctPOBREZA_Sairam, na.rm = TRUE),
+         pctPOBREZA_Entraram = scales::percent(pctPOBREZA_Entraram, na.rm = TRUE),
+         pctPOBREZA_Abaixo_17 = scales::percent(pctPOBREZA_Abaixo_17, na.rm = TRUE),
+         
+         pctPOBREZA_Abaixo_06 = paste0(POBREZA_Abaixo_06, " (", pctPOBREZA_Abaixo_06, ")"),
+         pctPOBREZA_Sairam = paste0(POBREZA_Sairam, " (", pctPOBREZA_Sairam, ")"),
+         pctPOBREZA_Entraram = paste0(POBREZA_Entraram, " (", pctPOBREZA_Entraram, ")"),
+         pctPOBREZA_Abaixo_17 = paste0(POBREZA_Abaixo_17, " (", pctPOBREZA_Abaixo_17, ")")
+         )
 
 IP_microrregioes_sumario_NAF <- as.data.frame(t(IP_microrregioes_sumario_NAF)) %>%
   rename("Centro-Oeste" = 1,
@@ -1405,6 +1500,13 @@ IP_microrregioes_sumario_NAF <- as.data.frame(t(IP_microrregioes_sumario_NAF)) %
          "Sul" = 5) %>%
   slice(-1) %>%
   rownames_to_column(var = "Resumo")
+
+IP_microrregioes_sumario_NAF <- IP_microrregioes_sumario_NAF %>%
+  filter(Resumo != "POBREZA_Abaixo_06") %>% 
+  filter(Resumo != "POBREZA_Sairam") %>% 
+  filter(Resumo != "POBREZA_Entraram") %>% 
+  filter(Resumo != "POBREZA_Abaixo_17")
+
 
 IP_microrregioes_sumario_NAF[1,1] <- "Nº de microrregiões nas quais o rendimento diminuiu" 
 IP_microrregioes_sumario_NAF[2,1] <- "Porcentagem de microrregiões nas quais o rendimento diminuiu"
@@ -1418,6 +1520,10 @@ IP_microrregioes_sumario_NAF[9,1] <- "Nº de microrregiões nas quais a renda po
 IP_microrregioes_sumario_NAF[10,1] <- "Porcentagem de microrregiões nas quais a renda por ocupado diminuiu"
 IP_microrregioes_sumario_NAF[11,1] <- "Nº de microrregiões nas quais a renda por estab. diminuiu"
 IP_microrregioes_sumario_NAF[12,1] <- "Porcentagem de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario_NAF[13,1] <- "Microrregiões abaixo da linha da pobreza em 2006"
+IP_microrregioes_sumario_NAF[14,1] <- "Microrregiões que saíram da pobreza"
+IP_microrregioes_sumario_NAF[15,1] <- "Microrregiões que entraram na pobreza"
+IP_microrregioes_sumario_NAF[16,1] <- "Microrregiões abaixo da linha da pobreza em 2017"
 
 kbl(IP_microrregioes_sumario_NAF, digits = 2, caption = "", align = "lccccc") %>%
   kable_paper("basic", full_width = T) %>%
@@ -1428,9 +1534,12 @@ kbl(IP_microrregioes_sumario_NAF, digits = 2, caption = "", align = "lccccc") %>
   pack_rows("Pessoas ocupadas", 5, 6) %>%
   pack_rows("Área total", 7, 8) %>%
   pack_rows("Rendimento por pessoal ocupado", 9, 10) %>%
-  pack_rows("Rendimento por estabelecimento", 11, 12)
+  pack_rows("Rendimento por estabelecimento", 11, 12) %>%
+  pack_rows("Mobilidade de renda", 13, 16)
 
 ```
+<br>
+
 
 <br>
 
