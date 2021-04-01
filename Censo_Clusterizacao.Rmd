@@ -1,8 +1,8 @@
 ---
 title: "Análise de clusters <br/>Variáveis do Censo Agro 2017"
 output:
-  rmdformats::html_docco:
-  prettydoc::html_pretty: default
+  html_document:
+    theme: flatly
 ---
 
 ```{r setup, include=FALSE}
@@ -20,6 +20,7 @@ opts_chunk$set(echo=FALSE,
                warning=FALSE)
 opts_knit$set(width=75)
 ```
+
 
 
 ```{r Pacotes, message=FALSE, warning=FALSE, include=FALSE}
@@ -492,6 +493,8 @@ mutate(
          
     AF_prop_OCUarea = (O_AF / (AREA_AF - AREAPRESERV_AF)), #prop de pessoas ocupadas por hectare da AF
     GP_prop_OCUarea = ((O_T - O_AF) / ((AREA_T - AREA_AF) - AREAPRESERV_GP)), #prop de pessoas ocupadas por hectare da AP
+    # AF_prop_OCUarea = ((AREA_AF - AREAPRESERV_AF) / O_AF), #hectares por pessoa ocupada na AF
+    # GP_prop_OCUarea = (((AREA_T - AREA_AF) - AREAPRESERV_GP) / (O_T - O_AF)), #hectares por pessoa ocupada na AP
     
     # AF_prop_OCUestab = (O_AF / R_NEST_AF_TOT), #prop de pessoas ocupadas por estabelecimento da AF
     # GP_prop_OCUestab = ((O_T - O_AF) / (R_NEST_T_TOT - R_NEST_AF_TOT)),
@@ -542,6 +545,7 @@ Após a normalização dos valores (com desvio padrão de 1 e média 0), uma vez
 2. Método de silhueta (Average Silhouette Method) 
 3. Método Gap (Gap Statistic Method)
 
+
 ```{r Testes de tamanho de cluster, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 # Elbow method
 CLIDEAL_elbow <- fviz_nbclust(clusterizacao1_scale, kmeans, method = "wss") +
@@ -562,6 +566,7 @@ CLIDEAL_gap <- fviz_nbclust(clusterizacao1_scale, kmeans, nstart = 25,  method =
 
 ggarrange(CLIDEAL_elbow, CLIDEAL_silhou, CLIDEAL_gap)
 ```
+
 
 Uma vez que os valores indicados são divergentes, optou-se pelo número de seis clusters, valor indicado no primeiro método e média das três opções.
     
@@ -653,11 +658,29 @@ df_clusters_k9_centers <- as.data.frame(k9[["centers"]])
 ```
 
 
-Sumário das médias das microrregiões para cada um dos clusters calculados
+**Sumário das médias das microrregiões para cada um dos clusters calculados**
 
 ```{r tabela sumario cl6, echo=FALSE, message=FALSE, warning=FALSE, results = "asis"}
+
+df_clusters_k6_sumarioSCALES <- df_clusters_k6_sumario %>%
+  mutate(AF_prop_AREA  = scales::percent(AF_prop_AREA, na.rm = TRUE),
+         AF_prop_OCU  = scales::percent(AF_prop_OCU, na.rm = TRUE),
+         AF_prop_OCUarea = paste("1 emprego a cada", round((1 / AF_prop_OCUarea), 2), "ha"),
+         GP_prop_OCUarea = paste("1 emprego a cada", round((1 / GP_prop_OCUarea), 2), "ha"),
+         AF_VPdivAREA = paste("R$", round(AF_VPdivAREA), "/ha"),
+         GP_VPdivAREA = paste("R$", round(GP_VPdivAREA), "/ha"),
+
+         AF_prop3_REC_PROG = scales::percent(AF_prop3_REC_PROG, na.rm = TRUE),
+         
+         AF_Receita = paste("R$", round(AF_Receita)),
+         GP_Receita = paste("R$", round(GP_Receita))
+    
+  )
+
+real <- dollar_format(prefix = "R$ ", big.mark = ".", decimal.mark = ",")
+
 df_clusters_k6_sumarioPLOT <-
-  as.data.frame(t(df_clusters_k6_sumario)) %>%
+  as.data.frame(t(df_clusters_k6_sumarioSCALES)) %>%
   rename("CL 1" = V1,
          "CL 2" = V2,
          "CL 3" = V3,
@@ -693,7 +716,7 @@ df_clusters_k6_sumarioPLOT <-
 
 
 df_clusters_k6_sumarioPLOT <- df_clusters_k6_sumarioPLOT %>%
-rownames_to_column(var = "Variável")
+rownames_to_column(var = "Médias das microrregiões")
 
 df_clusters_k6_sumarioPLOT[1,1] <- "Proporção de área AF" 
 df_clusters_k6_sumarioPLOT[2,1] <- "Proporção de ocupados na AF"
@@ -702,16 +725,20 @@ df_clusters_k6_sumarioPLOT[4,1] <- "Ocupados por ha útil da AP"
 df_clusters_k6_sumarioPLOT[5,1] <- "VP/ha da AF"
 df_clusters_k6_sumarioPLOT[6,1] <- "VP/ha da AP"
 df_clusters_k6_sumarioPLOT[7,1] <- "Prop. das rendas de programas/políticas na AF"
-df_clusters_k6_sumarioPLOT[8,1] <- "Rendimentos totais da AF"
-df_clusters_k6_sumarioPLOT[9,1] <- "Rendimentos totais da AP"
-df_clusters_k6_sumarioPLOT[10,1] <- "Nº de microrregiões"
+df_clusters_k6_sumarioPLOT[8,1] <- "Rendimentos da AF"
+df_clusters_k6_sumarioPLOT[9,1] <- "Rendimentos da AP"
+df_clusters_k6_sumarioPLOT[10,1] <- "Nº total de microrregiões"
+
+
 
 kbl(df_clusters_k6_sumarioPLOT, digits = 2, caption = "", align = "lcccccc") %>%
   kable_paper("basic", full_width = F)
 
 ```
 
-Representação espacial dos clusters
+</br>
+
+**Representação espacial dos clusters**
 ```{r CODmapas PREPARACAO, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
@@ -913,56 +940,59 @@ Sumário com médias, medianas, mínimos e máximos das microrregiões para cada
 
 ```{r Tabela de resumo, echo=FALSE, message=FALSE, warning=FALSE, results = "asis"}
 
+
+
 options(qwraps2_markup = 'markdown')
 our_summary1 <-
   list("Proporção de área AF" =
-       list("min"       = ~ round(min(AF_prop_AREA), 2),
-            "Mediana"    = ~ round(median(AF_prop_AREA), 2),
-            "max"       = ~ round(max(AF_prop_AREA), 2),
-            "Média"      = ~ round(mean(AF_prop_AREA), 2)),
+       list("min"       = ~ scales::percent(round(min(AF_prop_AREA), 2)),
+            "Mediana"    = ~ scales::percent(round(median(AF_prop_AREA), 2)),
+            "max"       = ~ scales::percent(round(max(AF_prop_AREA), 2)),
+            "Média"      = ~ scales::percent(round(mean(AF_prop_AREA), 2))),
        
        "Proporção de ocupados na AF" =
-       list("min"       = ~ round(min(AF_prop_OCU), 2),
-            "Mediana"    = ~ round(median(AF_prop_OCU), 2),
-            "max"       = ~ round(max(AF_prop_OCU), 2),
-            "Média"      = ~ round(mean(AF_prop_OCU), 2)),
+       list("min"       = ~ scales::percent(round(min(AF_prop_OCU), 2)),
+            "Mediana"    = ~ scales::percent(round(median(AF_prop_OCU), 2)),
+            "max"       = ~ scales::percent(round(max(AF_prop_OCU), 2)),
+            "Média"      = ~ scales::percent(round(mean(AF_prop_OCU), 2))),
        "Ocupados por ha útil da AF" =
-       list("min"       = ~ round(min(AF_prop_OCUarea), 2),
-            "Mediana"    = ~ round(median(AF_prop_OCUarea), 2),
-            "max"       = ~ round(max(AF_prop_OCUarea), 2),
-            "Média"      = ~ round(mean(AF_prop_OCUarea), 2)),
+       list("min"       = ~ paste("1 emprego a cada", round(min(1 / AF_prop_OCUarea), 2), "ha"),
+            "Mediana"    = ~ paste("1 emprego a cada", round(median(1 / AF_prop_OCUarea), 2), "ha"),
+            "max"       = ~ paste("1 emprego a cada", round(max(1 / AF_prop_OCUarea), 2), "ha"),
+            "Média"      = ~ paste("1 emprego a cada", round(mean(1 / AF_prop_OCUarea), 2), "ha")),
        "Ocupados por ha útil da AP" =
-       list("min"       = ~ round(min(GP_prop_OCUarea), 2),
-            "Mediana"    = ~ round(median(GP_prop_OCUarea), 2),
-            "max"       = ~ round(max(GP_prop_OCUarea), 2),
-            "Média"      = ~ round(mean(GP_prop_OCUarea), 2)),
+       list("min"       = ~ paste("1 emprego a cada", round(min(1 / GP_prop_OCUarea), 2),"ha"),
+            "Mediana"    = ~ paste("1 emprego a cada", round(median(1 / GP_prop_OCUarea), 2),"ha"),
+            "max"       = ~ paste("1 emprego a cada", round(max(1 / GP_prop_OCUarea), 2), "ha"),
+            "Média"      = ~ paste("1 emprego a cada", round(mean(1 / GP_prop_OCUarea), 2), "ha")),
        
        "VP/ha da AF" =
-       list("min"       = ~ round(min(AF_VPdivAREA), 2),
-            "Mediana"    = ~ round(median(AF_VPdivAREA), 2),
-            "max"       = ~ round(max(AF_VPdivAREA), 2),
-            "Média"      = ~ round(mean(AF_VPdivAREA), 2)),
+       list("min"       = ~ paste("R$", round(min(AF_VPdivAREA)), "/ha"),
+            "Mediana"    = ~ paste("R$", round(median(AF_VPdivAREA)), "/ha"),
+            "max"       = ~ paste("R$", round(max(AF_VPdivAREA)), "/ha"),
+            "Média"      = ~ paste("R$", round(mean(AF_VPdivAREA)), "/ha")),
+       
        "VP/ha da AP" =
-       list("min"       = ~ round(min(GP_VPdivAREA), 2),
-            "Mediana"    = ~ round(median(GP_VPdivAREA), 2),
-            "max"       = ~ round(max(GP_VPdivAREA), 2),
-            "Média"      = ~ round(mean(GP_VPdivAREA), 2)),
+       list("min"       = ~ paste("R$", round(min(GP_VPdivAREA)), "/ha"),
+            "Mediana"    = ~ paste("R$", round(median(GP_VPdivAREA)), "/ha"),
+            "max"       = ~ paste("R$", round(max(GP_VPdivAREA)), "/ha"),
+            "Média"      = ~ paste("R$", round(mean(GP_VPdivAREA)), "/ha")),
        
        "Prop. das rendas de programas/políticas na AF" =
-       list("min"       = ~ round(min(AF_prop3_REC_PROG), 2),
-            "Mediana"    = ~ round(median(AF_prop3_REC_PROG), 2),
-            "max"       = ~ round(max(AF_prop3_REC_PROG), 2),
-            "Média"      = ~ round(mean(AF_prop3_REC_PROG), 2)),
-       "Rendimentos totais da AF" =
-       list("min"       = ~ round(min(AF_Receita), 2),
-            "Mediana"    = ~ round(median(AF_Receita), 2),
-            "max"       = ~ round(max(AF_Receita), 2),
-            "Média"      = ~ round(mean(AF_Receita), 2)),
-       "Rendimentos totais da AP" =
-       list("min"       = ~ round(min(GP_Receita), 2),
-            "Mediana"    = ~ round(median(GP_Receita), 2),
-            "max"       = ~ round(max(GP_Receita), 2),
-            "Média"      = ~ round(mean(GP_Receita), 2))
+       list("min"       = ~ scales::percent(round(min(AF_prop3_REC_PROG), 4)),
+            "Mediana"    = ~ scales::percent(round(median(AF_prop3_REC_PROG), 4)),
+            "max"       = ~ scales::percent(round(max(AF_prop3_REC_PROG), 2)),
+            "Média"      = ~ scales::percent(round(mean(AF_prop3_REC_PROG), 2))),
+       "Rendimentos da AF" =
+       list("min"       = ~ paste("R$", (round(min(AF_Receita)))),
+            "Mediana"    = ~ paste("R$", (round(median(AF_Receita)))),
+            "max"       = ~ paste("R$", (round(max(AF_Receita)))),
+            "Média"      = ~ paste("R$", (round(mean(AF_Receita))))),
+       "Rendimentos da AP" =
+       list("min"       = ~ paste("R$", (round(min(GP_Receita)))),
+            "Mediana"    = ~ paste("R$", (round(median(GP_Receita)))),
+            "max"       = ~ paste("R$", (round(max(GP_Receita)))),
+            "Média"      = ~ paste("R$", (round(mean(GP_Receita)))))
   )
 
 
