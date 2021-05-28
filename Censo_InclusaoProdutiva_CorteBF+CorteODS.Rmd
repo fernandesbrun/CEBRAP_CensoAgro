@@ -1,0 +1,2638 @@
+---
+title: "Inclusão/exclusão produtiva: Comparação entre os Censos Agropecuários de 2006 e 2017"
+subtitle: "Cortes de renda do Bolsa Família e dos ODS"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3 
+    toc_float: 
+      collapsed: false
+    theme: flatly  
+
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+               cache=FALSE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+
+
+```{r Pacotes, message=FALSE, warning=FALSE, include=FALSE}
+#pacotes
+
+#install.packages(c("ggthemes", "ggpubr", "readr", "readxl", "rstatix", "sp", "sf", "tmap", "leaflet", "arsenal", "knitr", "plotly", "kableExtra", "prettydoc", "rmdformats", "knitr", "scales", "esquisse", "pacman"))
+
+#install.packages(c(	"broom", "cli", "crayon" , "dbplyr", "dplyr", "forcats", "ggplot2", "haven", "hms", "httr", "jsonlite", "lubridate", "magrittr", "modelr", "pillar", "purrr", "readr", "readxl", "reprex", "rlang", "rstudioapi", "rvest", "stringr", "tibble", "tidyr", "xml2"))
+
+##install.packages("factoextra")
+##install.packages("qwraps2")
+
+pacman::p_load(ggthemes, ggpubr, tidyverse, readr, readxl, esquisse, rstatix, sp, sf, tmap, leaflet, arsenal, knitr, plotly, kableExtra, prettydoc, rmdformats, knitr, scales, broom, cli, crayon , dbplyr, dplyr, forcats, ggplot2, haven, hms, httr, jsonlite, lubridate, magrittr, modelr, pillar, purrr, readr, readxl, reprex, rlang, rstudioapi, rvest, stringr, tibble, tidyr, xml2, factoextra, qwraps2, DT) 
+
+
+
+options(scipen=999)
+
+```
+
+
+```{r COD_Tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### TABELAS -----
+
+TABELA4 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6884_MUN_pessoalocupado+niveis.xlsx", na = "X") 
+TABELA4$COD[TABELA4$NIVEL == "BR"] <- 000
+
+TABELA7 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6901_MUN_num-estab-rendas+niveis.xlsx", na = "X") 
+TABELA7$COD[TABELA7$NIVEL == "BR"] <- 000
+TABELA7 <- TABELA7 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA8 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6901_MUN_valorreceitas+niveis.xlsx", na = "X") 
+TABELA8$COD[TABELA8$NIVEL == "BR"] <- 000
+TABELA8 <- TABELA8 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA10 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6788_MUN_totalestabelecimentos+niveis.xlsx", na = "X") 
+TABELA10$COD[TABELA10$NIVEL == "BR"] <- 000
+TABELA10 <- TABELA10 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA2 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6878_MUN_areaestabelecimentos+niveis.xlsx", na = "X") 
+TABELA2$COD[TABELA2$NIVEL == "BR"] <- 000
+TABELA2 <- TABELA2 %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+
+TABELA4_06 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/2006_1113_MUN_ocupados.xlsx", na = "X") 
+TABELA4_06$COD[TABELA4_06$NIVEL == "BR"] <- 000
+TABELA4_06 <- TABELA4_06 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+
+
+TABELA8_06a <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/2006_1116_MUN_rendimentosagropecuarios.xlsx", na = "X") 
+TABELA8_06a$COD[TABELA8_06a$NIVEL == "BR"] <- 000
+TABELA8_06a <- TABELA8_06a %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+TABELA8_06b <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/2006_1117_MUN_rendimentosnaoagropec.xlsx", na = "X") 
+TABELA8_06b$COD[TABELA8_06b$NIVEL == "BR"] <- 000
+TABELA8_06b <- TABELA8_06b %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+TABELA8_06 <- left_join(TABELA8_06a, TABELA8_06b, by = "COD")
+
+
+
+TABELA2_06 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/2006_1112_MUN_totalestabelecimentos+areas+niveis.xlsx", na = "X") 
+TABELA2_06$COD[TABELA2_06$NIVEL == "BR"] <- 000
+TABELA2_06 <- TABELA2_06 %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+
+
+
+
+#TABELAS DO CENSO 2010
+
+CENSODEM_00 <- read_excel("data/tabelas/CensoDemografico/CensoDem_2000_1434.xlsx", na = "X") 
+CENSODEM_00$COD[CENSODEM_00$NIVEL == "BR"] <- 000
+CENSODEM_00 <- CENSODEM_00 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+CENSODEM_10 <- read_excel("data/tabelas/CensoDemografico/CensoDem_2010_3216.xlsx", na = "X") 
+CENSODEM_10$COD[CENSODEM_10$NIVEL == "BR"] <- 000
+CENSODEM_10 <- CENSODEM_10 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+
+
+```
+
+
+```{r COD_Procedimentos com as tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### PROCEDIMENTOS COM AS TABELAS -----
+
+#Join de todas as tabelas 
+IP_todastabelas <- TABELA4 %>% 
+  full_join(., TABELA7, by = "COD") %>%
+  full_join(., TABELA8, by = "COD") %>%
+  full_join(., TABELA10, by = "COD") %>%
+  full_join(., TABELA2, by = "COD") %>%
+  
+  full_join(., TABELA4_06, by = "COD") %>%
+  full_join(., TABELA8_06, by = "COD") %>%
+  full_join(., TABELA2_06, by = "COD") %>%
+  full_join(., CENSODEM_00, by = "COD") %>%
+  full_join(., CENSODEM_10, by = "COD")
+
+
+#Filtragem por recorte geográfico
+
+IP_municipios <- IP_todastabelas %>% filter(NIVEL == "MU")
+IP_microrregioes <- IP_todastabelas %>% filter(NIVEL == "MI")
+IP_mesorregioes <- IP_todastabelas %>% filter(NIVEL == "ME")
+IP_estados <- IP_todastabelas %>% filter(NIVEL == "UF")
+IP_macrorregioes <- IP_todastabelas %>% filter(NIVEL == "GR")
+IP_brasil <- IP_todastabelas %>% filter(NIVEL == "BR")
+
+
+#Criando colunas de código do estado e da região - MUNICIPIOS
+IP_municipios <- IP_municipios %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+IP_municipios$COD_ESTADO <- substr(IP_municipios$COD_ESTADO, 0, 2)
+IP_municipios$COD_REGIAO <- substr(IP_municipios$COD_REGIAO, 0, 1)
+IP_municipios$COD_REGIAO[IP_municipios$COD_REGIAO == "1"] <- "Norte"
+IP_municipios$COD_REGIAO[IP_municipios$COD_REGIAO == "2"] <- "Nordeste"
+IP_municipios$COD_REGIAO[IP_municipios$COD_REGIAO == "3"] <- "Sudeste"
+IP_municipios$COD_REGIAO[IP_municipios$COD_REGIAO == "4"] <- "Sul"
+IP_municipios$COD_REGIAO[IP_municipios$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+#Criando colunas de código do estado e da região - MICRORREGIOES
+IP_microrregioes <- IP_microrregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+IP_microrregioes$COD_ESTADO <- substr(IP_microrregioes$COD_ESTADO, 0, 2)
+IP_microrregioes$COD_REGIAO <- substr(IP_microrregioes$COD_REGIAO, 0, 1)
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "1"] <- "Norte"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "2"] <- "Nordeste"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "3"] <- "Sudeste"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "4"] <- "Sul"
+IP_microrregioes$COD_REGIAO[IP_microrregioes$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+
+IP_mesorregioes <- IP_mesorregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+IP_mesorregioes$COD_ESTADO <- substr(IP_mesorregioes$COD_ESTADO, 0, 2)
+IP_mesorregioes$COD_REGIAO <- substr(IP_mesorregioes$COD_REGIAO, 0, 1)
+
+
+```
+
+<br>
+
+# Sobre o trabalho 
+
+
+
+
+## Dados utilizados
+
+Esse trabalho utilizou três variáveis principais para comparação entre os Censos Agropecuários de 2006 e 2017, sendo elas:
+
+- Rendimentos dos estabelecimentos agropecuários
+	+ Os rendimentos do estabelecimento não consideram rendas obtidas fora do estabelecimento ou rendas de programas e políticas públicas (ver nota)
+- Ocupados nos estabelecimentos agropecuários
+- Número de estabelecimentos agropecuários
+- População residente em domicílios particulares permanentes nas zonas rurais do país (Censo Demográfico, 2000 e 2010) 
+
+<br>
+
+
+## Organização do arquivo 
+
+O arquivo está organizado em duas seções principais que se distinguem pelo critério de corte de renda para delimitar microrregiões abaixo e acima da pobreza, bem como a mobilidade dentre essas classes de 2006 para 2007: na primeira seção é utilizado o corte do Bolsa Família e, na segunda, o corte dos ODS adaptado pelo IBGE/IPEA à realidade brasileira.
+Dentro dessas duas seções, são analisadas tanto a mobilidade de renda utilizando como dado populacional as pessoas residentes em áreas rurais (Censo Demográfico 2000 e 2010), quanto as pessoas ocupadas nos estabelecimentos agropecuários (Censo Agropecuário 2006 e 2017), ambos a partir da renda obtida nos estabelecimentos agropecuários.
+
+
+### Critérios de corte para definição da linha da pobreza
+
+1. Corte de renda do Bolsa Família
+Nessa primeira parte, serão reproduzidos os dados que já constavam nas análises anteriores, ou seja, a mobilidade de renda nas microrregiões a partir de critérios do Bolsa Família:
+
+- Para os dados de renda do Censo Agropecuário de 2006: "Art. 18. O Programa Bolsa Família atenderá às famílias em situação de **pobreza** e **extrema pobreza**, caracterizadas pela renda familiar mensal per capita de até R\$ 120,00 (cento e vinte reais) e R\$ 60,00 (sessenta reais), respectivamente." 
+  + Redação dada pelo Decreto Federal nº 5.749, de 2006. 
+- Para os dados de renda do Censo Agropecuário de 2017: "Art. 18.  O Programa Bolsa Família atenderá às famílias em situação de **pobreza** e **extrema pobreza**, caracterizadas pela renda familiar mensal per capita de até R\$ 170,00 (cento e setenta reais) e de R\$ 85,00 (oitenta e cinco reais), respectivamente."
+  + Redação dada pelo Decreto Federal nº 8.794, de 2016. 
+  
+
+2. Corte de renda dos ODS (critérios adaptados ao Brasil)
+Nessa segunda parte, a mobilidade de renda será analisada a partir de critérios de pobreza estipulados nos Objetivos de Desenvolvimento Sustentável (ODS) e adaptados para o Brasil (IBGE/IPEA).
+
+- Para os dados de renda do Censo Agropecuário de 2006: Será considerado como **pobreza extrema** os casos em que a renda por ocupado é inferior a PPC\$3,20 per capita por dia, ou seja, R\$112 no mês, e como **pobreza** os casos em que a renda por ocupado na microrregião é inferior a PPC\$5,50 per capita por dia, ou seja, R\$192 no mês.
+- Para os dados de renda do Censo Agropecuário de 2017: Será considerado como **pobreza extrema** os casos em que a renda por ocupado é inferior a PPC\$3,20 per capita por dia, ou seja, R\$235 no mês, e como **pobreza** os casos em que a renda por ocupado na microrregião é inferior a PPC\$5,50 per capita por dia, ou seja, R\$400 no mês.
+
+
+OBS: Para o cálculo dos valores mensais foi utilizada a taxa de conversão da paridade de poder de compra (PPC 2011) para consumo privado (R\$ 1,66 para US\$ 1,00), inflacionado pelo IPCA para o ano de referência.
+
+
+<br>
+<br>
+
+
+
+# 1. Corte de renda do Bolsa Família
+
+- Para os dados de renda do Censo Agropecuário de 2006: "Art. 18. O Programa Bolsa Família atenderá às famílias em situação de **pobreza** e **extrema pobreza**, caracterizadas pela renda familiar mensal per capita de até R\$ 120,00 (cento e vinte reais) e R\$ 60,00 (sessenta reais), respectivamente." 
+  + Redação dada pelo Decreto Federal nº 5.749, de 2006. 
+- Para os dados de renda do Censo Agropecuário de 2017: "Art. 18.  O Programa Bolsa Família atenderá às famílias em situação de **pobreza** e **extrema pobreza**, caracterizadas pela renda familiar mensal per capita de até R\$ 170,00 (cento e setenta reais) e de R\$ 85,00 (oitenta e cinco reais), respectivamente."
+  + Redação dada pelo Decreto Federal nº 8.794, de 2016. 
+
+## 1.a. R$ dos estab. / ocupados nos estab.
+
+Essa primeira subseção utiliza como parâmetro populacional para o cálculo da renda per capita a renda dos estabelecimentos agropecuários e o número de ocupados nos estabelecimentos (ambos do Censo Agropecuário).
+
+### Dados utilizados
+
+Foram utilizadas três variáveis principais para comparação entre os Censos Agropecuários de 2006 e 2017, sendo elas:
+
+- Rendimentos dos estabelecimentos agropecuários
+	+ Os rendimentos do estabelecimento não consideram rendas obtidas fora do estabelecimento ou rendas de programas e políticas públicas
+- Ocupados nos estabelecimentos agropecuários
+- Número de estabelecimentos agropecuários
+
+<br>
+
+```{r COD_Novas colunas, message=FALSE, warning=FALSE, include=FALSE}
+#### CÁLCULO DAS PORCENTAGENS -----
+
+IP_microrregioes_final <- IP_microrregioes %>%
+  mutate(
+    NIVEL = NIVEL,
+    COD = COD,
+    COD_ESTADO = COD_ESTADO,
+    COD_REGIAO = COD_REGIAO,
+    LOCALIZACAO = LOCALIZACAO,
+    DOM00_Tot = DOM00_Tot,
+    DOM00_Urb = DOM00_Urb,
+    DOM00_Rur = DOM00_Rur,
+    POP00_Tot = POP00_Tot,
+    POP00_Urb = POP00_Urb,
+    POP00_Rur = POP00_Rur,
+    DOM10_Tot = DOM10_Tot,
+    DOM10_Urb = DOM10_Urb,
+    DOM10_Rur = DOM10_Rur,
+    POP10_Tot = POP10_Tot,
+    POP10_Urb = POP10_Urb,
+    POP10_Rur = POP10_Rur,
+    
+    
+#### a partir daqui, método para calcular os rendimentos dos estabelecimentos + RENDIMENTOS FORA DO ESTABELECIMENTO (SEM CONSIDERAR RENDAS DE PROGRAMAS E POLÍTICAS) ####
+
+    # R_NEST_T = R_NEST_T_TOT     ,
+    # R_NEST_NAF = R_NEST_T_TOT - R_NEST_AF_TOT     ,
+    # R_NEST_AF = R_NEST_AF_TOT     ,
+    # R_06_NEST_T = R_06_NEST_T     ,
+    # R_06_NEST_NAF = R_06_NEST_NAF     ,
+    # R_06_NEST_AF = R_06_NEST_AF     ,
+    # 
+    # 
+    # R_VALOR_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302) / 12 ,
+    # R_VALOR_NAF = (R_VALOR_T_1 - R_VALOR_AF_1 + R_VALOR_T_2 - R_VALOR_AF_2 + R_VALOR_T_302 - R_VALOR_AF_302) / 12 ,
+    # R_VALOR_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302) / 12 ,
+    # 
+    # 
+    # Rc_06_VALOR_T	=	((R_06_VALOR_T + R_06_VALOROTR_T6) / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    # Rc_06_VALOR_AF	=	((R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12)	*	1,8974051,
+    # Rc_06_VALOR_NAF	=	((R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12)	*	1,8974051,
+    # R_06_VALOR_T = (R_06_VALOR_T + R_06_VALOROTR_T6) / 12   ,
+    # R_06_VALOR_AF = (R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12  ,
+    # R_06_VALOR_NAF = (R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12   ,
+    # 
+    # NEST_T = NEST_T     ,
+    # NEST_NAF = NEST_NAF     ,
+    # NEST_AF = NEST_AF     ,
+    # NEST_06_T = NEST_06_T     ,
+    # NEST_06_NAF = NEST_06_NAF     ,
+    # NEST_06_AF = NEST_06_AF     ,
+    # AREA_T = AREA_T     ,
+    # AREA_NAF = AREA_T - AREA_AF     ,
+    # AREA_AF = AREA_AF     ,
+    # AREA_06_T = AREA_06_T     ,
+    # AREA_06_NAF = AREA_06_NAF     ,
+    # AREA_06_AF = AREA_06_AF     ,
+    # OCU_T = O_T     ,
+    # OCU_NAF = O_T - O_AF     ,
+    # OCU_AF = O_AF     ,
+    # OCU_06_T = OCU_06_T     ,
+    # OCU_06_NAF = OCU_06_Nfam     ,
+    # OCU_06_AF = OCU_06_AF  ,
+    
+
+#### a partir daqui, método para calcular os rendimentos APENAS DOS ESTABELECIMENTOS ####
+    
+    R_NEST_T	=	R_NEST_T_TOT				,
+    R_NEST_NAF	=	R_NEST_T_TOT - R_NEST_AF_TOT				,
+    R_NEST_AF	=	R_NEST_AF_TOT				,
+    R_06_NEST_T	=	R_06_NEST_T				,
+    R_06_NEST_NAF	=	R_06_NEST_NAF				,
+    R_06_NEST_AF	=	R_06_NEST_AF				,
+
+
+    R_VALOR_T	=	(R_VALOR_T_1	+	R_VALOR_T_2) / 12, #como a variável é anual, aqui está sendo dividida por 12 para se ter o valor mensal médio
+    R_VALOR_NAF	=	(R_VALOR_T_1 - R_VALOR_AF_1	+	R_VALOR_T_2 - R_VALOR_AF_2) / 12		,
+    R_VALOR_AF	=	(R_VALOR_AF_1	+	R_VALOR_AF_2) / 12		,
+
+
+
+    Rc_06_VALOR_T	=	(R_06_VALOR_T / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    Rc_06_VALOR_NAF	=	(R_06_VALOR_NAF / 12)	*	1,8974051,
+    Rc_06_VALOR_AF	=	(R_06_VALOR_AF / 12)	*	1,8974051,
+    R_06_VALOR_T	=	(R_06_VALOR_T) / 12				,
+    R_06_VALOR_NAF	=	(R_06_VALOR_NAF) / 12				,
+    R_06_VALOR_AF	=	(R_06_VALOR_AF) / 12				,
+
+
+
+    NEST_T	=	NEST_T				,
+    NEST_NAF	=	NEST_NAF				,
+    NEST_AF	=	NEST_AF				,
+    NEST_06_T	=	NEST_06_T				,
+    NEST_06_NAF	=	NEST_06_NAF				,
+    NEST_06_AF	=	NEST_06_AF				,
+    AREA_T	=	AREA_T				,
+    AREA_NAF	=	AREA_T - AREA_AF				,
+    AREA_AF	=	AREA_AF				,
+    AREA_06_T	=	AREA_06_T				,
+    AREA_06_NAF	=	AREA_06_NAF				,
+    AREA_06_AF	=	AREA_06_AF				,
+    OCU_T	=	O_T				,
+    OCU_NAF	=	O_T - O_AF				,
+    OCU_AF	=	O_AF				,
+    OCU_06_T	=	OCU_06_T				,
+    OCU_06_NAF	=	OCU_06_Nfam				,
+    OCU_06_AF	=	OCU_06_AF	,
+
+    
+    .keep = c("none")
+
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+REND_ESTAB_T	=	(1000	*	R_VALOR_T)	/	NEST_T	,
+REND_ESTAB_NAF	=	(1000	*	R_VALOR_NAF)	/	NEST_NAF	,
+REND_ESTAB_AF	=	(1000	*	R_VALOR_AF)	/	NEST_AF	,
+REND_ESTAB_06_T	=	(1000	*	R_06_VALOR_T)	/	NEST_06_T	,
+REND_ESTAB_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	NEST_06_NAF	,
+REND_ESTAB_06_AF	=	(1000	*	R_06_VALOR_AF)	/	NEST_06_AF , 
+RENDc_ESTAB_06_T	=	(1000	*	Rc_06_VALOR_T)	/	NEST_06_T	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	NEST_06_NAF	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	NEST_06_AF ,  #INFLAÇÃO CORRIGIDA
+
+
+REND_OCU_T	=	(1000	*	R_VALOR_T)	/	OCU_T	,
+REND_OCU_NAF	=	(1000	*	R_VALOR_NAF)	/	OCU_NAF	,
+REND_OCU_AF	=	(1000	*	R_VALOR_AF)	/	OCU_AF	,
+REND_OCU_06_T	=	(1000	*	R_06_VALOR_T)	/	OCU_06_T	,
+REND_OCU_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	OCU_06_NAF	,
+REND_OCU_06_AF	=	(1000	*	R_06_VALOR_AF)	/	OCU_06_AF ,
+
+RENDc_OCU_06_T	=	(1000	*	Rc_06_VALOR_T)	/	OCU_06_T	,
+RENDc_OCU_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	OCU_06_NAF	,
+RENDc_OCU_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	OCU_06_AF
+  
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+
+Dif_NEST_T	=	(	NEST_T	-	NEST_06_T	)	/	NEST_06_T	,
+Dif_NEST_NAF	=	(	NEST_NAF	-	NEST_06_NAF	)	/	NEST_06_NAF	,
+Dif_NEST_AF	=	(	NEST_AF	-	NEST_06_AF	)	/	NEST_06_AF	,
+									
+Dif_OCU_T	=	(	OCU_T	-	OCU_06_T	)	/	OCU_06_T	,
+Dif_OCU_NAF	=	(	OCU_NAF	-	OCU_06_NAF	)	/	OCU_06_NAF	,
+Dif_OCU_AF	=	(	OCU_AF	-	OCU_06_AF	)	/	OCU_06_AF	,
+									
+Dif_REND_OCU_T	=	(	REND_OCU_T	-	REND_OCU_06_T	)	/	REND_OCU_06_T	,
+Dif_REND_OCU_NAF	=	(	REND_OCU_NAF	-	REND_OCU_06_NAF	)	/	REND_OCU_06_NAF	,
+Dif_REND_OCU_AF	=	(	REND_OCU_AF	-	REND_OCU_06_AF	)	/	REND_OCU_06_AF	,
+									
+Dif_REND_ESTAB_T	=	(	REND_ESTAB_T	-	RENDc_ESTAB_06_T	)	/	RENDc_ESTAB_06_T	,
+Dif_REND_ESTAB_NAF	=	(	REND_ESTAB_NAF	-	RENDc_ESTAB_06_NAF	)	/	RENDc_ESTAB_06_NAF	,
+Dif_REND_ESTAB_AF	=	(	REND_ESTAB_AF	-	RENDc_ESTAB_06_AF	)	/	RENDc_ESTAB_06_AF	,
+									
+Dif_AREA_T	=	(	AREA_T	-	AREA_06_T	)	/	AREA_06_T	,
+Dif_AREA_NAF	=	(	AREA_NAF	-	AREA_06_NAF	)	/	AREA_06_NAF	,
+Dif_AREA_AF	=	(	AREA_AF	-	AREA_06_AF	)	/	AREA_06_AF	,
+
+Dif_REND_T	=	(	R_VALOR_T	-	Rc_06_VALOR_T	)	/	Rc_06_VALOR_T	,
+Dif_REND_NAF	=	(	R_VALOR_NAF	-	Rc_06_VALOR_NAF	)	/	Rc_06_VALOR_NAF	,
+Dif_REND_AF	=	(	R_VALOR_AF	-	Rc_06_VALOR_AF	)	/	Rc_06_VALOR_AF	
+
+
+)
+
+is.na(IP_microrregioes_final) <- do.call(cbind,lapply(IP_microrregioes_final, is.nan))
+
+#mobilidade de renda por ocupados total
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU = case_when((REND_OCU_06_T < 120 & REND_OCU_T > 170) ~ "Saiu da pobreza",
+                            (REND_OCU_06_T > 120 & REND_OCU_T < 170) ~ "Entrou na pobreza",
+	            (REND_OCU_06_T < 120 & REND_OCU_T < 170) ~ "Permaneceu na pobreza",
+	            (REND_OCU_06_T > 120 & REND_OCU_T > 170) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU <- factor(IP_microrregioes_final$MOBILI_REND_OCU, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+#mobilidade de renda da AF por ocupados na AF
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU_AF = case_when((REND_OCU_06_AF < 120 & REND_OCU_AF > 170) ~ "Saiu da pobreza",
+                            (REND_OCU_06_AF > 120 & REND_OCU_AF < 170) ~ "Entrou na pobreza",
+	            (REND_OCU_06_AF < 120 & REND_OCU_AF < 170) ~ "Permaneceu na pobreza",
+	            (REND_OCU_06_AF > 120 & REND_OCU_AF > 170) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU_AF <- factor(IP_microrregioes_final$MOBILI_REND_OCU_AF, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+#mobilidade de renda da NAF por ocupados na NAF
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU_NAF = case_when((REND_OCU_06_NAF < 120 & REND_OCU_NAF > 170) ~ "Saiu da pobreza",
+                            (REND_OCU_06_NAF > 120 & REND_OCU_NAF < 170) ~ "Entrou na pobreza",
+	            (REND_OCU_06_NAF < 120 & REND_OCU_NAF < 170) ~ "Permaneceu na pobreza",
+	            (REND_OCU_06_NAF > 120 & REND_OCU_NAF > 170) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU_NAF <- factor(IP_microrregioes_final$MOBILI_REND_OCU_NAF, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+
+### Mobilidade de rendimentos por ocupados 2017
+# 1 = Quem estava abaixo em 06 e subiu em 17
+# 2 = Quem estava acima em 06 e desceu em 17
+# 3 = Quem estava abaixo em 06 e permaneceu abaixo em 17
+# 4 = Quem estava acima em 06 e permaneceu acima em 17
+
+
+```
+
+
+```{r CODmapas PREPARACAO, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+#SHP_Microrregioes <- read_sf("data/shapes/BR_Municipios_2020_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+
+# Juntando o shape e a tabela
+SHP_IP_microrreg <- SHP_Microrregioes %>%
+  left_join(., IP_microrregioes_final, by = "COD")
+
+
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# make some bbox magic
+bbox_new <- st_bbox(SHP_IP_microrreg) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+ bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+ bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
+
+
+##### mapa
+
+# tm_AF_VPdivAREA <- 
+# microrregioes_VPha_shape[!is.na(microrregioes_VPha_shape$VPdivAREA),] %>%
+#   filter(VPdivAREA >= 0) %>%
+#   filter(TIPOLOGIA == "AF") %>%
+#   tm_shape(bbox = bbox_new) +
+#   tm_fill(col = "VPdivAREA", 
+#           title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+#           id = "LOCALIZACAO", palette="BuGn",
+#           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+#           style = "fixed", breaks = c(35, 500, 1500, 3500, 16000)) +
+#   tm_borders(lwd = 0.2) +
+#   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+#   tm_view(view.legend.position = c("right", "bottom")) +
+#   tm_shape(SHP_Estados) +
+#   tm_borders(lwd = 1) 
+
+
+```
+
+
+<br>
+<br>
+
+
+#### Rend. / pessoa ocupada  
+
+**Rendimentos mensais por pessoa ocupada nos estabelecimentos em 2006 e 2017** 
+
+A correção dos valores do Bolsa Família de 2006 para 2017 foi inferior a correção da inflação entre esses anos, portanto aqui foram mantidos os valores originais de cada ano (sem correção da inflação).
+
+Nos mapas abaixo, as duas primeiras classes representam a linha da pobreza extrema e da pobreza, respectivamente.
+
+```{r MAPAS_LinhaDaPobreza_TOTAIS2006, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+  
+### rendimentos dos estabelecimentos por ocupados 2006 - de 30 a 12mil
+plot_06RENDOCU <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_OCU_06_T)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_06_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed" ,
+          breaks = c(30, 60, 120, 240, 480, 1000, 3000, 5000, 12000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+```{r MAPAS_LinhaDaPobreza_TOTAIS2017, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+
+
+### rendimentos dos estabelecimentos por ocupados 2017
+plot_17RENDOCU <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%  
+  filter(!is.na(REND_OCU_T)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(plot_06RENDOCU, plot_17RENDOCU,
+             sync = TRUE,
+             nrow = 1)
+
+```
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+É importante notar aqui que os valores de gradação de cores nos mapas não foram padronizados. Isso porque as primeiras duas classes de cada mapa representam, respectivamente, as microrregiões enquadradas na pobreza extrema (até R\$60 em 2006 e até R\$85 em 2017) e as microrregiões enquadradas na pobreza (até R\$120 em 2006 e até R\$170 em 2017).
+
+<br>
+
+
+#### Dif. % de rend. totais 
+
+**Diferença percentual de rendimentos rendimentos totais nos estabelecimentos**
+
+*Para garantir a comparação entre valores, os rendimentos de 2006 foram corrigidos de acordo com a inflação do período correspondente (IGP-M).
+
+```{r MAPAS_DifPercent_RENDA, echo=FALSE, message=FALSE, warning=FALSE}
+### Diferença percentual de rendimentos totais dos estabelecimentos 
+
+palete3 <- c("#b2182b", "#ef8a62", "#e0e0e0", "#c7eae5", "#80cdc1", "#01665e")
+
+#Total
+SHP_IP_microrreg %>%
+  mutate(Dif_REND_T = Dif_REND_T * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_REND_T", 
+          title = "Alteração percentual nos rendimentos<br>dos estabelecimentos de 2006* para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-100, -50, -5, 5, 100, 500, 1200)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+<br>
+<br>
+<br>
+
+### Mobilidade de renda - Ocupados (BF)
+
+**Mobilidade de rendimentos por ocupados nos estabelecimentos agropecuários de 2006 para 2017 (Bolsa Família)**
+
+*Tabela síntese*
+
+```{r TABELA_SINTESE_TOTAL, echo=FALSE, message=FALSE, warning=FALSE}
+
+IP_microrregioes_sumario2 <- IP_microrregioes_final %>%
+  group_by(COD_REGIAO) %>%
+  summarise(REN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])),
+            pctREN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])) / length(R_VALOR_T),
+
+            ESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])),
+            pctESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])) / length(NEST_T),
+            
+            OCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))),
+            pctOCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))/ length(OCU_T)),
+            
+            AREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])),
+            pctAREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])) / length(AREA_T),
+            
+            REN_OCU_DIM = length(na.omit(REND_OCU_T[REND_OCU_T < RENDc_OCU_06_T])),
+            pctREN_OCU_DIM = length(na.omit(REND_OCU_T[REND_OCU_T < RENDc_OCU_06_T])) / length(REND_OCU_T),
+            
+            REN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])),
+            pctREN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])) / length(REND_ESTAB_T),
+            
+            
+            POBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])),
+            pctPOBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])) / length(REND_OCU_06_T),
+            
+            POBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])),
+            pctPOBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])),
+            pctPOBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])),
+            pctPOBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])) / length(REND_OCU_T)
+            
+            ) %>%
+  
+  mutate(pctREN_DIM = scales::percent(pctREN_DIM, na.rm = TRUE),
+         pctESTAB_DIM = scales::percent(pctESTAB_DIM, na.rm = TRUE),
+         pctOCUP_DIM = scales::percent(pctOCUP_DIM, na.rm = TRUE),
+         pctAREA_DIM = scales::percent(pctAREA_DIM, na.rm = TRUE),
+         pctREN_OCU_DIM = scales::percent(pctREN_OCU_DIM, na.rm = TRUE),
+         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE),
+         
+         pctPOBREZA_Abaixo_06 = scales::percent(pctPOBREZA_Abaixo_06, na.rm = TRUE),
+         pctPOBREZA_Sairam = scales::percent(pctPOBREZA_Sairam, na.rm = TRUE),
+         pctPOBREZA_Entraram = scales::percent(pctPOBREZA_Entraram, na.rm = TRUE),
+         pctPOBREZA_Abaixo_17 = scales::percent(pctPOBREZA_Abaixo_17, na.rm = TRUE),
+         
+         
+         pctPOBREZA_Abaixo_06 = paste0(POBREZA_Abaixo_06, " (", pctPOBREZA_Abaixo_06, ")"),
+         pctPOBREZA_Sairam = paste0(POBREZA_Sairam, " (", pctPOBREZA_Sairam, ")"),
+         pctPOBREZA_Entraram = paste0(POBREZA_Entraram, " (", pctPOBREZA_Entraram, ")"),
+         pctPOBREZA_Abaixo_17 = paste0(POBREZA_Abaixo_17, " (", pctPOBREZA_Abaixo_17, ")")
+         
+         )
+
+
+IP_microrregioes_sumario2 <- as.data.frame(t(IP_microrregioes_sumario2)) %>%
+  rename("Centro-Oeste" = 1,
+         "Nordeste" = 2,
+         "Norte" = 3,
+         "Sudeste" = 4,
+         "Sul" = 5) %>%
+  slice(-1) %>%
+  rownames_to_column(var = "Resumo") 
+
+IP_microrregioes_sumario2 <- IP_microrregioes_sumario2 %>%
+  filter(Resumo != "POBREZA_Abaixo_06") %>% 
+  filter(Resumo != "POBREZA_Sairam") %>% 
+  filter(Resumo != "POBREZA_Entraram") %>% 
+  filter(Resumo != "POBREZA_Abaixo_17")
+
+
+
+
+IP_microrregioes_sumario2[1,1] <- "Nº de microrregiões nas quais o rendimento diminuiu" 
+IP_microrregioes_sumario2[2,1] <- "Porcentagem de microrregiões nas quais o rendimento diminuiu"
+IP_microrregioes_sumario2[3,1] <- "Nº de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[4,1] <- "Porcentagem de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[5,1] <- "Nº de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[6,1] <- "Porcentagem de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[7,1] <- "Nº de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[8,1] <- "Porcentagem de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[9,1] <- "Nº de microrregiões nas quais a renda por ocupado diminuiu"
+IP_microrregioes_sumario2[10,1] <- "Porcentagem de microrregiões nas quais a renda por ocupado diminuiu"
+IP_microrregioes_sumario2[11,1] <- "Nº de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario2[12,1] <- "Porcentagem de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario2[13,1] <- "Microrregiões abaixo da linha da pobreza em 2006"
+IP_microrregioes_sumario2[14,1] <- "Microrregiões que saíram da pobreza"
+IP_microrregioes_sumario2[15,1] <- "Microrregiões que entraram na pobreza"
+IP_microrregioes_sumario2[16,1] <- "Microrregiões abaixo da linha da pobreza em 2017"
+
+```
+```{r TABELA_SINTESE_TOTALv2, echo=FALSE, message=FALSE, warning=FALSE}
+kbl(IP_microrregioes_sumario2, digits = 2, caption = "", align = "lccccc") %>%
+  kable_paper("basic", full_width = T) %>%
+  column_spec(column = c(2:6), width = "2.6cm") %>%
+  kable_styling(bootstrap_options = "striped") %>%
+  pack_rows("Rendimento", 1, 2) %>%
+  pack_rows("Estabelecimentos", 3, 4) %>%
+  pack_rows("Pessoas ocupadas", 5, 6) %>%
+  pack_rows("Área total", 7, 8) %>%
+  pack_rows("Rendimento por pessoal ocupado", 9, 10) %>%
+  pack_rows("Rendimento por estabelecimento", 11, 12) %>%
+  pack_rows("Mobilidade de renda", 13, 16)
+```
+
+<br>
+
+Tanto em número, quanto em proporção de microrregiões por região do Brasil, o Nordeste foi o que mais perdeu valores de 2006 para 2017. Apesar do Sul apresentar nas variáveis de estabelecimentos e pessoas ocupadas uma perda percentual maior do que a da região anterior, diferente dela, não houve tão redução no rendimento por pessoal ocupado ou no rendimento por estabelecimento.
+
+Considerando a unidade agregada da microrregião, as regiões Centro-Oeste, Sul e Sudeste não apresentaram nenhuma microrregião abaixo da linha da pobreza nem em 2006 nem em 2017, exceto a última que apresentava três, mas todas ultrapassaram o limiar da pobreza em 2017. A região Nordeste é a que mais possui microrregiões abaixo da linha da pobreza aqui determinada; apesar de 60% dessas microrregiões pobres terem saído da pobreza em 2017, ainda permaneceram cerca de 40%. Dentre todas as regiões, é importante ressaltar que a única região que possuiu microrregiões entrando na linha da pobreza de 2006 para 2017 foi a Nordeste.
+
+
+```{r MAPAS_Mobilidade_Pobreza_Renda, echo=FALSE, message=FALSE, warning=FALSE}
+
+### Mobilidade de rendimentos por ocupados de 2006 para 2017
+
+paleta2 <- c("#5e4fa2", "#9e0142", "#4d4d4d", "#e0e0e0")
+
+CorteBF_ocupados <- SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(MOBILI_REND_OCU)) %>%
+  tm_shape() +
+  tm_fill(col = "MOBILI_REND_OCU", 
+          palette = paleta2,
+          title = "Mobil. de R$ por ocupados <br> de 2006 para 2017 (BF)",
+          id = "LOCALIZACAO",
+          #n=7
+          #legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "cat", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+CorteBF_ocupados
+
+```
+
+<br>
+
+
+<br>
+<br>
+<br>
+
+
+
+## 1.b. R$ dos estab. / pop. residente na zona rural
+
+Essa segunda subseção utiliza como parâmetro para o cálculo da renda per capita a renda dos estabelecimentos agropecuários (Censo Agropecuário 2006 e 2017) e moradores em domicílios das áreas rurais do país (Censo Demográfico 2000 e 2010). 
+
+
+### Dados utilizados
+
+Foram utilizadas duas variáveis principais para comparação entre os Censos Agropecuários de 2006 e 2017, sendo elas:
+
+- Rendimentos dos estabelecimentos agropecuários
+	+ Os rendimentos do estabelecimento não consideram rendas obtidas fora do estabelecimento ou rendas de programas e políticas públicas
+- População residente em domicílios particulares permanentes nas zonas rurais do país (Censo Demográfico 2000 e 2010). 
+- Número de estabelecimentos agropecuários
+
+
+
+```{r bCOD_Novas colunas USANDO DADOS DO CENSODEMOGRAFICOc, message=FALSE, warning=FALSE, include=FALSE}
+
+# usando dados DO CENSO DEMOGRÁFICO 
+
+#### CÁLCULO DAS PORCENTAGENS -----
+
+#IP_microrregioes_final <- IP_municipios %>%
+IP_microrregioes_final <- IP_microrregioes %>%
+  mutate(
+    NIVEL = NIVEL,
+    COD = COD,
+    COD_ESTADO = COD_ESTADO,
+    COD_REGIAO = COD_REGIAO,
+    LOCALIZACAO = LOCALIZACAO,
+    DOM00_Tot = DOM00_Tot,
+    DOM00_Urb = DOM00_Urb,
+    DOM00_Rur = DOM00_Rur,
+    POP00_Tot = POP00_Tot,
+    POP00_Urb = POP00_Urb,
+    POP00_Rur = POP00_Rur,
+    DOM10_Tot = DOM10_Tot,
+    DOM10_Urb = DOM10_Urb,
+    DOM10_Rur = DOM10_Rur,
+    POP10_Tot = POP10_Tot,
+    POP10_Urb = POP10_Urb,
+    POP10_Rur = POP10_Rur,
+    
+    
+##a partir daqui, método para calcular os rendimentos dos estabelecimentos + RENDIMENTOS FORA DO ESTABELECIMENTO (SEM CONSIDERAR RENDAS DE PROGRAMAS E POLÍTICAS)
+
+    R_NEST_T = R_NEST_T_TOT     ,
+    R_NEST_NAF = R_NEST_T_TOT - R_NEST_AF_TOT     ,
+    R_NEST_AF = R_NEST_AF_TOT     ,
+    R_06_NEST_T = R_06_NEST_T     ,
+    R_06_NEST_NAF = R_06_NEST_NAF     ,
+    R_06_NEST_AF = R_06_NEST_AF     ,
+
+
+    R_VALOR_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302) / 12 ,
+    R_VALOR_NAF = (R_VALOR_T_1 - R_VALOR_AF_1 + R_VALOR_T_2 - R_VALOR_AF_2 + R_VALOR_T_302 - R_VALOR_AF_302) / 12 ,
+    R_VALOR_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302) / 12 ,
+
+
+    Rc_06_VALOR_T	=	((R_06_VALOR_T + R_06_VALOROTR_T6) / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    Rc_06_VALOR_AF	=	((R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12)	*	1,8974051,
+    Rc_06_VALOR_NAF	=	((R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12)	*	1,8974051,
+    R_06_VALOR_T = (R_06_VALOR_T + R_06_VALOROTR_T6) / 12   ,
+    R_06_VALOR_AF = (R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12  ,
+    R_06_VALOR_NAF = (R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12   ,
+
+    NEST_T = NEST_T     ,
+    NEST_NAF = NEST_NAF     ,
+    NEST_AF = NEST_AF     ,
+    NEST_06_T = NEST_06_T     ,
+    NEST_06_NAF = NEST_06_NAF     ,
+    NEST_06_AF = NEST_06_AF     ,
+    AREA_T = AREA_T     ,
+    AREA_NAF = AREA_T - AREA_AF     ,
+    AREA_AF = AREA_AF     ,
+    AREA_06_T = AREA_06_T     ,
+    AREA_06_NAF = AREA_06_NAF     ,
+    AREA_06_AF = AREA_06_AF     ,
+    OCU_T = O_T     ,
+    OCU_NAF = O_T - O_AF     ,
+    OCU_AF = O_AF     ,
+    OCU_06_T = OCU_06_T     ,
+    OCU_06_NAF = OCU_06_Nfam     ,
+    OCU_06_AF = OCU_06_AF  ,
+
+
+##a partir daqui, método para calcular os rendimentos APENAS DOS ESTABELECIMENTOS
+    
+    # R_NEST_T	=	R_NEST_T_TOT				,
+    # R_NEST_NAF	=	R_NEST_T_TOT - R_NEST_AF_TOT				,
+    # R_NEST_AF	=	R_NEST_AF_TOT				,
+    # R_06_NEST_T	=	R_06_NEST_T				,
+    # R_06_NEST_NAF	=	R_06_NEST_NAF				,
+    # R_06_NEST_AF	=	R_06_NEST_AF				,
+    # 
+    # 
+    # R_VALOR_T	=	(R_VALOR_T_1	+	R_VALOR_T_2) / 12, #como a variável é anual, aqui está sendo dividida por 12 para se ter o valor mensal médio
+    # R_VALOR_NAF	=	(R_VALOR_T_1 - R_VALOR_AF_1	+	R_VALOR_T_2 - R_VALOR_AF_2) / 12		,
+    # R_VALOR_AF	=	(R_VALOR_AF_1	+	R_VALOR_AF_2) / 12		,
+    # 
+    # 
+    # 
+    # Rc_06_VALOR_T	=	(R_06_VALOR_T / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    # Rc_06_VALOR_NAF	=	(R_06_VALOR_NAF / 12)	*	1,8974051,
+    # Rc_06_VALOR_AF	=	(R_06_VALOR_AF / 12)	*	1,8974051,
+    # R_06_VALOR_T	=	(R_06_VALOR_T) / 12				,
+    # R_06_VALOR_NAF	=	(R_06_VALOR_NAF) / 12				,
+    # R_06_VALOR_AF	=	(R_06_VALOR_AF) / 12				,
+    # 
+    # 
+    # 
+    # NEST_T	=	NEST_T				,
+    # NEST_NAF	=	NEST_NAF				,
+    # NEST_AF	=	NEST_AF				,
+    # NEST_06_T	=	NEST_06_T				,
+    # NEST_06_NAF	=	NEST_06_NAF				,
+    # NEST_06_AF	=	NEST_06_AF				,
+    # AREA_T	=	AREA_T				,
+    # AREA_NAF	=	AREA_T - AREA_AF				,
+    # AREA_AF	=	AREA_AF				,
+    # AREA_06_T	=	AREA_06_T				,
+    # AREA_06_NAF	=	AREA_06_NAF				,
+    # AREA_06_AF	=	AREA_06_AF				,
+    # OCU_T	=	OCU_T				,
+    # OCU_NAF	=	OCU_T - O_AF				,
+    # OCU_AF	=	OCU_AF				,
+    # OCU_06_T	=	OCU_06_T				,
+    # OCU_06_NAF	=	OCU_06_Nfam				,
+    # OCU_06_AF	=	OCU_06_AF	,
+
+    
+    .keep = c("none")
+
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+     
+Dif_Morad_OCU_0006_T = (POP00_Rur - OCU_06_T),
+Dif_Domic_Estab_0006_T = (DOM00_Rur - NEST_06_T),
+     
+Dif_Morad_OCU_1017_T = (POP10_Rur - OCU_06_T),
+Dif_Domic_Estab_1017_T = (DOM10_Rur - NEST_T),
+  
+  
+REND_ESTAB_T	=	(1000	*	R_VALOR_T)	/	NEST_T	,
+REND_ESTAB_NAF	=	(1000	*	R_VALOR_NAF)	/	NEST_NAF	,
+REND_ESTAB_AF	=	(1000	*	R_VALOR_AF)	/	NEST_AF	,
+REND_ESTAB_06_T	=	(1000	*	R_06_VALOR_T)	/	NEST_06_T	,
+REND_ESTAB_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	NEST_06_NAF	,
+REND_ESTAB_06_AF	=	(1000	*	R_06_VALOR_AF)	/	NEST_06_AF , 
+RENDc_ESTAB_06_T	=	(1000	*	Rc_06_VALOR_T)	/	NEST_06_T	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	NEST_06_NAF	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	NEST_06_AF ,  #INFLAÇÃO CORRIGIDA
+
+
+REND_OCU_T	=	(1000	*	R_VALOR_T)	/	OCU_T	,
+REND_OCU_NAF	=	(1000	*	R_VALOR_NAF)	/	OCU_NAF	,
+REND_OCU_AF	=	(1000	*	R_VALOR_AF)	/	OCU_AF	,
+REND_OCU_06_T	=	(1000	*	R_06_VALOR_T)	/	OCU_06_T	,
+REND_OCU_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	OCU_06_NAF	,
+REND_OCU_06_AF	=	(1000	*	R_06_VALOR_AF)	/	OCU_06_AF,
+
+RENDc_OCU_06_T	=	(1000	*	Rc_06_VALOR_T)	/	OCU_06_T	,
+RENDc_OCU_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	OCU_06_NAF	,
+RENDc_OCU_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	OCU_06_AF,
+
+REND_PES_0006_T = (1000	*	Rc_06_VALOR_T)	/	POP00_Rur ,
+REND_PES_1017_T = (1000	*	R_VALOR_T)	/	 POP10_Rur
+  
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+
+Dif_NEST_T	=	(	NEST_T	-	NEST_06_T	)	/	NEST_06_T	,
+Dif_NEST_NAF	=	(	NEST_NAF	-	NEST_06_NAF	)	/	NEST_06_NAF	,
+Dif_NEST_AF	=	(	NEST_AF	-	NEST_06_AF	)	/	NEST_06_AF	,
+									
+Dif_OCU_T	=	(	OCU_T	-	OCU_06_T	)	/	OCU_06_T	,
+Dif_OCU_NAF	=	(	OCU_NAF	-	OCU_06_NAF	)	/	OCU_06_NAF	,
+Dif_OCU_AF	=	(	OCU_AF	-	OCU_06_AF	)	/	OCU_06_AF	,
+									
+Dif_REND_OCU_T	=	(	REND_OCU_T	-	REND_OCU_06_T	)	/	REND_OCU_06_T	,
+Dif_REND_OCU_NAF	=	(	REND_OCU_NAF	-	REND_OCU_06_NAF	)	/	REND_OCU_06_NAF	,
+Dif_REND_OCU_AF	=	(	REND_OCU_AF	-	REND_OCU_06_AF	)	/	REND_OCU_06_AF	,
+									
+Dif_REND_ESTAB_T	=	(	REND_ESTAB_T	-	RENDc_ESTAB_06_T	)	/	RENDc_ESTAB_06_T	,
+Dif_REND_ESTAB_NAF	=	(	REND_ESTAB_NAF	-	RENDc_ESTAB_06_NAF	)	/	RENDc_ESTAB_06_NAF	,
+Dif_REND_ESTAB_AF	=	(	REND_ESTAB_AF	-	RENDc_ESTAB_06_AF	)	/	RENDc_ESTAB_06_AF	,
+									
+Dif_AREA_T	=	(	AREA_T	-	AREA_06_T	)	/	AREA_06_T	,
+Dif_AREA_NAF	=	(	AREA_NAF	-	AREA_06_NAF	)	/	AREA_06_NAF	,
+Dif_AREA_AF	=	(	AREA_AF	-	AREA_06_AF	)	/	AREA_06_AF	,
+
+Dif_REND_T	=	(	R_VALOR_T	-	Rc_06_VALOR_T	)	/	Rc_06_VALOR_T	,
+Dif_REND_NAF	=	(	R_VALOR_NAF	-	Rc_06_VALOR_NAF	)	/	Rc_06_VALOR_NAF	,
+Dif_REND_AF	=	(	R_VALOR_AF	-	Rc_06_VALOR_AF	)	/	Rc_06_VALOR_AF,
+
+Dif_POP_T = ((POP10_Rur	-	POP00_Rur) / POP00_Rur),
+Dif_REND_POP_T = (REND_PES_1017_T	-	REND_PES_0006_T) / REND_OCU_06_T
+
+)
+
+is.na(IP_microrregioes_final) <- do.call(cbind,lapply(IP_microrregioes_final, is.nan))
+
+#mobilidade de renda por ocupados total
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU = case_when((REND_PES_0006_T < 120 & REND_PES_1017_T > 170) ~ "Saiu da pobreza",
+                            (REND_PES_0006_T > 120 & REND_PES_1017_T < 170) ~ "Entrou na pobreza",
+	            (REND_PES_0006_T < 120 & REND_PES_1017_T < 170) ~ "Permaneceu na pobreza",
+	            (REND_PES_0006_T > 120 & REND_PES_1017_T > 170) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU <- factor(IP_microrregioes_final$MOBILI_REND_OCU, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+
+
+### Mobilidade de rendimentos por ocupados 2017
+# 1 = Quem estava abaixo em 06 e subiu em 17
+# 2 = Quem estava acima em 06 e desceu em 17
+# 3 = Quem estava abaixo em 06 e permaneceu abaixo em 17
+# 4 = Quem estava acima em 06 e permaneceu acima em 17
+
+
+```
+
+```{r bCODmapas PREPARACAOc, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+#SHP_Microrregioes <- read_sf("data/shapes/BR_Municipios_2020_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+
+# Juntando o shape e a tabela
+SHP_IP_microrreg <- SHP_Microrregioes %>%
+  left_join(., IP_microrregioes_final, by = "COD")
+
+
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# make some bbox magic
+bbox_new <- st_bbox(SHP_IP_microrreg) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+ bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+ bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
+
+
+##### mapa
+
+# tm_AF_VPdivAREA <- 
+# microrregioes_VPha_shape[!is.na(microrregioes_VPha_shape$VPdivAREA),] %>%
+#   filter(VPdivAREA >= 0) %>%
+#   filter(TIPOLOGIA == "AF") %>%
+#   tm_shape(bbox = bbox_new) +
+#   tm_fill(col = "VPdivAREA", 
+#           title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+#           id = "LOCALIZACAO", palette="BuGn",
+#           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+#           style = "fixed", breaks = c(35, 500, 1500, 3500, 16000)) +
+#   tm_borders(lwd = 0.2) +
+#   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+#   tm_view(view.legend.position = c("right", "bottom")) +
+#   tm_shape(SHP_Estados) +
+#   tm_borders(lwd = 1) 
+
+
+```
+
+
+<br>
+
+Para ter um parâmetro da diferença entre o número de pessoas residentes nas zonas rurais e o número de ocupados nos estabelecimentos, observa-se a tabela abaixo. Nela, é possível notar que a diferença entre os dados de ocupados e os dados de moradores de áreas rurais não é tão grande, o que explica os resultados da tabela anterior serem muito similares aos da tabela da primeira análise.
+
+```{r b, echo=FALSE, message=FALSE, warning=FALSE}
+IP_microrregioes %>%
+  group_by(COD_REGIAO) %>%
+  select(POP00_Rur, POP10_Rur, OCU_06_T, O_T, COD_REGIAO) %>%
+  summarise(prop1 = paste0("+", round(mean(((POP00_Rur - OCU_06_T)/ OCU_06_T), na.rm = TRUE), 2), "%"),
+            prop2 = paste0("+", round(mean(((POP10_Rur - O_T)/ O_T), na.rm = TRUE), 2), "%")) %>%
+  
+
+datatable(., 
+          options = list(pageLength = 5, dom = 't', 
+                         columnDefs = list(list(className = 'dt-center', targets = 0:2))),
+          rownames = FALSE,
+          colnames = c("Região", "Média do aumento percentual de pessoas: de ocupados para residentes em áreas rurais (2000 e 2006)", "Média do aumento percentual de pessoas: de ocupados para residentes em áreas rurais (2010 e 2017)") 
+                       )
+```
+
+
+<br>
+
+
+#### Rend. / residente em zona rural
+
+*Rendimentos mensais por pessoa moradora em zona rural em 2006/2000 e 2017/2010 *
+
+A correção dos valores do Bolsa Família de 2006 para 2017 foi inferior a correção da inflação entre esses anos, portanto aqui foram mantidos os valores originais de cada ano (sem correção da inflação).
+
+Nos mapas abaixo, as duas primeiras classes representam a linha da pobreza extrema e da pobreza, respectivamente.
+
+
+```{r bMAPAS_LinhaDaPobreza_TOTAIS2006c, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+  
+### rendimentos dos estabelecimentos por ocupados 2006 - de 30 a 12mil
+plot_06RENDOCU_3ana <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_PES_0006_T)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_PES_0006_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+
+          style = "fixed", breaks = c(6, 60, 120, 240, 480, 1000, 3000, 5000, 43000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+```{r bMAPAS_LinhaDaPobreza_TOTAIS2017c, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+
+
+### rendimentos dos estabelecimentos por ocupados 2017
+plot_17RENDOCU_3ana <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_PES_1017_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+
+          style = "fixed", breaks = c(6, 85, 170, 340, 680, 1500, 5000, 10000, 43000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(plot_06RENDOCU_3ana, plot_17RENDOCU_3ana,
+             sync = TRUE,
+             nrow = 1)
+
+```
+
+<br>
+<br>
+
+
+<br>
+
+#### Diferença percentual de rendimentos totais dos estabelecimentos de 2006 para 2017 
+
+*Para garantir a comparação entre valores, os rendimentos de 2006 foram corrigidos de acordo com a inflação do período correspondente (IGP-M).
+
+```{r bMAPAS_DifPercent_RENDAc, echo=FALSE, message=FALSE, warning=FALSE}
+### Diferença percentual de rendimentos totais dos estabelecimentos 
+
+palete3 <- c("#b2182b", "#ef8a62", "#e0e0e0", "#c7eae5", "#80cdc1", "#01665e")
+
+#Total
+SHP_IP_microrreg %>%
+  mutate(Dif_REND_T = Dif_REND_T * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_REND_T", 
+          title = "Alteração percentual nos rendimentos<br>dos estabelecimentos de 2006* para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-100, -50, -5, 5, 100, 500, 1200)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+<br>
+<br>
+
+
+
+<br>
+
+
+### 
+
+### Mobilidade de renda - Residentes (BF)
+
+**Mobilidade de rendimentos por população residente em áreas rurais de 2006 para 2017 (Bolsa Família)**
+
+*Tabela síntese*
+
+```{r bTABELA_SINTESE_TOTALc, echo=FALSE, message=FALSE, warning=FALSE}
+
+IP_microrregioes_sumario2 <- IP_microrregioes_final %>%
+  group_by(COD_REGIAO) %>%
+  summarise(REN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])),
+            pctREN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])) / length(R_VALOR_T),
+
+            ESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])),
+            pctESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])) / length(NEST_T),
+            
+            OCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))),
+            pctOCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))/ length(OCU_T)),
+            
+            POP_DIM = (length(na.omit(POP10_Rur[POP10_Rur < POP00_Rur]))),
+            pctPOP_DIM = (length(na.omit(POP10_Rur[POP10_Rur < POP00_Rur])) / length(POP10_Rur)),
+            
+            AREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])),
+            pctAREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])) / length(AREA_T),
+            
+            REN_PES_DIM = length(na.omit(REND_PES_1017_T[REND_PES_1017_T < REND_PES_0006_T])),
+            pctREN_OCU_DIM = length(na.omit(REND_PES_1017_T[REND_PES_1017_T < REND_PES_0006_T])) / length(REND_PES_1017_T),
+            
+            REN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])),
+            pctREN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])) / length(REND_ESTAB_T),
+            
+            
+            POBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])),
+            pctPOBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])) / length(REND_OCU_06_T),
+            
+            POBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])),
+            pctPOBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])),
+            pctPOBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])),
+            pctPOBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])) / length(REND_OCU_T)
+            
+            ) %>%
+  
+  mutate(pctREN_DIM = scales::percent(pctREN_DIM, na.rm = TRUE),
+         pctESTAB_DIM = scales::percent(pctESTAB_DIM, na.rm = TRUE),
+         pctOCUP_DIM = scales::percent(pctOCUP_DIM, na.rm = TRUE),
+         pctPOP_DIM = scales::percent(pctPOP_DIM, na.rm = TRUE),
+         pctAREA_DIM = scales::percent(pctAREA_DIM, na.rm = TRUE),
+         pctREN_OCU_DIM = scales::percent(pctREN_OCU_DIM, na.rm = TRUE),
+         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE),
+         
+         pctPOBREZA_Abaixo_06 = scales::percent(pctPOBREZA_Abaixo_06, na.rm = TRUE),
+         pctPOBREZA_Sairam = scales::percent(pctPOBREZA_Sairam, na.rm = TRUE),
+         pctPOBREZA_Entraram = scales::percent(pctPOBREZA_Entraram, na.rm = TRUE),
+         pctPOBREZA_Abaixo_17 = scales::percent(pctPOBREZA_Abaixo_17, na.rm = TRUE),
+         
+         
+         pctPOBREZA_Abaixo_06 = paste0(POBREZA_Abaixo_06, " (", pctPOBREZA_Abaixo_06, ")"),
+         pctPOBREZA_Sairam = paste0(POBREZA_Sairam, " (", pctPOBREZA_Sairam, ")"),
+         pctPOBREZA_Entraram = paste0(POBREZA_Entraram, " (", pctPOBREZA_Entraram, ")"),
+         pctPOBREZA_Abaixo_17 = paste0(POBREZA_Abaixo_17, " (", pctPOBREZA_Abaixo_17, ")")
+         
+         )
+
+
+IP_microrregioes_sumario2 <- as.data.frame(t(IP_microrregioes_sumario2)) %>%
+  rename("Centro-Oeste" = 1,
+         "Nordeste" = 2,
+         "Norte" = 3,
+         "Sudeste" = 4,
+         "Sul" = 5) %>%
+  slice(-1) %>%
+  rownames_to_column(var = "Resumo") 
+
+IP_microrregioes_sumario2 <- IP_microrregioes_sumario2 %>%
+  filter(Resumo != "POBREZA_Abaixo_06") %>% 
+  filter(Resumo != "POBREZA_Sairam") %>% 
+  filter(Resumo != "POBREZA_Entraram") %>% 
+  filter(Resumo != "POBREZA_Abaixo_17")
+
+
+
+
+IP_microrregioes_sumario2[1,1] <- "Nº de microrregiões nas quais o rendimento diminuiu" 
+IP_microrregioes_sumario2[2,1] <- "Porcentagem de microrregiões nas quais o rendimento diminuiu"
+IP_microrregioes_sumario2[3,1] <- "Nº de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[4,1] <- "Porcentagem de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[5,1] <- "Nº de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[6,1] <- "Porcentagem de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[7,1] <- "Nº de microrregiões nas quais o nº de residentes em zona rural diminuiu"
+IP_microrregioes_sumario2[8,1] <- "Porcentagem de microrregiões nas quais o nº de residentes em zona rural diminuiu"
+IP_microrregioes_sumario2[9,1] <- "Nº de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[10,1] <- "Porcentagem de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[11,1] <- "Nº de microrregiões nas quais a renda por moradores da zona rural diminuiu"
+IP_microrregioes_sumario2[12,1] <- "Porcentagem de microrregiões nas quais a renda por moradores da zona rural diminuiu"
+IP_microrregioes_sumario2[13,1] <- "Nº de microrregiões nas quais a renda por morador da zona rural diminuiu"
+IP_microrregioes_sumario2[14,1] <- "Porcentagem de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario2[15,1] <- "Microrregiões abaixo da linha da pobreza em 2006"
+IP_microrregioes_sumario2[16,1] <- "Microrregiões que saíram da pobreza"
+IP_microrregioes_sumario2[17,1] <- "Microrregiões que entraram na pobreza"
+IP_microrregioes_sumario2[18,1] <- "Microrregiões abaixo da linha da pobreza em 2017"
+
+```
+```{r bTABELA_SINTESE_TOTALc2, echo=FALSE, message=FALSE, warning=FALSE}
+
+kbl(IP_microrregioes_sumario2, digits = 2, caption = "", align = "lccccc") %>%
+  kable_paper("basic", full_width = T) %>%
+  column_spec(column = c(2:6), width = "2.6cm") %>%
+  kable_styling(bootstrap_options = "striped") %>%
+  pack_rows("Rendimento", 1, 2) %>%
+  pack_rows("Estabelecimentos", 3, 4) %>%
+  pack_rows("Pessoas ocupadas", 5, 6) %>%
+  pack_rows("Pessoas residentes na zona rural", 7, 8) %>%
+  pack_rows("Área total", 9, 10) %>%
+  pack_rows("Rendimento (Censo Agro) por pessoas residentes na zona rural (Censo Demográfico)", 11, 12) %>%
+  pack_rows("Rendimento por estabelecimento", 13, 14) %>%
+  pack_rows("Mobilidade de renda", 15, 18)
+```
+
+
+```{r bMAPAS_Mobilidade_Pobreza_Rendac, echo=FALSE, message=FALSE, warning=FALSE}
+
+### Mobilidade de rendimentos por ocupados de 2006 para 2017
+
+paleta2 <- c("#5e4fa2", "#9e0142", "#4d4d4d", "#e0e0e0")
+
+CorteBF_residentes <- SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(MOBILI_REND_OCU)) %>%
+  tm_shape() +
+  tm_fill(col = "MOBILI_REND_OCU", 
+          palette = paleta2,
+          title = "Mobil. de R$ por residentes <br> de 2006 para 2017 (BF)",
+          id = "LOCALIZACAO",
+          #n=7
+          #legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "cat", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+CorteBF_residentes
+
+```
+
+<br>
+
+<br>
+
+
+
+
+
+
+
+
+
+# 2. Corte de renda dos ODS
+
+- Para os dados de renda do Censo Agropecuário de 2006: Será considerado como **pobreza extrema** os casos em que a renda por ocupado é inferior a PPC\$3,20 per capita por dia, ou seja, R\$112 no mês, e como **pobreza** os casos em que a renda por ocupado na microrregião é inferior a PPC\$5,50 per capita por dia, ou seja, R\$192 no mês.
+- Para os dados de renda do Censo Agropecuário de 2017: Será considerado como **pobreza extrema** os casos em que a renda por ocupado é inferior a PPC\$3,20 per capita por dia, ou seja, R\$235 no mês, e como **pobreza** os casos em que a renda por ocupado na microrregião é inferior a PPC\$5,50 per capita por dia, ou seja, R\$400 no mês.
+
+## 2.a. R$ dos estab. / ocupados nos estab.
+
+Essa primeira subseção utiliza como parâmetro populacional para o cálculo da renda per capita a renda dos estabelecimentos agropecuários e o número de ocupados nos estabelecimentos (ambos do Censo Agropecuário).
+
+### Dados utilizados
+
+Foram utilizadas três variáveis principais para comparação entre os Censos Agropecuários de 2006 e 2017, sendo elas:
+
+- Rendimentos dos estabelecimentos agropecuários
+	+ Os rendimentos do estabelecimento não consideram rendas obtidas fora do estabelecimento ou rendas de programas e políticas públicas
+- Ocupados nos estabelecimentos agropecuários
+- Número de estabelecimentos agropecuários
+
+<br>
+
+```{r cCOD_Novas colunas, message=FALSE, warning=FALSE, include=FALSE}
+#### CÁLCULO DAS PORCENTAGENS -----
+
+IP_microrregioes_final <- IP_microrregioes %>%
+  mutate(
+    NIVEL = NIVEL,
+    COD = COD,
+    COD_ESTADO = COD_ESTADO,
+    COD_REGIAO = COD_REGIAO,
+    LOCALIZACAO = LOCALIZACAO,
+    DOM00_Tot = DOM00_Tot,
+    DOM00_Urb = DOM00_Urb,
+    DOM00_Rur = DOM00_Rur,
+    POP00_Tot = POP00_Tot,
+    POP00_Urb = POP00_Urb,
+    POP00_Rur = POP00_Rur,
+    DOM10_Tot = DOM10_Tot,
+    DOM10_Urb = DOM10_Urb,
+    DOM10_Rur = DOM10_Rur,
+    POP10_Tot = POP10_Tot,
+    POP10_Urb = POP10_Urb,
+    POP10_Rur = POP10_Rur,
+    
+    
+#### a partir daqui, método para calcular os rendimentos dos estabelecimentos + RENDIMENTOS FORA DO ESTABELECIMENTO (SEM CONSIDERAR RENDAS DE PROGRAMAS E POLÍTICAS) ####
+
+    # R_NEST_T = R_NEST_T_TOT     ,
+    # R_NEST_NAF = R_NEST_T_TOT - R_NEST_AF_TOT     ,
+    # R_NEST_AF = R_NEST_AF_TOT     ,
+    # R_06_NEST_T = R_06_NEST_T     ,
+    # R_06_NEST_NAF = R_06_NEST_NAF     ,
+    # R_06_NEST_AF = R_06_NEST_AF     ,
+    # 
+    # 
+    # R_VALOR_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302) / 12 ,
+    # R_VALOR_NAF = (R_VALOR_T_1 - R_VALOR_AF_1 + R_VALOR_T_2 - R_VALOR_AF_2 + R_VALOR_T_302 - R_VALOR_AF_302) / 12 ,
+    # R_VALOR_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302) / 12 ,
+    # 
+    # 
+    # Rc_06_VALOR_T	=	((R_06_VALOR_T + R_06_VALOROTR_T6) / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    # Rc_06_VALOR_AF	=	((R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12)	*	1,8974051,
+    # Rc_06_VALOR_NAF	=	((R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12)	*	1,8974051,
+    # R_06_VALOR_T = (R_06_VALOR_T + R_06_VALOROTR_T6) / 12   ,
+    # R_06_VALOR_AF = (R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12  ,
+    # R_06_VALOR_NAF = (R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12   ,
+    # 
+    # NEST_T = NEST_T     ,
+    # NEST_NAF = NEST_NAF     ,
+    # NEST_AF = NEST_AF     ,
+    # NEST_06_T = NEST_06_T     ,
+    # NEST_06_NAF = NEST_06_NAF     ,
+    # NEST_06_AF = NEST_06_AF     ,
+    # AREA_T = AREA_T     ,
+    # AREA_NAF = AREA_T - AREA_AF     ,
+    # AREA_AF = AREA_AF     ,
+    # AREA_06_T = AREA_06_T     ,
+    # AREA_06_NAF = AREA_06_NAF     ,
+    # AREA_06_AF = AREA_06_AF     ,
+    # OCU_T = O_T     ,
+    # OCU_NAF = O_T - O_AF     ,
+    # OCU_AF = O_AF     ,
+    # OCU_06_T = OCU_06_T     ,
+    # OCU_06_NAF = OCU_06_Nfam     ,
+    # OCU_06_AF = OCU_06_AF  ,
+    
+
+#### a partir daqui, método para calcular os rendimentos APENAS DOS ESTABELECIMENTOS ####
+    
+    R_NEST_T	=	R_NEST_T_TOT				,
+    R_NEST_NAF	=	R_NEST_T_TOT - R_NEST_AF_TOT				,
+    R_NEST_AF	=	R_NEST_AF_TOT				,
+    R_06_NEST_T	=	R_06_NEST_T				,
+    R_06_NEST_NAF	=	R_06_NEST_NAF				,
+    R_06_NEST_AF	=	R_06_NEST_AF				,
+
+
+    R_VALOR_T	=	(R_VALOR_T_1	+	R_VALOR_T_2) / 12, #como a variável é anual, aqui está sendo dividida por 12 para se ter o valor mensal médio
+    R_VALOR_NAF	=	(R_VALOR_T_1 - R_VALOR_AF_1	+	R_VALOR_T_2 - R_VALOR_AF_2) / 12		,
+    R_VALOR_AF	=	(R_VALOR_AF_1	+	R_VALOR_AF_2) / 12		,
+
+
+
+    Rc_06_VALOR_T	=	(R_06_VALOR_T / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    Rc_06_VALOR_NAF	=	(R_06_VALOR_NAF / 12)	*	1,8974051,
+    Rc_06_VALOR_AF	=	(R_06_VALOR_AF / 12)	*	1,8974051,
+    R_06_VALOR_T	=	(R_06_VALOR_T) / 12				,
+    R_06_VALOR_NAF	=	(R_06_VALOR_NAF) / 12				,
+    R_06_VALOR_AF	=	(R_06_VALOR_AF) / 12				,
+
+
+
+    NEST_T	=	NEST_T				,
+    NEST_NAF	=	NEST_NAF				,
+    NEST_AF	=	NEST_AF				,
+    NEST_06_T	=	NEST_06_T				,
+    NEST_06_NAF	=	NEST_06_NAF				,
+    NEST_06_AF	=	NEST_06_AF				,
+    AREA_T	=	AREA_T				,
+    AREA_NAF	=	AREA_T - AREA_AF				,
+    AREA_AF	=	AREA_AF				,
+    AREA_06_T	=	AREA_06_T				,
+    AREA_06_NAF	=	AREA_06_NAF				,
+    AREA_06_AF	=	AREA_06_AF				,
+    OCU_T	=	O_T				,
+    OCU_NAF	=	O_T - O_AF				,
+    OCU_AF	=	O_AF				,
+    OCU_06_T	=	OCU_06_T				,
+    OCU_06_NAF	=	OCU_06_Nfam				,
+    OCU_06_AF	=	OCU_06_AF	,
+
+    
+    .keep = c("none")
+
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+REND_ESTAB_T	=	(1000	*	R_VALOR_T)	/	NEST_T	,
+REND_ESTAB_NAF	=	(1000	*	R_VALOR_NAF)	/	NEST_NAF	,
+REND_ESTAB_AF	=	(1000	*	R_VALOR_AF)	/	NEST_AF	,
+REND_ESTAB_06_T	=	(1000	*	R_06_VALOR_T)	/	NEST_06_T	,
+REND_ESTAB_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	NEST_06_NAF	,
+REND_ESTAB_06_AF	=	(1000	*	R_06_VALOR_AF)	/	NEST_06_AF , 
+RENDc_ESTAB_06_T	=	(1000	*	Rc_06_VALOR_T)	/	NEST_06_T	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	NEST_06_NAF	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	NEST_06_AF ,  #INFLAÇÃO CORRIGIDA
+
+
+REND_OCU_T	=	(1000	*	R_VALOR_T)	/	OCU_T	,
+REND_OCU_NAF	=	(1000	*	R_VALOR_NAF)	/	OCU_NAF	,
+REND_OCU_AF	=	(1000	*	R_VALOR_AF)	/	OCU_AF	,
+REND_OCU_06_T	=	(1000	*	R_06_VALOR_T)	/	OCU_06_T	,
+REND_OCU_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	OCU_06_NAF	,
+REND_OCU_06_AF	=	(1000	*	R_06_VALOR_AF)	/	OCU_06_AF ,
+
+RENDc_OCU_06_T	=	(1000	*	Rc_06_VALOR_T)	/	OCU_06_T	,
+RENDc_OCU_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	OCU_06_NAF	,
+RENDc_OCU_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	OCU_06_AF
+  
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+
+Dif_NEST_T	=	(	NEST_T	-	NEST_06_T	)	/	NEST_06_T	,
+Dif_NEST_NAF	=	(	NEST_NAF	-	NEST_06_NAF	)	/	NEST_06_NAF	,
+Dif_NEST_AF	=	(	NEST_AF	-	NEST_06_AF	)	/	NEST_06_AF	,
+									
+Dif_OCU_T	=	(	OCU_T	-	OCU_06_T	)	/	OCU_06_T	,
+Dif_OCU_NAF	=	(	OCU_NAF	-	OCU_06_NAF	)	/	OCU_06_NAF	,
+Dif_OCU_AF	=	(	OCU_AF	-	OCU_06_AF	)	/	OCU_06_AF	,
+									
+Dif_REND_OCU_T	=	(	REND_OCU_T	-	REND_OCU_06_T	)	/	REND_OCU_06_T	,
+Dif_REND_OCU_NAF	=	(	REND_OCU_NAF	-	REND_OCU_06_NAF	)	/	REND_OCU_06_NAF	,
+Dif_REND_OCU_AF	=	(	REND_OCU_AF	-	REND_OCU_06_AF	)	/	REND_OCU_06_AF	,
+									
+Dif_REND_ESTAB_T	=	(	REND_ESTAB_T	-	RENDc_ESTAB_06_T	)	/	RENDc_ESTAB_06_T	,
+Dif_REND_ESTAB_NAF	=	(	REND_ESTAB_NAF	-	RENDc_ESTAB_06_NAF	)	/	RENDc_ESTAB_06_NAF	,
+Dif_REND_ESTAB_AF	=	(	REND_ESTAB_AF	-	RENDc_ESTAB_06_AF	)	/	RENDc_ESTAB_06_AF	,
+									
+Dif_AREA_T	=	(	AREA_T	-	AREA_06_T	)	/	AREA_06_T	,
+Dif_AREA_NAF	=	(	AREA_NAF	-	AREA_06_NAF	)	/	AREA_06_NAF	,
+Dif_AREA_AF	=	(	AREA_AF	-	AREA_06_AF	)	/	AREA_06_AF	,
+
+Dif_REND_T	=	(	R_VALOR_T	-	Rc_06_VALOR_T	)	/	Rc_06_VALOR_T	,
+Dif_REND_NAF	=	(	R_VALOR_NAF	-	Rc_06_VALOR_NAF	)	/	Rc_06_VALOR_NAF	,
+Dif_REND_AF	=	(	R_VALOR_AF	-	Rc_06_VALOR_AF	)	/	Rc_06_VALOR_AF	
+
+
+)
+
+is.na(IP_microrregioes_final) <- do.call(cbind,lapply(IP_microrregioes_final, is.nan))
+
+#mobilidade de renda por ocupados total
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU = case_when((REND_OCU_06_T < 192 & REND_OCU_T > 400) ~ "Saiu da pobreza",
+                            (REND_OCU_06_T > 192 & REND_OCU_T < 400) ~ "Entrou na pobreza",
+	            (REND_OCU_06_T < 192 & REND_OCU_T < 400) ~ "Permaneceu na pobreza",
+	            (REND_OCU_06_T > 192 & REND_OCU_T > 400) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU <- factor(IP_microrregioes_final$MOBILI_REND_OCU, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+### Mobilidade de rendimentos por ocupados 2017
+# 1 = Quem estava abaixo em 06 e subiu em 17
+# 2 = Quem estava acima em 06 e desceu em 17
+# 3 = Quem estava abaixo em 06 e permaneceu abaixo em 17
+# 4 = Quem estava acima em 06 e permaneceu acima em 17
+
+
+```
+
+
+```{r cCODmapas PREPARACAO, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+#SHP_Microrregioes <- read_sf("data/shapes/BR_Municipios_2020_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+
+# Juntando o shape e a tabela
+SHP_IP_microrreg <- SHP_Microrregioes %>%
+  left_join(., IP_microrregioes_final, by = "COD")
+
+
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# make some bbox magic
+bbox_new <- st_bbox(SHP_IP_microrreg) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+ bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+ bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
+
+
+##### mapa
+
+# tm_AF_VPdivAREA <- 
+# microrregioes_VPha_shape[!is.na(microrregioes_VPha_shape$VPdivAREA),] %>%
+#   filter(VPdivAREA >= 0) %>%
+#   filter(TIPOLOGIA == "AF") %>%
+#   tm_shape(bbox = bbox_new) +
+#   tm_fill(col = "VPdivAREA", 
+#           title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+#           id = "LOCALIZACAO", palette="BuGn",
+#           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+#           style = "fixed", breaks = c(35, 500, 1500, 3500, 16000)) +
+#   tm_borders(lwd = 0.2) +
+#   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+#   tm_view(view.legend.position = c("right", "bottom")) +
+#   tm_shape(SHP_Estados) +
+#   tm_borders(lwd = 1) 
+
+
+```
+
+
+<br>
+<br>
+
+
+#### Rend. / pessoa ocupada  
+*Rendimentos mensais por pessoa ocupada nos estabelecimentos em 2006 e 2017*
+
+A correção dos valores do Bolsa Família de 2006 para 2017 foi inferior a correção da inflação entre esses anos, portanto aqui foram mantidos os valores originais de cada ano (sem correção da inflação).
+
+Nos mapas abaixo, as duas primeiras classes representam a linha da pobreza extrema e da pobreza, respectivamente.
+
+```{r cMAPAS_LinhaDaPobreza_TOTAIS2006, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+  
+### rendimentos dos estabelecimentos por ocupados 2006 - de 30 a 12mil
+plot_06RENDOCU <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_OCU_06_T)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_06_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed" ,
+          breaks = c(30, 112, 192, 300, 480, 1000, 3000, 5000, 12000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+```{r cMAPAS_LinhaDaPobreza_TOTAIS2017, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+
+
+### rendimentos dos estabelecimentos por ocupados 2017
+plot_17RENDOCU <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%  
+  filter(!is.na(REND_OCU_T)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_OCU_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "fixed",
+          breaks = c(50, 235, 400, 600, 1000, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(plot_06RENDOCU, plot_17RENDOCU,
+             sync = TRUE,
+             nrow = 1)
+
+```
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+É importante notar aqui que os valores de gradação de cores nos mapas não foram padronizados. Isso porque as primeiras duas classes de cada mapa representam, respectivamente, as microrregiões enquadradas na pobreza extrema (até R\$112 em 2006 e até R\$235 em 2017) e as microrregiões enquadradas na pobreza (até R\$192 em 2006 e até R\$400 em 2017).
+
+<br>
+
+
+
+<br>
+
+### Mobilidade de renda - Ocupados (ODS)
+
+**Mobilidade de rendimentos por ocupados de 2006 para 2017 (Bolsa Família)**
+
+*Tabela síntese*
+
+```{r cTABELA_SINTESE_TOTAL, echo=FALSE, message=FALSE, warning=FALSE}
+
+IP_microrregioes_sumario2 <- IP_microrregioes_final %>%
+  group_by(COD_REGIAO) %>%
+  summarise(REN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])),
+            pctREN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])) / length(R_VALOR_T),
+
+            ESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])),
+            pctESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])) / length(NEST_T),
+            
+            OCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))),
+            pctOCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))/ length(OCU_T)),
+            
+            AREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])),
+            pctAREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])) / length(AREA_T),
+            
+            REN_OCU_DIM = length(na.omit(REND_OCU_T[REND_OCU_T < RENDc_OCU_06_T])),
+            pctREN_OCU_DIM = length(na.omit(REND_OCU_T[REND_OCU_T < RENDc_OCU_06_T])) / length(REND_OCU_T),
+            
+            REN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])),
+            pctREN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])) / length(REND_ESTAB_T),
+            
+            
+            POBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])),
+            pctPOBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])) / length(REND_OCU_06_T),
+            
+            POBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])),
+            pctPOBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])),
+            pctPOBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])),
+            pctPOBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])) / length(REND_OCU_T)
+            
+            ) %>%
+  
+  mutate(pctREN_DIM = scales::percent(pctREN_DIM, na.rm = TRUE),
+         pctESTAB_DIM = scales::percent(pctESTAB_DIM, na.rm = TRUE),
+         pctOCUP_DIM = scales::percent(pctOCUP_DIM, na.rm = TRUE),
+         pctAREA_DIM = scales::percent(pctAREA_DIM, na.rm = TRUE),
+         pctREN_OCU_DIM = scales::percent(pctREN_OCU_DIM, na.rm = TRUE),
+         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE),
+         
+         pctPOBREZA_Abaixo_06 = scales::percent(pctPOBREZA_Abaixo_06, na.rm = TRUE),
+         pctPOBREZA_Sairam = scales::percent(pctPOBREZA_Sairam, na.rm = TRUE),
+         pctPOBREZA_Entraram = scales::percent(pctPOBREZA_Entraram, na.rm = TRUE),
+         pctPOBREZA_Abaixo_17 = scales::percent(pctPOBREZA_Abaixo_17, na.rm = TRUE),
+         
+         
+         pctPOBREZA_Abaixo_06 = paste0(POBREZA_Abaixo_06, " (", pctPOBREZA_Abaixo_06, ")"),
+         pctPOBREZA_Sairam = paste0(POBREZA_Sairam, " (", pctPOBREZA_Sairam, ")"),
+         pctPOBREZA_Entraram = paste0(POBREZA_Entraram, " (", pctPOBREZA_Entraram, ")"),
+         pctPOBREZA_Abaixo_17 = paste0(POBREZA_Abaixo_17, " (", pctPOBREZA_Abaixo_17, ")")
+         
+         )
+
+
+IP_microrregioes_sumario2 <- as.data.frame(t(IP_microrregioes_sumario2)) %>%
+  rename("Centro-Oeste" = 1,
+         "Nordeste" = 2,
+         "Norte" = 3,
+         "Sudeste" = 4,
+         "Sul" = 5) %>%
+  slice(-1) %>%
+  rownames_to_column(var = "Resumo") 
+
+IP_microrregioes_sumario2 <- IP_microrregioes_sumario2 %>%
+  filter(Resumo != "POBREZA_Abaixo_06") %>% 
+  filter(Resumo != "POBREZA_Sairam") %>% 
+  filter(Resumo != "POBREZA_Entraram") %>% 
+  filter(Resumo != "POBREZA_Abaixo_17")
+
+
+
+
+IP_microrregioes_sumario2[1,1] <- "Nº de microrregiões nas quais o rendimento diminuiu" 
+IP_microrregioes_sumario2[2,1] <- "Porcentagem de microrregiões nas quais o rendimento diminuiu"
+IP_microrregioes_sumario2[3,1] <- "Nº de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[4,1] <- "Porcentagem de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[5,1] <- "Nº de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[6,1] <- "Porcentagem de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[7,1] <- "Nº de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[8,1] <- "Porcentagem de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[9,1] <- "Nº de microrregiões nas quais a renda por ocupado diminuiu"
+IP_microrregioes_sumario2[10,1] <- "Porcentagem de microrregiões nas quais a renda por ocupado diminuiu"
+IP_microrregioes_sumario2[11,1] <- "Nº de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario2[12,1] <- "Porcentagem de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario2[13,1] <- "Microrregiões abaixo da linha da pobreza em 2006"
+IP_microrregioes_sumario2[14,1] <- "Microrregiões que saíram da pobreza"
+IP_microrregioes_sumario2[15,1] <- "Microrregiões que entraram na pobreza"
+IP_microrregioes_sumario2[16,1] <- "Microrregiões abaixo da linha da pobreza em 2017"
+
+```
+```{r cTABELA_SINTESE_TOTALv2, echo=FALSE, message=FALSE, warning=FALSE}
+kbl(IP_microrregioes_sumario2, digits = 2, caption = "", align = "lccccc") %>%
+  kable_paper("basic", full_width = T) %>%
+  column_spec(column = c(2:6), width = "2.6cm") %>%
+  kable_styling(bootstrap_options = "striped") %>%
+  pack_rows("Rendimento", 1, 2) %>%
+  pack_rows("Estabelecimentos", 3, 4) %>%
+  pack_rows("Pessoas ocupadas", 5, 6) %>%
+  pack_rows("Área total", 7, 8) %>%
+  pack_rows("Rendimento por pessoal ocupado", 9, 10) %>%
+  pack_rows("Rendimento por estabelecimento", 11, 12) %>%
+  pack_rows("Mobilidade de renda", 13, 16)
+```
+
+<br>
+
+
+
+```{r cMAPAS_Mobilidade_Pobreza_Renda, echo=FALSE, message=FALSE, warning=FALSE}
+
+### Mobilidade de rendimentos por ocupados de 2006 para 2017
+
+
+paleta2 <- c("#5e4fa2", "#9e0142", "#4d4d4d", "#e0e0e0")
+
+CorteODS_ocupados <- SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(MOBILI_REND_OCU)) %>%
+  tm_shape() +
+  tm_fill(col = "MOBILI_REND_OCU", 
+          palette = paleta2,
+          title = "Mobil. de R$ por ocupados <br> de 2006 para 2017 (ODS)",
+          id = "LOCALIZACAO",
+          #n=7
+          #legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "cat", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+CorteODS_ocupados
+
+```
+
+<br>
+
+
+<br>
+<br>
+<br>
+
+
+
+## 2.b. R$ dos estab. / pop. residente na zona rural
+
+Essa segunda subseção utiliza como parâmetro para o cálculo da renda per capita a renda dos estabelecimentos agropecuários (Censo Agropecuário 2006 e 2017) e moradores em domicílios das áreas rurais do país (Censo Demográfico 2000 e 2010). 
+
+
+### Dados utilizados
+
+Foram utilizadas duas variáveis principais para comparação entre os Censos Agropecuários de 2006 e 2017, sendo elas:
+
+- Rendimentos dos estabelecimentos agropecuários
+	+ Os rendimentos do estabelecimento não consideram rendas obtidas fora do estabelecimento ou rendas de programas e políticas públicas
+- População residente em domicílios particulares permanentes nas zonas rurais do país (Censo Demográfico 2000 e 2010). 
+- Número de estabelecimentos agropecuários
+
+
+
+```{r cCOD_Novas colunas USANDO DADOS DO CENSODEMOGRAFICOc, message=FALSE, warning=FALSE, include=FALSE}
+
+# usando dados DO CENSO DEMOGRÁFICO 
+
+#### CÁLCULO DAS PORCENTAGENS -----
+
+#IP_microrregioes_final <- IP_municipios %>%
+IP_microrregioes_final <- IP_microrregioes %>%
+  mutate(
+    NIVEL = NIVEL,
+    COD = COD,
+    COD_ESTADO = COD_ESTADO,
+    COD_REGIAO = COD_REGIAO,
+    LOCALIZACAO = LOCALIZACAO,
+    DOM00_Tot = DOM00_Tot,
+    DOM00_Urb = DOM00_Urb,
+    DOM00_Rur = DOM00_Rur,
+    POP00_Tot = POP00_Tot,
+    POP00_Urb = POP00_Urb,
+    POP00_Rur = POP00_Rur,
+    DOM10_Tot = DOM10_Tot,
+    DOM10_Urb = DOM10_Urb,
+    DOM10_Rur = DOM10_Rur,
+    POP10_Tot = POP10_Tot,
+    POP10_Urb = POP10_Urb,
+    POP10_Rur = POP10_Rur,
+    
+    
+##a partir daqui, método para calcular os rendimentos dos estabelecimentos + RENDIMENTOS FORA DO ESTABELECIMENTO (SEM CONSIDERAR RENDAS DE PROGRAMAS E POLÍTICAS)
+
+    R_NEST_T = R_NEST_T_TOT     ,
+    R_NEST_NAF = R_NEST_T_TOT - R_NEST_AF_TOT     ,
+    R_NEST_AF = R_NEST_AF_TOT     ,
+    R_06_NEST_T = R_06_NEST_T     ,
+    R_06_NEST_NAF = R_06_NEST_NAF     ,
+    R_06_NEST_AF = R_06_NEST_AF     ,
+
+
+    R_VALOR_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302) / 12 ,
+    R_VALOR_NAF = (R_VALOR_T_1 - R_VALOR_AF_1 + R_VALOR_T_2 - R_VALOR_AF_2 + R_VALOR_T_302 - R_VALOR_AF_302) / 12 ,
+    R_VALOR_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302) / 12 ,
+
+
+    Rc_06_VALOR_T	=	((R_06_VALOR_T + R_06_VALOROTR_T6) / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    Rc_06_VALOR_AF	=	((R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12)	*	1,8974051,
+    Rc_06_VALOR_NAF	=	((R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12)	*	1,8974051,
+    R_06_VALOR_T = (R_06_VALOR_T + R_06_VALOROTR_T6) / 12   ,
+    R_06_VALOR_AF = (R_06_VALOR_AF + R_06_VALOROTR_AF6) / 12  ,
+    R_06_VALOR_NAF = (R_06_VALOR_NAF + R_06_VALOROTR_NAF6) / 12   ,
+
+    NEST_T = NEST_T     ,
+    NEST_NAF = NEST_NAF     ,
+    NEST_AF = NEST_AF     ,
+    NEST_06_T = NEST_06_T     ,
+    NEST_06_NAF = NEST_06_NAF     ,
+    NEST_06_AF = NEST_06_AF     ,
+    AREA_T = AREA_T     ,
+    AREA_NAF = AREA_T - AREA_AF     ,
+    AREA_AF = AREA_AF     ,
+    AREA_06_T = AREA_06_T     ,
+    AREA_06_NAF = AREA_06_NAF     ,
+    AREA_06_AF = AREA_06_AF     ,
+    OCU_T = O_T     ,
+    OCU_NAF = O_T - O_AF     ,
+    OCU_AF = O_AF     ,
+    OCU_06_T = OCU_06_T     ,
+    OCU_06_NAF = OCU_06_Nfam     ,
+    OCU_06_AF = OCU_06_AF  ,
+
+
+##a partir daqui, método para calcular os rendimentos APENAS DOS ESTABELECIMENTOS
+    
+    # R_NEST_T	=	R_NEST_T_TOT				,
+    # R_NEST_NAF	=	R_NEST_T_TOT - R_NEST_AF_TOT				,
+    # R_NEST_AF	=	R_NEST_AF_TOT				,
+    # R_06_NEST_T	=	R_06_NEST_T				,
+    # R_06_NEST_NAF	=	R_06_NEST_NAF				,
+    # R_06_NEST_AF	=	R_06_NEST_AF				,
+    # 
+    # 
+    # R_VALOR_T	=	(R_VALOR_T_1	+	R_VALOR_T_2) / 12, #como a variável é anual, aqui está sendo dividida por 12 para se ter o valor mensal médio
+    # R_VALOR_NAF	=	(R_VALOR_T_1 - R_VALOR_AF_1	+	R_VALOR_T_2 - R_VALOR_AF_2) / 12		,
+    # R_VALOR_AF	=	(R_VALOR_AF_1	+	R_VALOR_AF_2) / 12		,
+    # 
+    # 
+    # 
+    # Rc_06_VALOR_T	=	(R_06_VALOR_T / 12)	*	1,8974051,  #Para corrigir inflação multiplicar tudo por 1,89740510
+    # Rc_06_VALOR_NAF	=	(R_06_VALOR_NAF / 12)	*	1,8974051,
+    # Rc_06_VALOR_AF	=	(R_06_VALOR_AF / 12)	*	1,8974051,
+    # R_06_VALOR_T	=	(R_06_VALOR_T) / 12				,
+    # R_06_VALOR_NAF	=	(R_06_VALOR_NAF) / 12				,
+    # R_06_VALOR_AF	=	(R_06_VALOR_AF) / 12				,
+    # 
+    # 
+    # 
+    # NEST_T	=	NEST_T				,
+    # NEST_NAF	=	NEST_NAF				,
+    # NEST_AF	=	NEST_AF				,
+    # NEST_06_T	=	NEST_06_T				,
+    # NEST_06_NAF	=	NEST_06_NAF				,
+    # NEST_06_AF	=	NEST_06_AF				,
+    # AREA_T	=	AREA_T				,
+    # AREA_NAF	=	AREA_T - AREA_AF				,
+    # AREA_AF	=	AREA_AF				,
+    # AREA_06_T	=	AREA_06_T				,
+    # AREA_06_NAF	=	AREA_06_NAF				,
+    # AREA_06_AF	=	AREA_06_AF				,
+    # OCU_T	=	OCU_T				,
+    # OCU_NAF	=	OCU_T - O_AF				,
+    # OCU_AF	=	OCU_AF				,
+    # OCU_06_T	=	OCU_06_T				,
+    # OCU_06_NAF	=	OCU_06_Nfam				,
+    # OCU_06_AF	=	OCU_06_AF	,
+
+    
+    .keep = c("none")
+
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+     
+Dif_Morad_OCU_0006_T = (POP00_Rur - OCU_06_T),
+Dif_Domic_Estab_0006_T = (DOM00_Rur - NEST_06_T),
+     
+Dif_Morad_OCU_1017_T = (POP10_Rur - OCU_06_T),
+Dif_Domic_Estab_1017_T = (DOM10_Rur - NEST_T),
+  
+  
+REND_ESTAB_T	=	(1000	*	R_VALOR_T)	/	NEST_T	,
+REND_ESTAB_NAF	=	(1000	*	R_VALOR_NAF)	/	NEST_NAF	,
+REND_ESTAB_AF	=	(1000	*	R_VALOR_AF)	/	NEST_AF	,
+REND_ESTAB_06_T	=	(1000	*	R_06_VALOR_T)	/	NEST_06_T	,
+REND_ESTAB_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	NEST_06_NAF	,
+REND_ESTAB_06_AF	=	(1000	*	R_06_VALOR_AF)	/	NEST_06_AF , 
+RENDc_ESTAB_06_T	=	(1000	*	Rc_06_VALOR_T)	/	NEST_06_T	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	NEST_06_NAF	, #INFLAÇÃO CORRIGIDA
+RENDc_ESTAB_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	NEST_06_AF ,  #INFLAÇÃO CORRIGIDA
+
+
+REND_OCU_T	=	(1000	*	R_VALOR_T)	/	OCU_T	,
+REND_OCU_NAF	=	(1000	*	R_VALOR_NAF)	/	OCU_NAF	,
+REND_OCU_AF	=	(1000	*	R_VALOR_AF)	/	OCU_AF	,
+REND_OCU_06_T	=	(1000	*	R_06_VALOR_T)	/	OCU_06_T	,
+REND_OCU_06_NAF	=	(1000	*	R_06_VALOR_NAF)	/	OCU_06_NAF	,
+REND_OCU_06_AF	=	(1000	*	R_06_VALOR_AF)	/	OCU_06_AF,
+
+RENDc_OCU_06_T	=	(1000	*	Rc_06_VALOR_T)	/	OCU_06_T	,
+RENDc_OCU_06_NAF	=	(1000	*	Rc_06_VALOR_NAF)	/	OCU_06_NAF	,
+RENDc_OCU_06_AF	=	(1000	*	Rc_06_VALOR_AF)	/	OCU_06_AF,
+
+REND_PES_0006_T = (1000	*	Rc_06_VALOR_T)	/	POP00_Rur ,
+REND_PES_1017_T = (1000	*	R_VALOR_T)	/	 POP10_Rur
+  
+  )
+
+
+IP_microrregioes_final <- IP_microrregioes_final %>%
+   mutate(
+
+Dif_NEST_T	=	(	NEST_T	-	NEST_06_T	)	/	NEST_06_T	,
+Dif_NEST_NAF	=	(	NEST_NAF	-	NEST_06_NAF	)	/	NEST_06_NAF	,
+Dif_NEST_AF	=	(	NEST_AF	-	NEST_06_AF	)	/	NEST_06_AF	,
+									
+Dif_OCU_T	=	(	OCU_T	-	OCU_06_T	)	/	OCU_06_T	,
+Dif_OCU_NAF	=	(	OCU_NAF	-	OCU_06_NAF	)	/	OCU_06_NAF	,
+Dif_OCU_AF	=	(	OCU_AF	-	OCU_06_AF	)	/	OCU_06_AF	,
+									
+Dif_REND_OCU_T	=	(	REND_OCU_T	-	REND_OCU_06_T	)	/	REND_OCU_06_T	,
+Dif_REND_OCU_NAF	=	(	REND_OCU_NAF	-	REND_OCU_06_NAF	)	/	REND_OCU_06_NAF	,
+Dif_REND_OCU_AF	=	(	REND_OCU_AF	-	REND_OCU_06_AF	)	/	REND_OCU_06_AF	,
+									
+Dif_REND_ESTAB_T	=	(	REND_ESTAB_T	-	RENDc_ESTAB_06_T	)	/	RENDc_ESTAB_06_T	,
+Dif_REND_ESTAB_NAF	=	(	REND_ESTAB_NAF	-	RENDc_ESTAB_06_NAF	)	/	RENDc_ESTAB_06_NAF	,
+Dif_REND_ESTAB_AF	=	(	REND_ESTAB_AF	-	RENDc_ESTAB_06_AF	)	/	RENDc_ESTAB_06_AF	,
+									
+Dif_AREA_T	=	(	AREA_T	-	AREA_06_T	)	/	AREA_06_T	,
+Dif_AREA_NAF	=	(	AREA_NAF	-	AREA_06_NAF	)	/	AREA_06_NAF	,
+Dif_AREA_AF	=	(	AREA_AF	-	AREA_06_AF	)	/	AREA_06_AF	,
+
+Dif_REND_T	=	(	R_VALOR_T	-	Rc_06_VALOR_T	)	/	Rc_06_VALOR_T	,
+Dif_REND_NAF	=	(	R_VALOR_NAF	-	Rc_06_VALOR_NAF	)	/	Rc_06_VALOR_NAF	,
+Dif_REND_AF	=	(	R_VALOR_AF	-	Rc_06_VALOR_AF	)	/	Rc_06_VALOR_AF,
+
+Dif_POP_T = ((POP10_Rur	-	POP00_Rur) / POP00_Rur),
+Dif_REND_POP_T = (REND_PES_1017_T	-	REND_PES_0006_T) / REND_OCU_06_T
+
+)
+
+is.na(IP_microrregioes_final) <- do.call(cbind,lapply(IP_microrregioes_final, is.nan))
+
+#mobilidade de renda por ocupados total
+IP_microrregioes_final <- IP_microrregioes_final %>%
+  mutate(
+    MOBILI_REND_OCU = case_when((REND_PES_0006_T < 192 & REND_PES_1017_T > 400) ~ "Saiu da pobreza",
+                            (REND_PES_0006_T > 192 & REND_PES_1017_T < 400) ~ "Entrou na pobreza",
+	            (REND_PES_0006_T < 192 & REND_PES_1017_T < 400) ~ "Permaneceu na pobreza",
+	            (REND_PES_0006_T > 192 & REND_PES_1017_T > 400) ~ "Permaneceu acima da pobreza")
+  ) 
+
+IP_microrregioes_final$MOBILI_REND_OCU <- factor(IP_microrregioes_final$MOBILI_REND_OCU, levels = c("Saiu da pobreza",
+                                                                                                    "Entrou na pobreza",
+                                                                                                    "Permaneceu na pobreza",
+                                                                                                    "Permaneceu acima da pobreza"
+                                                                                                    
+                                                                                                    ))
+
+
+
+### Mobilidade de rendimentos por ocupados 2017
+# 1 = Quem estava abaixo em 06 e subiu em 17
+# 2 = Quem estava acima em 06 e desceu em 17
+# 3 = Quem estava abaixo em 06 e permaneceu abaixo em 17
+# 4 = Quem estava acima em 06 e permaneceu acima em 17
+
+
+```
+
+```{r cCODmapas PREPARACAOc, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+#SHP_Microrregioes <- read_sf("data/shapes/BR_Municipios_2020_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+
+# Juntando o shape e a tabela
+SHP_IP_microrreg <- SHP_Microrregioes %>%
+  left_join(., IP_microrregioes_final, by = "COD")
+
+
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# make some bbox magic
+bbox_new <- st_bbox(SHP_IP_microrreg) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+ bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+# bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+ bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+#bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
+
+
+##### mapa
+
+# tm_AF_VPdivAREA <- 
+# microrregioes_VPha_shape[!is.na(microrregioes_VPha_shape$VPdivAREA),] %>%
+#   filter(VPdivAREA >= 0) %>%
+#   filter(TIPOLOGIA == "AF") %>%
+#   tm_shape(bbox = bbox_new) +
+#   tm_fill(col = "VPdivAREA", 
+#           title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
+#           id = "LOCALIZACAO", palette="BuGn",
+#           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
+#           style = "fixed", breaks = c(35, 500, 1500, 3500, 16000)) +
+#   tm_borders(lwd = 0.2) +
+#   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+#   tm_view(view.legend.position = c("right", "bottom")) +
+#   tm_shape(SHP_Estados) +
+#   tm_borders(lwd = 1) 
+
+
+```
+
+
+<br>
+
+Para ter um parâmetro da diferença entre o número de pessoas residentes nas zonas rurais e o número de ocupados nos estabelecimentos, observa-se a tabela abaixo. Nela, é possível notar que a diferença entre os dados de ocupados e os dados de moradores de áreas rurais não é tão grande, o que explica os resultados da tabela anterior serem muito similares aos da tabela da primeira análise.
+
+```{r c,echo=FALSE, message=FALSE, warning=FALSE}
+IP_microrregioes %>%
+  group_by(COD_REGIAO) %>%
+  select(POP00_Rur, POP10_Rur, OCU_06_T, O_T, COD_REGIAO) %>%
+  summarise(prop1 = paste0("+", round(mean(((POP00_Rur - OCU_06_T)/ OCU_06_T), na.rm = TRUE), 2), "%"),
+            prop2 = paste0("+", round(mean(((POP10_Rur - O_T)/ O_T), na.rm = TRUE), 2), "%")) %>%
+  
+
+datatable(., 
+          options = list(pageLength = 5, dom = 't', 
+                         columnDefs = list(list(className = 'dt-center', targets = 0:2))),
+          rownames = FALSE,
+          colnames = c("Região", "Média do aumento percentual de pessoas: de ocupados para residentes em áreas rurais (2000 e 2006)", "Média do aumento percentual de pessoas: de ocupados para residentes em áreas rurais (2010 e 2017)") 
+                       )
+```
+
+
+<br>
+
+
+#### Rend. / residente em zona rural
+Rendimentos mensais por pessoa moradora em zona rural em 2006/2000 e 2017/2010 
+
+A correção dos valores do Bolsa Família de 2006 para 2017 foi inferior a correção da inflação entre esses anos, portanto aqui foram mantidos os valores originais de cada ano (sem correção da inflação).
+
+Nos mapas abaixo, as duas primeiras classes representam a linha da pobreza extrema e da pobreza, respectivamente.
+
+
+```{r cMAPAS_LinhaDaPobreza_TOTAIS2006c, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+  
+### rendimentos dos estabelecimentos por ocupados 2006 - de 30 a 12mil
+plot_06RENDOCU_3ana <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(REND_PES_0006_T)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_PES_0006_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2006", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+
+          style = "fixed", breaks = c(6, 60, 120, 240, 480, 1000, 3000, 5000, 43000)
+          ) +
+  #tm_layout(aes.palette = list(seq = "RdYlGn")) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+
+```{r cMAPAS_LinhaDaPobreza_TOTAIS2017c, echo=FALSE, message=FALSE, warning=FALSE}
+paleta1 <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#c7eae5", "#80cdc1", "#35978f", "#01665e")
+
+
+### rendimentos dos estabelecimentos por ocupados 2017
+plot_17RENDOCU_3ana <-
+SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  tm_shape() +
+  tm_fill(col = "REND_PES_1017_T", palette = paleta1,
+          title = "Rendimentos mensais por<br>pessoa ocupada - 2017", 
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+
+          style = "fixed", breaks = c(6, 85, 170, 340, 680, 1500, 5000, 10000, 43000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(plot_06RENDOCU_3ana, plot_17RENDOCU_3ana,
+             sync = TRUE,
+             nrow = 1)
+
+```
+
+<br>
+<br>
+
+
+<br>
+
+
+### Mobilidade de renda - Residentes (ODS)
+
+**Mobilidade de rendimentos por população residente em áreas rurais de 2006 para 2017 (Critério ODS)**
+
+*Tabela síntese*
+
+```{r cTABELA_SINTESE_TOTALc, echo=FALSE, message=FALSE, warning=FALSE}
+
+IP_microrregioes_sumario2 <- IP_microrregioes_final %>%
+  group_by(COD_REGIAO) %>%
+  summarise(REN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])),
+            pctREN_DIM = length(na.omit(R_VALOR_T[R_VALOR_T < Rc_06_VALOR_T])) / length(R_VALOR_T),
+
+            ESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])),
+            pctESTAB_DIM = length(na.omit(NEST_T[NEST_T < NEST_06_T])) / length(NEST_T),
+            
+            OCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))),
+            pctOCUP_DIM = (length(na.omit(OCU_T[OCU_T < OCU_06_T]))/ length(OCU_T)),
+            
+            POP_DIM = (length(na.omit(POP10_Rur[POP10_Rur < POP00_Rur]))),
+            pctPOP_DIM = (length(na.omit(POP10_Rur[POP10_Rur < POP00_Rur])) / length(POP10_Rur)),
+            
+            AREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])),
+            pctAREA_DIM = length(na.omit(AREA_T[AREA_T < AREA_06_T])) / length(AREA_T),
+            
+            REN_PES_DIM = length(na.omit(REND_PES_1017_T[REND_PES_1017_T < REND_PES_0006_T])),
+            pctREN_OCU_DIM = length(na.omit(REND_PES_1017_T[REND_PES_1017_T < REND_PES_0006_T])) / length(REND_PES_1017_T),
+            
+            REN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])),
+            pctREN_ESTAB_DIM = length(na.omit(REND_ESTAB_T[REND_ESTAB_T < RENDc_ESTAB_06_T])) / length(REND_ESTAB_T),
+            
+            
+            POBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])),
+            pctPOBREZA_Abaixo_06 = length(na.omit(REND_OCU_06_T[REND_OCU_06_T < 120])) / length(REND_OCU_06_T),
+            
+            POBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])),
+            pctPOBREZA_Sairam = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Saiu da pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])),
+            pctPOBREZA_Entraram = length(na.omit(MOBILI_REND_OCU[MOBILI_REND_OCU == "Entrou na pobreza"])) / length(MOBILI_REND_OCU),
+            
+            POBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])),
+            pctPOBREZA_Abaixo_17 = length(na.omit(REND_OCU_T[REND_OCU_T < 170])) / length(REND_OCU_T)
+            
+            ) %>%
+  
+  mutate(pctREN_DIM = scales::percent(pctREN_DIM, na.rm = TRUE),
+         pctESTAB_DIM = scales::percent(pctESTAB_DIM, na.rm = TRUE),
+         pctOCUP_DIM = scales::percent(pctOCUP_DIM, na.rm = TRUE),
+         pctPOP_DIM = scales::percent(pctPOP_DIM, na.rm = TRUE),
+         pctAREA_DIM = scales::percent(pctAREA_DIM, na.rm = TRUE),
+         pctREN_OCU_DIM = scales::percent(pctREN_OCU_DIM, na.rm = TRUE),
+         pctREN_ESTAB_DIM = scales::percent(pctREN_ESTAB_DIM, na.rm = TRUE),
+         
+         pctPOBREZA_Abaixo_06 = scales::percent(pctPOBREZA_Abaixo_06, na.rm = TRUE),
+         pctPOBREZA_Sairam = scales::percent(pctPOBREZA_Sairam, na.rm = TRUE),
+         pctPOBREZA_Entraram = scales::percent(pctPOBREZA_Entraram, na.rm = TRUE),
+         pctPOBREZA_Abaixo_17 = scales::percent(pctPOBREZA_Abaixo_17, na.rm = TRUE),
+         
+         
+         pctPOBREZA_Abaixo_06 = paste0(POBREZA_Abaixo_06, " (", pctPOBREZA_Abaixo_06, ")"),
+         pctPOBREZA_Sairam = paste0(POBREZA_Sairam, " (", pctPOBREZA_Sairam, ")"),
+         pctPOBREZA_Entraram = paste0(POBREZA_Entraram, " (", pctPOBREZA_Entraram, ")"),
+         pctPOBREZA_Abaixo_17 = paste0(POBREZA_Abaixo_17, " (", pctPOBREZA_Abaixo_17, ")")
+         
+         )
+
+
+IP_microrregioes_sumario2 <- as.data.frame(t(IP_microrregioes_sumario2)) %>%
+  rename("Centro-Oeste" = 1,
+         "Nordeste" = 2,
+         "Norte" = 3,
+         "Sudeste" = 4,
+         "Sul" = 5) %>%
+  slice(-1) %>%
+  rownames_to_column(var = "Resumo") 
+
+IP_microrregioes_sumario2 <- IP_microrregioes_sumario2 %>%
+  filter(Resumo != "POBREZA_Abaixo_06") %>% 
+  filter(Resumo != "POBREZA_Sairam") %>% 
+  filter(Resumo != "POBREZA_Entraram") %>% 
+  filter(Resumo != "POBREZA_Abaixo_17")
+
+
+
+
+IP_microrregioes_sumario2[1,1] <- "Nº de microrregiões nas quais o rendimento diminuiu" 
+IP_microrregioes_sumario2[2,1] <- "Porcentagem de microrregiões nas quais o rendimento diminuiu"
+IP_microrregioes_sumario2[3,1] <- "Nº de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[4,1] <- "Porcentagem de microrregiões nas quais o nº de estab. diminuiu"
+IP_microrregioes_sumario2[5,1] <- "Nº de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[6,1] <- "Porcentagem de microrregiões nas quais o nº de pessoas ocupadas diminuiu"
+IP_microrregioes_sumario2[7,1] <- "Nº de microrregiões nas quais o nº de residentes em zona rural diminuiu"
+IP_microrregioes_sumario2[8,1] <- "Porcentagem de microrregiões nas quais o nº de residentes em zona rural diminuiu"
+IP_microrregioes_sumario2[9,1] <- "Nº de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[10,1] <- "Porcentagem de microrregiões nas quais a área total dos estab. diminuiu"
+IP_microrregioes_sumario2[11,1] <- "Nº de microrregiões nas quais a renda por moradores da zona rural diminuiu"
+IP_microrregioes_sumario2[12,1] <- "Porcentagem de microrregiões nas quais a renda por moradores da zona rural diminuiu"
+IP_microrregioes_sumario2[13,1] <- "Nº de microrregiões nas quais a renda por morador da zona rural diminuiu"
+IP_microrregioes_sumario2[14,1] <- "Porcentagem de microrregiões nas quais a renda por estab. diminuiu"
+IP_microrregioes_sumario2[15,1] <- "Microrregiões abaixo da linha da pobreza em 2006"
+IP_microrregioes_sumario2[16,1] <- "Microrregiões que saíram da pobreza"
+IP_microrregioes_sumario2[17,1] <- "Microrregiões que entraram na pobreza"
+IP_microrregioes_sumario2[18,1] <- "Microrregiões abaixo da linha da pobreza em 2017"
+
+```
+```{r cTABELA_SINTESE_TOTALc2, echo=FALSE, message=FALSE, warning=FALSE}
+
+kbl(IP_microrregioes_sumario2, digits = 2, caption = "", align = "lccccc") %>%
+  kable_paper("basic", full_width = T) %>%
+  column_spec(column = c(2:6), width = "2.6cm") %>%
+  kable_styling(bootstrap_options = "striped") %>%
+  pack_rows("Rendimento", 1, 2) %>%
+  pack_rows("Estabelecimentos", 3, 4) %>%
+  pack_rows("Pessoas ocupadas", 5, 6) %>%
+  pack_rows("Pessoas residentes na zona rural", 7, 8) %>%
+  pack_rows("Área total", 9, 10) %>%
+  pack_rows("Rendimento (Censo Agro) por pessoas residentes na zona rural (Censo Demográfico)", 11, 12) %>%
+  pack_rows("Rendimento por estabelecimento", 13, 14) %>%
+  pack_rows("Mobilidade de renda", 15, 18)
+```
+
+
+```{r cMAPAS_Mobilidade_Pobreza_Rendac, echo=FALSE, message=FALSE, warning=FALSE}
+
+### Mobilidade de rendimentos por residentes de 2006 para 2017
+
+paleta2 <- c("#5e4fa2", "#9e0142", "#4d4d4d", "#e0e0e0")
+
+CorteODS_residentes <- SHP_IP_microrreg %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(MOBILI_REND_OCU)) %>%
+  tm_shape() +
+  tm_fill(col = "MOBILI_REND_OCU", 
+          palette = paleta2,
+          title = "Mobil. de R$ por residentes <br> de 2006 para 2017 (ODS)",
+          id = "LOCALIZACAO",
+          #n=7
+          #legend.format=list(fun=function(x) paste0("R$", formatC(x, digits=0, big.mark = ".", format="f"))),
+          style = "cat", 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+CorteODS_residentes
+
+```
+
+<br>
+
+
+<br>
+
+
+# Comparação
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+CENSODEM_10 <- read_excel("data/tabelas/CensoDemografico/CensoDem_2010_3216.xlsx", na = "X") 
+CENSODEM_10$COD[CENSODEM_10$NIVEL == "BR"] <- 000
+CENSODEM_10 <- CENSODEM_10 %>%
+  select(c(COD, POP10_Rur))
+
+
+
+
+# CORRESPONDER MUNICÍPIO E MICRORREGIÃO
+corresp <- read_delim("data/tabelas/CORRESPmun_micro/TabelaCorrespondencia_MUN_MICRO.csv", 
+                      ";", escape_double = FALSE, locale = locale(encoding = "WINDOWS-1252"))
+
+CADUNICO_familia <- read_delim("data/tabelas/CADUNICO/base_amostra_familia_201712_20190131.csv",
+    ";", escape_double = FALSE, col_types = cols(dat_alteracao_fam = col_date(format = "%Y-%m-%d")),
+    trim_ws = TRUE)
+
+
+CADUNICO_familia2 <- CADUNICO_familia %>%
+  filter(cod_local_domic_fam == 2) %>% #apenas rural
+  filter(marc_pbf == 1) %>% #beneficiários do Bolsa Familia
+  group_by(cd_ibge) %>%
+  summarise(NumPessoasBF = sum(qtde_pessoas)) %>%
+  left_join(., corresp, by = c("cd_ibge" = "Código Município Completo")) %>%
+  group_by(COD_MICRO) %>%
+  summarise(NumPessoasBF = sum(NumPessoasBF)) %>%
+  mutate(COD_MICRO = as.character(COD_MICRO))
+
+
+CADUNICO_POP <- CADUNICO_familia2 %>%
+  left_join(., CENSODEM_10, by = c("COD_MICRO" = "COD")) %>%
+  mutate(pct_POPrur_BF = (NumPessoasBF / POP10_Rur)) # Cálculo da porcentagem da população beneficiária do BF
+
+
+
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+#SHP_Microrregioes <- read_sf("data/shapes/BR_Municipios_2020_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+
+
+# Juntando o shape e a tabela
+SHP_CADUNICO <- SHP_Microrregioes %>%
+  left_join(., CADUNICO_POP, by = c("COD" = "COD_MICRO"))
+
+ 
+```
+
+
+**Porcentagem de residentes de áreas rurais da microrregião que são beneficiários do bolsa família (2017)**
+
+```{r cMAPAS_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+
+### Mobilidade de rendimentos por residentes de 2006 para 2017
+
+
+SHP_CADUNICO %>%
+  filter(!is.na(pct_POPrur_BF)) %>%
+  tm_shape() +
+  tm_fill(col = "pct_POPrur_BF", 
+          palette = "-inferno",
+          title = "% de residentes na zona<br>rural que recebem BF (2017)",
+          id = "LOCALIZACAO",
+          #n=7
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fisher" 
+          #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+
+```
+
+
+**Comparação entre os dois métodos de corte de renda**
+
+*Rendimentos do censo agro / ocupados nos estabelecimentos agropecuários*
+```{r 1comparacao_mapas, echo=FALSE, message=FALSE, warning=FALSE}
+tmap_arrange(CorteBF_ocupados, CorteODS_ocupados, 
+             sync = TRUE,
+             nrow = 1) 
+
+```
+
+
+
+*Rendimentos do censo agro / residentes em áreas rurais*
+```{r 2comparacao_mapas, echo=FALSE, message=FALSE, warning=FALSE}
+tmap_arrange(CorteBF_residentes, CorteODS_residentes, 
+             sync = TRUE,
+             nrow = 1) 
+
+```
+
+
+
