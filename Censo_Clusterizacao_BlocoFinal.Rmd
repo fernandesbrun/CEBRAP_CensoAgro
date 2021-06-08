@@ -18,7 +18,7 @@ library(rmdformats)
 ## Global options
 options(max.print="75")
 opts_chunk$set(echo=FALSE,
-               cache=TRUE,
+               cache=FALSE,
                prompt=FALSE,
                tidy=TRUE,
                comment=NA,
@@ -571,7 +571,8 @@ variaveis_clusterI <- microrregioes_CLI %>%
   
   select(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO,
          AF_prop_NEstab, MP_prop_NEstab, GP_prop_NEstab, 
-         TOT_AREAmedia, AF_AREAmedia, NAF_AREAmedia,
+        TOT_AREAmedia, 
+         AF_AREAmedia, NAF_AREAmedia,
          AF_prop_AREA, MP_prop_AREA, GP_prop_AREA, 
          AF_VPdivAREA, MP_VPdivAREA, GP_VPdivAREA, 
          AF_prop_OCU, MP_prop_OCU, GP_prop_OCU,
@@ -594,7 +595,7 @@ variaveis_clusterI_2 <- variaveis_clusterI %>% remove_rownames %>% column_to_row
 
 
 variaveis_clusterI_3 <- variaveis_clusterI_2 %>%
-  select(5:26) 
+  select(5:last_col()) 
 #%>%
   # rename(
   #   "Estab. - % de estab. (AF)" = AF_prop_NEstab,
@@ -870,7 +871,7 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 **Cluster 1**
 
 - Estabelecimentos
-	+ Segunda menor média de estabelecimentos da AF, mas ainda assim acima de 50% como em todos os demais clusters
+	+ Menor média de estabelecimentos da AF, mas ainda assim acima de 50% como em todos os demais clusters
 	+ Segunda maior média de estabelecimentos beneficiários do Pronamp (34%)
 	
 - Área
@@ -937,7 +938,7 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 **Cluster 4**
 
 - Estabelecimentos
-	+ Porcentagem de estabelecimentos da AF similar ao cluster 1, ainda são maioria em número, mas com valor menor que nos clusters 2, 3 e 
+	+ Porcentagem de estabelecimentos da AF similar ao cluster 1, ainda são maioria em número, mas com valor menor que nos clusters 2, 3 e 5
 	
 - Área
 	+ Área média dos estabelecimentos tanto para a AF quanto para a AP com valores altos, apenas não ultrapassando as médias do cluster 1 
