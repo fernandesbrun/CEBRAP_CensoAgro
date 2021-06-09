@@ -1489,6 +1489,13 @@ X6779_OrientacaoTecnica <- X6779_OrientacaoTecnica %>% #deletando colunas pra qu
   select(., -LOCALIZACAO)
 
 
+X6853_Organico <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6853_Organico.xlsx", na = "X") 
+X6853_Organico$COD[X6853_Organico$NIVEL == "BR"] <- 000
+X6853_Organico <- X6853_Organico %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
 XMortInfantil <- read_delim("data/tabelas/DATASUS/MORTALIDADEINFAN_MICRO.csv", 
     ";", escape_double = FALSE, col_types = cols(COD_MICRO = col_character(), 
         Nascim_17 = col_skip(), OBITOS_menos1ano = col_skip()), 
@@ -1506,6 +1513,7 @@ todastabelas_extra <- X6962_Internet %>%
   left_join(., X6860_recursoshidricos, by = "COD") %>%
   left_join(., X6756_Educacao, by = "COD") %>%
   left_join(., X6779_OrientacaoTecnica, by = "COD") %>%
+  left_join(., X6853_Organico, by = "COD") %>%
   left_join(., XMortInfantil, by = c("COD" = "COD_MICRO"))
 
 
@@ -1554,9 +1562,14 @@ microrregioes_extra_pct <- microrregioes_extra %>%
          pct_OrTec_sim_tot  = OrTec_sim_tot / OrTec_tot ,
          pct_OrTec_sim_AF  = OrTec_sim_AF / OrTec_AF ,
          pct_OrTec_sim_MP  = OrTec_sim_MP / OrTec_MP ,
-         pct_OrTec_sim_NAF  = OrTec_sim_NAF / OrTec_NAF 
+         pct_OrTec_sim_NAF  = OrTec_sim_NAF / OrTec_NAF ,
          
+         pct_Organico_sim_AF  = Organico_sim_AF / Organico_AF ,
+         pct_Organico_sim_MP  = Organico_sim_MP / Organico_MP ,
+         pct_Organico_sim_NAF  = Organico_sim_NAF / Organico_NAF 
          
+         						
+
          
         #  pct_  =  /  ,
         #  pct_  =  /  ,
@@ -1604,13 +1617,14 @@ paletaspectral_invert <- c("#9e0142", "#f46d43","#fee08b","#e6f598","#66c2a5","#
 
 ### Energia elétrica
 
+**% de estabelecimentos sem energia elétrica**
 ```{r energiaeletrica, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 ### ENERGIA ELETRICA ####
 EnerEle_nao_AF <-  SHP_bloco3 %>%
   filter(!is.na(pct_EnerEle_nao_AF)) %>%
   tm_shape(bbox = bbox_new) +
   tm_fill(col = "pct_EnerEle_nao_AF", 
-          title = "% de estabelecimentos\nsem energia elétrica (AF)", 
+          title = "% sem energia elétrica (AF)", 
           id = "nome", 
           palette=c("#5e4fa2", "#66c2a5", "#e6f598", "#fee08b", "#f46d43","#9e0142"),
 
@@ -1639,7 +1653,7 @@ EnerEle_nao_MP <-  SHP_bloco3 %>%
   filter(!is.na(pct_EnerEle_nao_MP)) %>%
   tm_shape(bbox = bbox_new) +
   tm_fill(col = "pct_EnerEle_nao_MP", 
-          title = "% de estabelecimentos\nsem energia elétrica (MP)", 
+          title = "% sem energia elétrica (MP)", 
           id = "nome", 
           palette=c("#5e4fa2", "#66c2a5", "#e6f598", "#fee08b", "#f46d43","#9e0142"),
 
@@ -1668,7 +1682,7 @@ EnerEle_nao_NAF <-  SHP_bloco3 %>%
   filter(!is.na(pct_EnerEle_nao_NAF)) %>%
   tm_shape(bbox = bbox_new) +
   tm_fill(col = "pct_EnerEle_nao_NAF", 
-          title = "% de estabelecimentos\nsem energia elétrica (Não-AF)", 
+          title = "% sem energia elétrica (Não-AF)", 
           id = "nome", 
           palette=c("#5e4fa2", "#66c2a5", "#e6f598", "#fee08b", "#f46d43","#9e0142"),
           n=6,
@@ -1699,15 +1713,14 @@ tmap_arrange(EnerEle_nao_AF, EnerEle_nao_MP, EnerEle_nao_NAF,
 
 ### Internet
 
+**% de estabelecimentos com internet**
 ```{r internet, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
-
-
 ### ACESSO A INTERNET ####
   SHP_bloco3 %>%
   filter(!is.na(pct_INTERNET_sim)) %>%
   tm_shape(bbox = bbox_new) +
   tm_fill(col = "pct_INTERNET_sim", 
-          title = "% de estabelecimentos\ncom internet", 
+          title = "% com internet", 
           id = "nome", 
           palette=paletaspectral_invert,
 
@@ -1737,7 +1750,8 @@ tmap_arrange(EnerEle_nao_AF, EnerEle_nao_MP, EnerEle_nao_NAF,
 
 ### Educação
 
-```{r ensinomedioEsuperior, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+**% de responsáveis pelo estabelecimento com ensino médio completo**
+```{r ensinomedio, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 ### ENSINO MÉDIO ####
 EM_AF <-  SHP_bloco3 %>%
   filter(!is.na(pct_EM_AF)) %>%
@@ -1821,12 +1835,10 @@ EM_NAF <-  SHP_bloco3 %>%
 tmap_arrange(EM_AF, EM_MP, EM_NAF, 
              sync = TRUE, 
              nrow = 1)
+```    
 
-
-
-
-
-
+**% de responsáveis pelo estabelecimento com ensino superior (ou acima) completo**
+```{r ensinosuperioroumais, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 ### ENSINO superior ####
 SUP_AF <-  SHP_bloco3 %>%
   filter(!is.na(pct_SUP_AF)) %>%
@@ -1911,12 +1923,12 @@ tmap_arrange(SUP_AF, SUP_MP, SUP_NAF,
              sync = TRUE, 
              nrow = 1)
 
-
-```    
+```
 
 
 ### Saúde
 
+**Taxa de mortalidade de menores de 1 ano, por mil nascidos vivos**
 ```{r mortinfantil, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 
   SHP_bloco3 %>%
@@ -1950,15 +1962,13 @@ tmap_arrange(SUP_AF, SUP_MP, SUP_NAF,
 
 
 
-## Situação fundiária
-
-
 ## Políticas produtivas
 
 <!-- ### D1 - Crédito -->
 
 ### Orientação técnica
 
+**% de estabelecimentos que recebem orientação técnica**
 ```{r orientacaotecnica, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 OrTec_sim_AF <-  SHP_bloco3 %>%
   filter(!is.na(pct_OrTec_sim_AF)) %>%
@@ -2040,6 +2050,101 @@ OrTec_sim_NAF <-  SHP_bloco3 %>%
 
 
 tmap_arrange(OrTec_sim_AF, OrTec_sim_MP, OrTec_sim_NAF, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+
+## Práticas não convencionais
+
+### Orgânicos
+
+Uso da agricultura ou pecuária orgânica
+
+**% de estabelecimentos que fazem práticas orgânicas**
+```{r organicos, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+Organico_sim_AF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_Organico_sim_AF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_Organico_sim_AF", 
+          title = "AF", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Uso de agricultura ou\npecuária orgânica (AF)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+###
+Organico_sim_MP <-  SHP_bloco3 %>%
+  filter(!is.na(pct_Organico_sim_MP)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_Organico_sim_MP", 
+          title = "Pronamp", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Uso de agricultura ou\npecuária orgânica (MP)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+####
+Organico_sim_NAF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_Organico_sim_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "pct_Organico_sim_NAF", 
+          title = "Não familiar", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Uso de agricultura ou pecuária\norgânica (não familiar)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"),
+             
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+
+
+tmap_arrange(Organico_sim_AF, Organico_sim_MP, Organico_sim_NAF, 
              sync = TRUE, 
              nrow = 1)
 
