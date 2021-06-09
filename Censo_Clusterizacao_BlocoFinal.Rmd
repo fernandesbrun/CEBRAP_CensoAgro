@@ -361,11 +361,14 @@ GP_prop_REC_TOT = (R_VALOR_T_TOT - R_VALOR_AF_TOT) / R_VALOR_T_TOT,
     PROD_prop_T_01 = PROD_T_01 / PROD_T,
     PROD_prop_AF_01 = PROD_AF_01 / PROD_AF,
     PROD_prop_MP_01 = PROD_MP_01 / PROD_MP,
+    PROD_prop_GP_01 = (PROD_T_01 - PROD_AF_01) / (PROD_T - PROD_AF),
 
     PROD_prop_T_010203 = (PROD_T_01+PROD_T_02+PROD_T_03) / PROD_T,
     PROD_prop_AF_010203 = (PROD_AF_01+PROD_AF_02+PROD_AF_03) / PROD_AF,
     PROD_prop_MP_010203 = (PROD_MP_01+PROD_MP_02+PROD_MP_03) / PROD_MP,
-   # PROD_prop_NAF_010203 = (PROD_MP_01+PROD_MP_02+PROD_MP_03) / PROD_MP,
+    PROD_prop_GP_010203 = ((PROD_T_01-PROD_AF_01) + (PROD_T_02-PROD_AF_02) + (PROD_T_03-PROD_AF_03)) / (PROD_T - PROD_AF),
+
+
 
     
 
@@ -430,6 +433,8 @@ GP_prop_OCUarea = ((O_T - O_AF) / ((AREA_T - AREA_AF) - AREAPRESERV_GP)), #prop 
 TOT_AREAmedia = AREA_T / NEST_T ,
 NAF_AREAmedia = AREA_NAF / NEST_NAF, 
 AF_AREAmedia = AREA_AF / NEST_AF,
+MP_AREAmedia = AREA_MP / NEST_MP,
+
 
 TOT_AREAmedia_util = (AREA_T - AREAPRESERV_T) / NEST_T, 
 NAF_AREAmedia_util = (AREA_NAF - AREAPRESERV_GP) / NEST_NAF, 
@@ -464,48 +469,6 @@ As variáveis compreendem dados de três grupos:
 Observação: Ao tratar de área útil dos estabelecimentos (hectare útil), o trabalho refere-se a totalidade das áreas dos estabelecimentos, excluídas as áreas de matas ou florestas naturais destinadas à preservação permanente ou reserva legal.
 
 
-```{r TABELA_POP_BF, message=FALSE, warning=FALSE, include=FALSE}
-
-CENSODEM_10 <- read_excel("data/tabelas/CensoDemografico/CensoDem_2010_3216.xlsx", na = "X") 
-CENSODEM_10$COD[CENSODEM_10$NIVEL == "BR"] <- 000
-CENSODEM_10 <- CENSODEM_10 %>%
-  select(c(COD, POP10_Rur))
-
-
-
-
-# CORRESPONDER MUNICÍPIO E MICRORREGIÃO
-corresp <- read_delim("data/tabelas/CORRESPmun_micro/TabelaCorrespondencia_MUN_MICRO.csv", 
-                      ";", escape_double = FALSE, locale = locale(encoding = "WINDOWS-1252"))
-
-CADUNICO_familia <- read_delim("data/tabelas/CADUNICO/base_amostra_familia_201712_20190131.csv",
-    ";", escape_double = FALSE, col_types = cols(dat_alteracao_fam = col_date(format = "%Y-%m-%d")),
-    trim_ws = TRUE)
-
-
-CADUNICO_familia2 <- CADUNICO_familia %>%
-  filter(cod_local_domic_fam == 2) %>% #apenas rural
-  filter(marc_pbf == 1) %>% #beneficiários do Bolsa Familia
-  group_by(cd_ibge) %>%
-  summarise(NumPessoasBF = sum(qtde_pessoas)) %>%
-  left_join(., corresp, by = c("cd_ibge" = "Código Município Completo")) %>%
-  group_by(COD_MICRO) %>%
-  summarise(NumPessoasBF = sum(NumPessoasBF)) %>%
-  mutate(COD_MICRO = as.character(COD_MICRO))
-
-
-CADUNICO_POP <- CADUNICO_familia2 %>%
-  left_join(., CENSODEM_10, by = c("COD_MICRO" = "COD")) %>%
-  mutate(pct_POPrur_BF = (NumPessoasBF / POP10_Rur)) # Cálculo da porcentagem da população beneficiária do BF
-
-
-#Juntando a tabela com as variáveis do Censo Agro e os dados do CADUNICO
-
-microrregioes_CLI <- microrregioes_pct %>%
-  left_join(., CADUNICO_POP, by = c("COD" = "COD_MICRO"))
-
- 
-```
 
 <br>
 
@@ -516,12 +479,10 @@ microrregioes_CLI <- microrregioes_pct %>%
 * Presença 
   + Proporção de estabelecimentos da AF na microrregião em 2017; 
   + Proporção de estabelecimentos do Pronamp na microrregião em 2017; 
-  + Proporção de estabelecimentos da AP na microrregião em 2017;  
   + Proporção da área de estabelecimentos AF no total da microrregião em 2017; 
   + Proporção da área de estabelecimentos do Pronamp no total da microrregião em 2017; 
-  + Proporção da área de estabelecimentos da AP no total da microrregião em 2017; 
-  + Área média do total dos estabelecimentos na microrregião em 2017;
   + Área média dos estabelecimentos da AF na microrregião em 2017;
+  + Área média dos estabelecimentos do Pronamp na microrregião em 2017;
   + Área média dos estabelecimentos da AP na microrregião em 2017;
   
 
@@ -534,28 +495,40 @@ microrregioes_CLI <- microrregioes_pct %>%
 * Pessoal ocupado
   + Proporção do pessoal ocupado da microrregião na AF em 2017; 
   + Proporção do pessoal ocupado da microrregião no Pronamp em 2017;  
-  + Proporção do pessoal ocupado da microrregião na AP em 2017;
 
   
-* Rendimentos
-  + Rendimentos por trabalhador ocupado nos estabelecimentos agropecuários da AF em 2017;
-  + Rendimentos por trabalhador ocupado nos estabelecimentos agropecuários não familiares em 2017;
-  + Rendimentos por trabalhador ocupado nos estabelecimentos agropecuários de beneficiários do Pronamp em 2017;
-  + Rendas produtivas não agrícolas (desinvestimentos; serviço de turismo rural; exploração mineral; atividade de artesanato, tecelagem, etc; outras receitas do estabelecimento; rendas obtidas em atividades fora do estabelecimento) 
-    - Proporção da renda dos estabelecimentos da AF com outras receitas ou fora do estabelecimento em 2017; 
-    - Proporção da renda dos estabelecimentos do Pronamp com outras receitas ou fora do estabelecimento em 2017; 
-    - Proporção da renda dos estabelecimentos da AP com outras receitas ou fora do estabelecimento em 2017; 
-  + Proporção da renda dos estabelecimentos da agricultura familiar composta por programas e políticas para AF em 2017;
-  
+* Receitas
+  + Receitas totais da AF por trabalhador ocupado nos estabelecimentos agropecuários da AF em 2017;
+  + Receitas totais do Pronamp por trabalhador ocupado nos estabelecimentos agropecuários de beneficiários do Pronamp em 2017;
+  + Receitas totais da AP por trabalhador ocupado nos estabelecimentos agropecuários não familiares em 2017;
+  + Receitas produtivas não agrícolas (desinvestimentos; serviço de turismo rural; exploração mineral; atividade de artesanato, tecelagem, etc; outras receitas do estabelecimento; rendas obtidas em atividades fora do estabelecimento) 
+    - Proporção nos estabelecimentos da AF; 
+    - Proporção nos estabelecimentos do Pronamp; 
+    - Proporção nos estabelecimentos da AP;  
+  + Receitas exclusivamente da produção agropecuária do estabelecimento (produtos vegetais, animais e seus produtos e produtos da agroindústria)
+    - Proporção nos estabelecimentos da AF; 
+    - Proporção nos estabelecimentos do Pronamp; 
+    - Proporção nos estabelecimentos da AP; 
+  + Proporção da renda dos estabelecimentos da agricultura familiar composta por programas e políticas em 2017;
   
 
+* Condição do produtor em relação às terras
+  + Proporção de produtores da AF proprietários da terra;
+  + Proporção de produtores do Pronamp proprietários da terra;
+  + Proporção de produtores da AP proprietários da terra;
+  
+  
+  
+Observação: Algumas variáveis de estabelecimentos patronais não foram incluídas por serem o exato oposto da mesma variável para o recorte da agricultura familiar. Isso se dá nas seguintes variáveis: Proporção de estabelecimentos, proporção da área de estabelecimentos e proporção do pessoal ocupado.
+  
+  
 
 ```{r bCriando a tabela Cluster I, message=FALSE, warning=FALSE, include=FALSE}
 
 # microrregioes_CLI_dist <- as.data.frame(SHP_DISTANCIAREGIC) %>%
 #   select(CD_MICRO, distance) %>%
 #   full_join(., microrregioes_CLI, by = c("CD_MICRO" = "COD")) 
-
+microrregioes_CLI <- microrregioes_pct
 
 variaveis_clusterI <- microrregioes_CLI %>%
   filter(LOCALIZACAO != "Fernando de Noronha (PE)") %>%
@@ -569,20 +542,58 @@ variaveis_clusterI <- microrregioes_CLI %>%
   
   
   
+# select(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO,
+#          AF_prop_NEstab, MP_prop_NEstab, #GP_prop_NEstab, 
+#          # TOT_AREAmedia, 
+#          AF_AREAmedia, NAF_AREAmedia,
+#          AF_prop_AREA, MP_prop_AREA, #GP_prop_AREA, 
+#          AF_VPdivAREA, MP_VPdivAREA, GP_VPdivAREA, 
+#          AF_prop_OCU, MP_prop_OCU, #GP_prop_OCU,
+#          #rendas exceto produção agrícola
+#          AF_prop3_REC_naoPROD, MP_prop3_REC_naoPROD, GP_prop3_REC_naoPROD,
+#          #rendas exceto programas e políticas
+#          #AF_prop3_PRODOUTRFORA, MP_prop3_PRODOUTRFORA, #GP_prop3_PRODOUTRFORA,
+#          # rendimentos por trabalhador ocupado
+#          REND_OCU_AF, REND_OCU_NAF, REND_OCU_MP,
+#          #AF_prop3_REC_PROG
+#        )
+
+
+  
   select(NIVEL, COD, LOCALIZACAO, COD_ESTADO, COD_REGIAO,
-         AF_prop_NEstab, MP_prop_NEstab, GP_prop_NEstab, 
-        TOT_AREAmedia, 
-         AF_AREAmedia, NAF_AREAmedia,
-         AF_prop_AREA, MP_prop_AREA, GP_prop_AREA, 
+         AF_prop_NEstab, MP_prop_NEstab, #GP_prop_NEstab, 
+         
+         AF_prop_AREA, MP_prop_AREA, #GP_prop_AREA, 
+         
+         # TOT_AREAmedia, 
+         AF_AREAmedia, MP_AREAmedia, NAF_AREAmedia,
+         
          AF_VPdivAREA, MP_VPdivAREA, GP_VPdivAREA, 
-         AF_prop_OCU, MP_prop_OCU, GP_prop_OCU,
-         #rendas exceto produção agrícola
+         
+         #pct_POPrur_BF, 
+         
+         AF_prop_OCU, MP_prop_OCU, #GP_prop_OCU,
+         
+         
+         
+         #rendas por ocupado
+         REND_OCU_AF, REND_OCU_MP, REND_OCU_NAF,
+         
+         #rendas exceto produção agrícola - OUTRAS e FORA do estabelecimento
          AF_prop3_REC_naoPROD, MP_prop3_REC_naoPROD, GP_prop3_REC_naoPROD,
-         #rendas exceto programas e políticas
-         #AF_prop3_PRODOUTRFORA, MP_prop3_PRODOUTRFORA, GP_prop3_PRODOUTRFORA,
-         # rendimentos por trabalhador ocupado
-         REND_OCU_AF, REND_OCU_NAF, REND_OCU_MP,
-         AF_prop3_REC_PROG)
+         
+         #rendas exclusivamente da produção agrícola
+         AF_prop3_REC_PROD, MP_prop3_REC_PROD, GP_prop3_REC_PROD,
+        
+         # rendas de programas e políticas da AF
+         AF_prop3_REC_PROG,
+         
+         # Condição do produtor
+         PROD_prop_AF_01, PROD_prop_MP_01, PROD_prop_GP_01
+         #PROD_prop_GP_010203,  PROD_prop_AF_010203,  PROD_prop_MP_010203 
+         
+         )
+
 ```
 
 
@@ -596,41 +607,6 @@ variaveis_clusterI_2 <- variaveis_clusterI %>% remove_rownames %>% column_to_row
 
 variaveis_clusterI_3 <- variaveis_clusterI_2 %>%
   select(5:last_col()) 
-#%>%
-  # rename(
-  #   "Estab. - % de estab. (AF)" = AF_prop_NEstab,
-  #   "Estab. - % de estab. (MP)" = MP_prop_NEstab,
-  #   "Estab. - % de estab. (AP)" = GP_prop_NEstab,
-  # 
-  #   "Área - % de área (AF)" = AF_prop_AREA,
-  #   "Área - % de área (MP)" = MP_prop_AREA,
-  #   "Área - % de área (AP)" = GP_prop_AREA,
-  # 
-  #   "VBP - VBP/ha (AF)" = AF_VPdivAREA,
-  #   "VBP - VBP/ha (MP)" = MP_VPdivAREA,
-  #   "VBP - VBP/ha (AP)" = GP_VPdivAREA,
-  # 
-  #   #"Bolsa Família - % pop. rural c/ BF" = pct_POPrur_BF,
-  # 
-  #   "Ocup. - % de ocupados (AF)" = AF_prop_OCU,
-  #   "Ocup. - % de ocupados (MP)" = MP_prop_OCU,
-  #   "Ocup. - % de ocupados (AP)" = GP_prop_OCU,
-  #   
-  #   
-  #   "" = TOT_AREAmedia,
-  #   "" = AF_AREAmedia,
-  #   "" = NAF_AREAmedia,
-  #   "" = AF_prop3_REC_naoPROD,
-  #   "" = MP_prop3_REC_naoPROD,
-  #   "" = GP_prop3_REC_naoPROD,
-  #   "" = REND_OCU_AF,
-  #   "" = REND_OCU_NAF,
-  #   "" = REND_OCU_MP,
-  #   "" = AF_prop3_REC_PROG,
-  #   "" = ,
-  #   "" = ,
-  #   
-  #   )
 
 
 # Padronização das escalas
@@ -675,7 +651,7 @@ CLIDEAL_gap <- fviz_nbclust(clusterizacaoI_scale, kmeans, nstart = 25,  method =
 ggarrange(CLIDEAL_elbow, CLIDEAL_silhou, CLIDEAL_gap, nrow = 1, heights = 0.5)
 ```
 
-Novamente aqui, as três análises sugeriram números ideias de clusters distintos entre si. Portanto, optou-se novamente pela alternativa a partir dos 30 índices diferentes.
+Novamente aqui, as três análises sugeriram números ideais de clusters distintos entre si. Portanto, optou-se novamente pela alternativa a partir dos 30 índices diferentes.
 
 ```{r bbteste numero clusters I, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 nbclust_out <- NbClust::NbClust(
@@ -701,33 +677,33 @@ nbclust_out <- NbClust::NbClust(
 ```
 
 
-Com as três variáveis que foram retiradas o número aconselhado de clusters ainda permanece como sendo, na maioria dos testes, 5 clusters. 
+O número aconselhado de clusters ainda permanece como sendo, na maioria dos testes, 5 clusters. 
 
 * 7 testes indicaram 4 como o número ideal de clusters 
 * 9 testes indicaram 5 como o número ideal de clusters 
 * 1 testes indicaram 6 como o número ideal de clusters 
-* 5 testes indicaram 7 como o número ideal de clusters 
-* 1 testes indicaram 8 como o número ideal de clusters 
+* 3 testes indicaram 7 como o número ideal de clusters 
+* 3 testes indicaram 8 como o número ideal de clusters 
 
-Portanto, de acordo com a maioria, o melhor número de clusters, nesse caso, é 5.
+Portanto, de acordo com a maioria, o melhor número de clusters adotado será de 5.
 
 
 ```{r bCriacao dos clusters I, message=FALSE, warning=FALSE, include=FALSE}
 
 #CLUSTERs
 set.seed(123)
-k4 <- kmeans(clusterizacaoI_scale, centers = 4, nstart = 150)
+# k4 <- kmeans(clusterizacaoI_scale, centers = 4, nstart = 150)
 k5 <- kmeans(clusterizacaoI_scale, centers = 5, nstart = 150)
-k6 <- kmeans(clusterizacaoI_scale, centers = 6, nstart = 150)
-k7 <- kmeans(clusterizacaoI_scale, centers = 7, nstart = 150)
-k8 <- kmeans(clusterizacaoI_scale, centers = 8, nstart = 150)
-k9 <- kmeans(clusterizacaoI_scale, centers = 9, nstart = 150)
+# k6 <- kmeans(clusterizacaoI_scale, centers = 6, nstart = 150)
+# k7 <- kmeans(clusterizacaoI_scale, centers = 7, nstart = 150)
+# k8 <- kmeans(clusterizacaoI_scale, centers = 8, nstart = 150)
+# k9 <- kmeans(clusterizacaoI_scale, centers = 9, nstart = 150)
 #print(k4)
 
-k4graph <- fviz_cluster(k4, geom = "point",  data = clusterizacaoI_scale) + ggtitle("k = 4")
+# k4graph <- fviz_cluster(k4, geom = "point",  data = clusterizacaoI_scale) + ggtitle("k = 4")
 k5graph <- fviz_cluster(k5, geom = "point",  data = clusterizacaoI_scale) + ggtitle("k = 5")
-k6graph <- fviz_cluster(k6, geom = "point",  data = clusterizacaoI_scale) + ggtitle("k = 6")
-k9graph <- fviz_cluster(k9, geom = "point",  data = clusterizacaoI_scale) + ggtitle("k = 9")
+# k6graph <- fviz_cluster(k6, geom = "point",  data = clusterizacaoI_scale) + ggtitle("k = 6")
+# k9graph <- fviz_cluster(k9, geom = "point",  data = clusterizacaoI_scale) + ggtitle("k = 9")
 
 # Visualize silhouhette information
 # library(cluster)
@@ -741,12 +717,13 @@ k9graph <- fviz_cluster(k9, geom = "point",  data = clusterizacaoI_scale) + ggti
 ```{r bManipulacao tabelas clusters I, message=FALSE, warning=FALSE, include=FALSE}
 
 df_clusters <- variaveis_clusterI %>%
-  select(-c("GP_prop_NEstab", "GP_prop_AREA", "GP_prop_OCU")) %>%
-  mutate(Cluster4 = k4$cluster,
+  #select(-c("GP_prop_NEstab", "GP_prop_AREA", "GP_prop_OCU")) %>%
+  mutate(# Cluster4 = k4$cluster,
          Cluster5 = k5$cluster,
-         Cluster6 = k6$cluster,
-         Cluster7 = k7$cluster,
-         Cluster9 = k9$cluster) 
+         # Cluster6 = k6$cluster,
+         # Cluster7 = k7$cluster,
+         # Cluster9 = k9$cluster
+         ) 
   
 
 
@@ -761,7 +738,6 @@ df_clusters <- variaveis_clusterI %>%
 
 
 df_clusters_k5_sumario <- variaveis_clusterI %>%
-  select(-c("GP_prop_NEstab", "GP_prop_AREA", "GP_prop_OCU")) %>%
   mutate(Cluster5 = k5$cluster) %>%
   group_by(Cluster5) %>%
   summarise_all("mean") %>%
@@ -781,45 +757,56 @@ df_clusters_k5_centers <- as.data.frame(k5[["centers"]])
 ```{r btabela sumario I, echo=FALSE, message=FALSE, warning=FALSE, results = "asis"}
 
 df_clusters_k5_sumarioSCALES <- df_clusters_k5_sumario %>%
-  mutate(AF_prop_NEstab = scales::percent(round(AF_prop_NEstab, 2), big.mark = ".",  decimal.mark = "," , na.rm = TRUE),
-         MP_prop_NEstab = scales::percent(round(MP_prop_NEstab, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
+  mutate(AF_prop_NEstab = scales::percent(AF_prop_NEstab, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1),
+         MP_prop_NEstab = scales::percent(MP_prop_NEstab, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
          
-         TOT_AREAmedia = paste(format(round(TOT_AREAmedia), decimal.mark=",", big.mark = "."), "ha"),
+         AF_prop_AREA = scales::percent(AF_prop_AREA, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         MP_prop_AREA = scales::percent(MP_prop_AREA, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         
          AF_AREAmedia = paste(format(round(AF_AREAmedia), decimal.mark=",", big.mark = "."), "ha"),
+         MP_AREAmedia = paste(format(round(MP_AREAmedia), decimal.mark=",", big.mark = "."), "ha"),
          NAF_AREAmedia = paste(format(round(NAF_AREAmedia), decimal.mark=",", big.mark = "."), "ha"),
-
-         AF_prop_AREA = scales::percent(round(AF_prop_AREA, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
-         MP_prop_AREA = scales::percent(round(MP_prop_AREA, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
 
          AF_VPdivAREA = paste("R$", format(round(AF_VPdivAREA), decimal.mark=",", big.mark = "."), "/ha"),
          MP_VPdivAREA = paste("R$", format(round(MP_VPdivAREA), decimal.mark=",", big.mark = "."), "/ha"),
          GP_VPdivAREA = paste("R$", format(round(GP_VPdivAREA), decimal.mark=",", big.mark = "."), "/ha"),
 
-         AF_prop_OCU = scales::percent(round(AF_prop_OCU, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
-         MP_prop_OCU = scales::percent(round(MP_prop_OCU, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
-    
-         AF_prop3_REC_naoPROD = scales::percent(round(AF_prop3_REC_naoPROD, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
-         MP_prop3_REC_naoPROD = scales::percent(round(MP_prop3_REC_naoPROD, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
-         GP_prop3_REC_naoPROD = scales::percent(round(GP_prop3_REC_naoPROD, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE),
+         AF_prop_OCU = scales::percent(AF_prop_OCU, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         MP_prop_OCU = scales::percent(MP_prop_OCU, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
          
          REND_OCU_AF = paste("R$", format(round(REND_OCU_AF), decimal.mark=",", big.mark = "."), "/ocup."),
          REND_OCU_MP = paste("R$", format(round(REND_OCU_MP), decimal.mark=",", big.mark = "."), "/ocup."),
          REND_OCU_NAF = paste("R$", format(round(REND_OCU_NAF), decimal.mark=",", big.mark = "."), "/ocup."),
+    
+         AF_prop3_REC_naoPROD = scales::percent(AF_prop3_REC_naoPROD, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         MP_prop3_REC_naoPROD = scales::percent(MP_prop3_REC_naoPROD, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         GP_prop3_REC_naoPROD = scales::percent(GP_prop3_REC_naoPROD, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
          
-         AF_prop3_REC_PROG = scales::percent(round(AF_prop3_REC_PROG, 2), big.mark = ".",  decimal.mark = ",", na.rm = TRUE)
+         AF_prop3_REC_PROD = scales::percent(AF_prop3_REC_PROD, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         MP_prop3_REC_PROD = scales::percent(MP_prop3_REC_PROD, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         GP_prop3_REC_PROD = scales::percent(GP_prop3_REC_PROD, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         
+         AF_prop3_REC_PROG = scales::percent(AF_prop3_REC_PROG, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         
+         PROD_prop_AF_01 = scales::percent(PROD_prop_AF_01, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         PROD_prop_MP_01 = scales::percent(PROD_prop_MP_01, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1),
+         PROD_prop_GP_01 = scales::percent(PROD_prop_GP_01, big.mark = ".",  decimal.mark = ",", na.rm = TRUE, accuracy = 0.1)
         ) %>%
+  
+
   
   
   rename(
     "% de estab. (AF)" = AF_prop_NEstab,
     "% de estab. (MP)" = MP_prop_NEstab,
 
-    "Área média dos estab." = TOT_AREAmedia,
-    "Área média dos estab. (AF)" = AF_AREAmedia,
-    "Área média dos estab. (AP)" = NAF_AREAmedia,
     "% de área (AF)" = AF_prop_AREA,
     "% de área (MP)" = MP_prop_AREA,
-
+    
+    "Área média dos estab. (AF)" = AF_AREAmedia,
+    "Área média dos estab. (MP)" = MP_AREAmedia,
+    "Área média dos estab. (AP)" = NAF_AREAmedia,
+    
     "VBP/ha (AF)" = AF_VPdivAREA,
     "VBP/ha (MP)" = MP_VPdivAREA,
     "VBP/ha (AP)" = GP_VPdivAREA,
@@ -834,7 +821,16 @@ df_clusters_k5_sumarioSCALES <- df_clusters_k5_sumario %>%
     "% rendimentos não agrícolas (AF)" = AF_prop3_REC_naoPROD,
     "% rendimentos não agrícolas (MP)" = MP_prop3_REC_naoPROD,
     "% rendimentos não agrícolas (AP)" = GP_prop3_REC_naoPROD,
+    
+    "% rendimentos agrícolas (AF)" = AF_prop3_REC_PROD,
+    "% rendimentos agrícolas (MP)" = MP_prop3_REC_PROD,
+    "% rendimentos agrícolas (AP)" = GP_prop3_REC_PROD,
+    
     "% rendimentos de prog. e pol. (AF)" = AF_prop3_REC_PROG,
+    
+    "% de proprietários (AF)" = PROD_prop_AF_01,
+    "% de proprietários (MP)" = PROD_prop_MP_01,
+    "% de proprietários (AP)" = PROD_prop_GP_01,
     
     "Nº total de microrregiões" = Tamanho
     )
@@ -861,8 +857,11 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
   pack_rows("Área", 3, 7) %>%
   pack_rows("VBP", 8, 10) %>%
   pack_rows("Pessoal ocupado", 11, 12) %>%
-  pack_rows("Rendimentos", 13, 19)
-  
+  pack_rows("Receitas por ocupados", 13, 15) %>%
+  pack_rows("Receitas não agrícolas", 16, 18) %>%
+  pack_rows("Receitas agrícolas", 19, 21) %>% 
+  pack_rows("Receitas de programas sociais", 22, 22) %>% 
+  pack_rows("Posse da terra", 23, 25)
 
 ```
 
@@ -871,69 +870,82 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 **Cluster 1**
 
 - Estabelecimentos
-	+ Menor média de estabelecimentos da AF, mas ainda assim acima de 50% como em todos os demais clusters
+	+ Segunda menor média de estabelecimentos da AF, mas ainda assim acima de 50% como em todos os demais clusters
 	+ Segunda maior média de estabelecimentos beneficiários do Pronamp (34%)
 	
 - Área
-	+ Estabelecimentos com maior média de área (6x maior do que o cluster com o segundo valor mais alto)
-	+ Tanto na agricultura familiar quanto na não-familiar/patronal os estabelecimentos são muito maiores do que em todos os demais clusters
-	+ Agricultura familiar possui baixíssima expressão nas microrregiões, com apenas em média 7% da área de estabelecimentos agropecuários sendo dessa tipologia
-	+ Em média, metade da área desse cluster é ocupada por estabelecimentos de beneficiários do Pronamp
+	+ Estabelecimentos com maior média de área
+	+ Tanto na agricultura familiar quanto no Pronamp e na não-familiar/patronal os estabelecimentos são muito maiores do que em todos os demais clusters (ao menos 2x maiores)
+	+ Agricultura familiar possui baixíssima expressão nas microrregiões, com apenas em média 15% da área de estabelecimentos agropecuários sendo dessa tipologia
+	+ Em média, pouco mais da metade da área desse cluster é ocupada por estabelecimentos de beneficiários do Pronamp
 	
 - VBP
 	+ AF possui o menor VBP/ha dentre todos os outros clusters considerando a mesma tipologia
-	+ Apesar dos estabelecimentos não-familiares terem o maior VBP/ha dentre todos os não familiares (com pouca diferença do cluster 5), esse VBP/ha ainda é muito inferior ao maior dentre todas as categorias (que pertence à AF no cluster 2)
+	+ Apesar dos estabelecimentos não-familiares terem o maior VBP/ha dentre todos os não familiares, esse VBP/ha ainda é muito inferior ao maior dentre todas as categorias (que pertence à AF no cluster 2)
+
 - Pessoal ocupado
-	+ Em média pouco mais da metade do pessoal ocupado está alocado em estabelecimentos não familiares
+	+ Em média pouco mais da metade do pessoal ocupado está alocado em estabelecimentos familiares, sendo a segunda menor média na AF dentre os clusters 
 
 - Rendimentos 
-	+ Nos estabelecimentos da AF, em média 8% dos rendimentos não são de atividades agropecuárias; apesar de baixo, é a maior média dentre os estabelecimentos da AF
+	+ Nos estabelecimentos da AF, em média 7% dos rendimentos não são de atividades de produção agropecuária; apesar de baixo, é a maior média dentre os estabelecimentos da AF
 	+ Nos estabelecimentos patronais, em média 9% dos rendimentos não são de atividades agropecuárias, mas diferentemente da AF, essa é a porcentagem mais baixa, dentre os patronais nos 5 clusters
-	+ Nos estabelecimentos patronais o valor da produção por pessoa ocupada é, com larga margem, o mais alto de todos (a hipótese, a partir da localização do cluster, é que isso deve se dar tanto pelo baixo número de pessoas ocupadas nos estabelecimentos, quanto pelo alto rendimento bruto da produção)
+	+ Nos estabelecimentos patronais o valor da produção por pessoa ocupada é, com larga margem, o mais alto de todos (a hipótese, a partir da localização do cluster, é que isso pode se dar tanto pelo baixo número de pessoas ocupadas nos estabelecimentos, quanto pelo alto rendimento bruto da produção)
 
 
 **Cluster 2**
 
 - Estabelecimentos
-	+ Maior porcentagem de área ocupada pela agricultura familiar (em média, 83%)
-	+ Estabelecimentos do Pronamp com apenas 18% (menor porcentagem, empatado com o CL3)
+	+ Maior porcentagem de área ocupada pela agricultura familiar (em média, 80%, junto com o cluster 5)
+	+ Estabelecimentos do Pronamp com apenas 21% (segunda menor porcentagem)
 	
 - Área
-	+ Menor área média dos estabelecimentos tanto familiares quanto não familiares 
-	+ Microrregiões em média equilibradas em termos de área ocupada pelos estabelecimentos, com 46% da AF e 54% da não familiar (equilíbrio similar ao do cluster3)
+	+ Área ocupada por estabelecimentos da AF próxima do equilíbrio com a área ocupada pelos não familiares (40% AF e 60% não familiar, em média)
+	+ Segundas menores áreas médias de estabelecimentos, sendo superior tanto na AF quando na AP apenas em comparação com o cluster 5
 	
 - VBP
 	+ O VBP/ha é o destaque desse cluster: especificamente na AF ele tem o valor 5x maior do que na não familiar, sendo o maior dentre todos os clusters e tipologias
 	
 - Pessoal ocupado
-	+ Assim como no cluster 3 e 5, esse possui em média mais da metade das pessoas ocupadas na AF, sendo nesse cluster o segundo valor mais alto (74%)
+	+ Assim como no cluster 3 e 5, esse possui em média quase 3/4 das pessoas ocupadas em estabelecimentos da AF (70%)
 	
 - Rendimentos 
-	+ Em média, os rendimentos não agrícolar ocupam a menor porcentagem da renda da AF dentre todos os clusters, com apenas 4%. Nos estabelecimentos não familiares, o valor sobe para 10%, baixo quando em comparação com os clusters 3 e 5, mas alto quanto em comparação com a AF
-	+ O rendimento por pessoa ocupada fica com o valor mais alto na AF, empatado com o cluster 4, e não tão distante do cluster 1
+	+ Em média, os rendimentos não agrícolas ocupam a menor porcentagem da renda da AF dentre todos os clusters, com apenas 5%. Nos estabelecimentos não familiares, o valor sobe para 11%, baixo quando em comparação com os clusters 3 e 5, mas alto quanto em comparação com a AF
+	+ O rendimento por pessoa ocupada fica com o valor mais alto dentre todos os cluster para a AF e com o segundo mais alto para a AP
+	+ Nas três tipologias esse é o cluster que mais depende das receitas agrícolas, com média de 81% da composição da renda da AF e 87% da composição da renda da AP dada pela produção agropecuária
+
+- Posse da terra
+	+ Com média muito similar ao cluster 1, as porcentagem de proprietários em estabelecimentos da AF e da AP são praticamente iguais, ambos com média de 86%.
+
 
 
 **Cluster 3**
 
 - Estabelecimentos
-	+ Estabelecimentos da AF são vasta maioria em número (82%)
+	+ Estabelecimentos da AF são vasta maioria em número, com terceira maior porcentagem dentre os clusters (78%)
 	
 - Área
-	+ Estabelecimentos tanto da AF quando da AP com área média inferior a dos demais clusters
-	+ Porcentagem de área ocupada pela AF equivalente a quase 50%, em média
+	+ Estabelecimentos tanto da AF quando da AP áreas médias de valores intermediários entre os clusters
+	+ Porcentagem de área ocupada pela AF equivalente a quase 40% em média, portanto em média as microrregiões possuem 60% da área total de estabelecimentos pertencendo a propriedades não familiares
 	
 - VBP
-	+ VBP/ha baixo para a AF, apenas maior do que o do cluster 1
+	+ VBP/ha intermediário para a AF
 	+ Menor VBP/ha na AP dentre todos os clusters em estabelecimentos da mesma tipologia
+	+ VBP/ha maior na AF do que na AP
 	
 - Pessoal ocupado
-	+ Maior porcentagem de ocupados na AF (cerca de 78%) 
+	+ Segunda maior porcentagem de ocupados na AF (cerca de 71%) 
 	
 - Rendimentos 
-	+ Média mais alta de porcentagem da renda composta por rendimentos não agrícolas nos estabelecimentos não familiares (35%), mas o valor alto não se repete para a AF
-	+ Menor rendimento por pessoal ocupado tanto na AF quando na AP
-	+ Cluster com maior média de renda nos estabelecimentos composta por programas e políticas
+	+ Segundo menor rendimento por ocupado nos estabelecimentos da AF
+	+ Rendimento por ocupado na AP muito inferior aos dos clusters 1, 2 e 4, mas ainda superior ao cluster 5
+	+ Segunda maior porcentagem de rendimentos não agrícolas na composição da renda dos estabelecimentos patronais e de beneficiários do Pronamp
+	+ Receitas agrícolas compondo, em média, apenas 55% dos rendimentos da AF
+	+ Porcentagem baixa (4%), mas significativa quando em comparação com os demais clusters de rendimentos de programas sociais na AF
 
+- Posse da terra
+	+ Cluster em média bastante equilibrado em relação a posse da terra, com valores muito similares nas três tipologias
+	
+	
 
 **Cluster 4**
 
@@ -941,41 +953,49 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 	+ Porcentagem de estabelecimentos da AF similar ao cluster 1, ainda são maioria em número, mas com valor menor que nos clusters 2, 3 e 5
 	
 - Área
-	+ Área média dos estabelecimentos tanto para a AF quanto para a AP com valores altos, apenas não ultrapassando as médias do cluster 1 
-	+ Porcentagem baixa de área ocupada por estabelecimentos da AF, com 14% (apenas superior ao cluster 1, com 7%)
+	+ Área média dos estabelecimentos da AP maior que nos demais clusters, exceto o 1, mas área média da AF maior apenas que o cluster 2 e 5
+	+ Porcentagem baixa de área ocupada por estabelecimentos da AF, com 15%, valor muito similar ao do cluster 1
 	
 - VBP
 	+ Segundo VBP/ha da AF mais alto (apenas abaixo do cluster 2)
+	+ VBP/ha mais alto na AF do que na AP, assim como no cluster 1 e 3
 	+ VBP/ha da AP mediano quando comparado com a mesma tipologia nos demais clusters, mas 4x menor que na AF do mesmo cluster
 	
 - Pessoal ocupado
-	+ Em média, a maior parte dos ocupados estão em estabelecimentos não familiares (59%)
+	+ Em média, a maior parte dos ocupados estão em estabelecimentos não familiares (58%)
 	
 - Rendimentos 
+	+ Rendimento por pessoal ocupado na AP com média relativamente alta (apesar de ainda ser quase metade do mais alto, no cluster 1)
+	+ Rendimento por pessoal ocupado na AF relativamente alto, com média quase tão alta quanto no cluster 2 para a mesma tipologia
 	+ Porcentagem de rendimentos não agrícolas medianos quando em comparação com os demais clusters tanto para a AF quanto para a AP
-	+ Segundo maior rendimento por pessoal ocupado na AP (apesar de ainda ser metade do mais alto, no cluster 1)
-	+ Rendimento por pessoal ocupado alto, tanto quanto no cluster 2, para a AF 
+	+ Receitas agrícolas são mais relevantes na AP do que na AF, mas em ambas as tipologias compõem mais que 3/4 dos rendimentos
+	+ Média de receitas de programas e políticas na composição da renda baixa, mas maior do que nos dois primeiros clusters
+	+ Segunda menor porcentagem de proprietários da terra na AF, com quase 10% a menos na média quando comparado com o valor mais alto, no cluster 2. Valor menor que nos cluster 1, 2 e 3 para a AP, mas com diferença de apenas 5% para o maior valor
+
 
 
 **Cluster 5**
 
 - Estabelecimentos
-	+ Maior número de estabelecimentos da AF do que da AP, assim como todos os demais clusters
+	+ Grande porcentagem de estabelecimentos da AF, com 4/5 do total
 	
 - Área
-	+ AF ocupa uma porcentagem baixa da área (27% em média), maior apenas que o cluster 1
-	+ Estabelecimentos da AF de tamanho mediano quando comparado com as demais
+	+ Menor área média dos estabelecimentos tanto familiares quanto não familiares 
+	+ Microrregiões em média equilibradas em termos de área ocupada pelos estabelecimentos, com 47% da AF e 53% da não familiar (equilíbrio similar ao do cluster2)
 	
 - VBP
-	+ VBP/ha mediano na AF
-	+ VBP/ha alto na AP quando comparado com a mesma tipologia nos demais clusters, mas ligeiramente menor do que na AF no cluster
+	+ VBP/ha mediano na AF quando em comparação com os demais clusters na mesma tipologia
+	+ Segundo VBP/ha mais alto na AP quando comparado com a mesma tipologia nos demais clusters, mas em média muito similar aos clusters 2 e 4, com valor muito próximo ao da AF
 	
 - Pessoal ocupado
-	+ Maior parcela dos ocupados estão em estabelecimentos da AF, apesar de não ser um dos valores mais altos 
+	+ Maior parcela dos ocupados estão em estabelecimentos da AF, sendo o valor mais alto dentre os clusters
 	
 - Rendimentos 
-	+ Valor médio para participação dos rendimentos não agrícolas na renda da AF, mas segundo valor mais alto na renda dos não familiares (menor apenas que o cluster 3)
-	+ Segundo maior valor médio da porcentagem das rendas compostas por programas e políticas 
+	+ Menor receita por ocupado dentre todos os clusters para todas as tipologias
+	+ Receitas não agrícolas são muito significativas nos estabelecimentos do Pronamp e não familiares, representando pouco mais de 40% da composição da renda
+	+ Uma vez que as receitas não agrícolas possuem um papel tão grande, as receitas agrícolas perdem força, com as menores participações dentre todos os clusters para todas as tipologias, com 34% na AF e 46% de média na AP
+	+ Cluster com a maior expressão da participação das receitas de programas sociais na composição da renda (7% em média)
+	+ Menores valores relativos de proprietários nos estabelecimentos para todas as tipologias
 
 
 <br>
@@ -1015,41 +1035,25 @@ yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
 bbox_new <- bbox_new %>%  # take the bounding box ...
   st_as_sfc() # ... and make it a sf polygon
 
-
-
-##### mapa
-
-# tm_AF_VPdivAREA <- 
-# microrregioes_VPha_shape[!is.na(microrregioes_VPha_shape$VPdivAREA),] %>%
-#   filter(VPdivAREA >= 0) %>%
-#   filter(TIPOLOGIA == "AF") %>%
-#   tm_shape(bbox = bbox_new) +
-#   tm_fill(col = "VPdivAREA", 
-#           title = "Valor da produção por hectare (VP/ha)<br/>- AF", 
-#           id = "LOCALIZACAO", palette="BuGn",
-#           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
-#           style = "fixed", breaks = c(35, 500, 1500, 3500, 16000)) +
-#   tm_borders(lwd = 0.2) +
-#   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-#   tm_view(view.legend.position = c("right", "bottom")) +
-#   tm_shape(SHP_Estados) +
-#   tm_borders(lwd = 1) 
-
-
 ```
 
 <br>
 
 
 ```{r bMapeando os clusters I, echo=FALSE, message=FALSE, warning=FALSE}
-cores <- c("#beaed4", "#386cb0", "#fdc086", "#7fc97f", "#ffff99")
+
+cores <- c("#beaed4", #roxo
+           "#386cb0", # azul
+           "#fdc086", #laranja"
+           "#7fc97f", #verde,
+           "#ffff99" #amarelo,
+           )
 
 SHP_clusters %>%
   filter(!is.na(Cluster5)) %>%
-
   tm_shape() +
   tm_fill(col = "Cluster5", 
-          title = "Clusters (n=5)", 
+          title = "Clusters", 
           id = "LOCALIZACAO", palette=cores,
           #n=7
           #legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"))),
@@ -1075,13 +1079,81 @@ SHP_clusters %>%
 
 <!-- Prevalência da pobreza rural -->
 
+```{r TABELA_POP_BF, message=FALSE, warning=FALSE, include=FALSE}
+CENSODEM_10 <- read_excel("data/tabelas/CensoDemografico/CensoDem_2010_3216.xlsx", na = "X") 
+CENSODEM_10$COD[CENSODEM_10$NIVEL == "BR"] <- 000
+CENSODEM_10 <- CENSODEM_10 %>%
+  select(c(COD, POP10_Rur))
+
+
+# CORRESPONDER MUNICÍPIO E MICRORREGIÃO
+corresp <- read_delim("data/tabelas/CORRESPmun_micro/TabelaCorrespondencia_MUN_MICRO.csv", 
+                      ";", escape_double = FALSE, locale = locale(encoding = "WINDOWS-1252"))
+```
+
+
+```{r tabelascadunico, message=FALSE, warning=FALSE, include=FALSE}
+
+CADUNICO_POP_2018 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2018.csv", 
+    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(), X1 = col_skip(),
+        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+CADUNICO_POP_2017 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2017.csv", 
+    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(), X1 = col_skip(), 
+        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+CADUNICO_POP_2016 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2016.csv", 
+    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
+        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+CADUNICO_POP_2015 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2015.csv", 
+    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
+        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+CADUNICO_POP_2014 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2014.csv", 
+    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
+        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+CADUNICO_POP_2013 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2013.csv", 
+    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(), X1 = col_skip(), 
+        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+CADUNICO_POP_2012 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2012.csv", 
+    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
+        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+
+CADUNICO_18a12 <- CADUNICO_POP_2018 %>%
+  left_join(., CADUNICO_POP_2017, by = "COD_MICRO") %>%
+  left_join(., CADUNICO_POP_2016, by = "COD_MICRO") %>%
+  left_join(., CADUNICO_POP_2015, by = "COD_MICRO") %>%
+  left_join(., CADUNICO_POP_2014, by = "COD_MICRO") %>%
+  left_join(., CADUNICO_POP_2013, by = "COD_MICRO") %>%
+  left_join(., CADUNICO_POP_2012, by = "COD_MICRO") %>%
+  mutate(COD_MICRO = as.character(COD_MICRO)) %>%
+  mutate(dif2012a2014 = pct_POPrur_BF_2014 - pct_POPrur_BF_2012,
+         dif2014a2016 = pct_POPrur_BF_2016 - pct_POPrur_BF_2014, 
+         dif2016a2018 = pct_POPrur_BF_2018 - pct_POPrur_BF_2016,
+         dif2012a2018 = pct_POPrur_BF_2018 - pct_POPrur_BF_2012)
+ 
+
+```
+
+
 ```{r cMAPAS_CADUNICO, message=FALSE, warning=FALSE, include=FALSE}
 # Juntando o shape e a tabela
 SHP_CADUNICO <- SHP_Microrregioes %>%
-  left_join(., CADUNICO_POP, by = c("COD" = "COD_MICRO"))
+  left_join(., CADUNICO_18a12, by = c("COD" = "COD_MICRO"))
 ```
 
-**Porcentagem de residentes de áreas rurais da microrregião que são beneficiários do bolsa família (2017)**
+### Porcentagem de residentes de áreas rurais da microrregião que são beneficiários do bolsa família (2017)
 
 ```{r cMAPAS_CADUNICO2, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -1090,13 +1162,13 @@ SHP_CADUNICO <- SHP_Microrregioes %>%
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 
 SHP_CADUNICO %>%
-  filter(!is.na(pct_POPrur_BF)) %>%
+  filter(!is.na(pct_POPrur_BF_2017)) %>%
   tm_shape() +
-  tm_fill(col = "pct_POPrur_BF", 
+  tm_fill(col = "pct_POPrur_BF_2017", 
           palette = cores_spectral,
           title = "% de residentes na zona<br>rural que recebem BF (2017)",
           id = "LOCALIZACAO",
-          #n=7
+          n=5,
           legend.format=list(fun=function(x) paste0(round(x*100), "%")),
           style = "fisher" 
           #breaks = c(50, 85, 170, 340, 680, 1500, 5000, 10000, 40000)
@@ -1112,6 +1184,107 @@ SHP_CADUNICO %>%
 ```
 
 <br>
+<br>
+
+### Evolução do número de beneficiários do bolsa família
+
+Para a análise da evolução da pobreza rural, ou seja, da variação da porcentagem de pessoas abaixo da linha da pobreza, será necessário realizar uma comparação dos anos de 2012 a 2018 (anos disponíveis dos dados de pessoas pobres), mas considerando todos sobre uma mesma base populacional (população rural de 2010, de acordo com o Censo Demográfico), uma vez que não foram encontrados dados anuais de contagem de população rural por microrregiões do Brasil. Portanto, enfatiza-se que a comparação não leva em consideração possíveis mudanças demográficas nas áreas rurais.
+
+
+```{r cMAPAS_CADUNICO2_evolu, echo=FALSE, message=FALSE, warning=FALSE}
+
+### Mobilidade de rendimentos por residentes de 2006 para 2017
+
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+
+COMP_CADUNICO_12a14 <- SHP_CADUNICO %>%
+  filter(!is.na(dif2012a2014)) %>%
+  tm_shape() +
+  tm_fill(col = "dif2012a2014", 
+          palette = cores_spectral,
+          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2012 a 2014)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.05, -0.025, 0, 0.05, 0.1, 0.2)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+
+COMP_CADUNICO_14a16 <- SHP_CADUNICO %>%
+  filter(!is.na(dif2014a2016)) %>%
+  tm_shape() +
+  tm_fill(col = "dif2014a2016", 
+          palette = cores_spectral,
+          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2014 a 2016)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.15, -0.05, 0, 0.01, 0.03, 0.05)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+
+COMP_CADUNICO_16a18 <- SHP_CADUNICO %>%
+  filter(!is.na(dif2016a2018)) %>%
+  tm_shape() +
+  tm_fill(col = "dif2016a2018", 
+          palette = cores_spectral,
+          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2016 a 2018)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.10, -0.05, 0, 0.05, 0.1, 0.15)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+
+tmap_arrange(COMP_CADUNICO_12a14, COMP_CADUNICO_14a16, COMP_CADUNICO_16a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+```{r cMAPAS_CADUNICO2_final, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+
+SHP_CADUNICO %>%
+  filter(!is.na(dif2012a2018)) %>%
+  tm_shape() +
+  tm_fill(col = "dif2012a2018", 
+          palette = cores_spectral,
+          title = "Aumento/redução no número<br>de pessoas que recebem<br>o BF (2012 a 2018)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.15, -0.05, 0, 0.05, 0.1, 0.2)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+```
+
+
 <br>
 <br>
 
@@ -1252,30 +1425,16 @@ SHP_mapasfinais %>%
 <br>
 <br>
 
-## [pendente] Variação da pobreza
 
 
 
+<!-- # Variáveis adicionais para análise -->
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<!-- 6778_EnergiaEletrica -->
+<!-- 6860_recursoshidricos -->
+<!-- 6962_Internet -->
+<!-- 6756_Educacao -->
+<!-- ●	[Situação jurídica da posse da terra] (condição do produtor em relação a terra) -->
+<!-- ●	[Evolução] – Variação percentual do número de estabelecimentos na microrregião 2006-2017 -->
+<!-- ●	[Situação atual] - Proporção da área estabelecimentos AF na microrregião em 2017 -->
 
