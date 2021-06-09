@@ -1428,13 +1428,621 @@ SHP_mapasfinais %>%
 
 
 
-<!-- # Variáveis adicionais para análise -->
+# Variáveis adicionais para análise
 
-<!-- 6778_EnergiaEletrica -->
-<!-- 6860_recursoshidricos -->
-<!-- 6962_Internet -->
-<!-- 6756_Educacao -->
-<!-- ●	[Situação jurídica da posse da terra] (condição do produtor em relação a terra) -->
-<!-- ●	[Evolução] – Variação percentual do número de estabelecimentos na microrregião 2006-2017 -->
-<!-- ●	[Situação atual] - Proporção da área estabelecimentos AF na microrregião em 2017 -->
+<!-- Bloco III - Fatores que influenciam -->
+
+<!-- A) Infraestrutura -->
+<!--     A1 - Acesso a energia elétrica -->
+<!--     A2 - Tipo de acesso a recursos hídricos -->
+<!--     A3 - Internet -->
+<!--     A4 - Proximidade de centros urbanos -->
+
+<!-- B) Capabilities  -->
+<!--     B1 - Educação (médio e superior ) -->
+<!--     B2 - Saúde (mortalidade infantil)  -->
+
+<!-- C) Situação fundiária -->
+<!--     [Já incluído na clusterização] C1 - Variação percentual do número de estabelecimentos na microrregião 2006-2017 -->
+<!--     [Já incluído na clusterização] C2 - Proporção da área estabelecimentos AF na microrregião em 2017 -->
+<!--     [Já incluído na clusterização] C3 - Situação jurídica da posse da terra (condição do produtor em relação a terra) -->
+
+<!-- D) Acesso a políticas públicas produtivas  -->
+<!--     D1 - Crédito -->
+<!--     D2 - ATER (Recebe orientação técnica)  -->
+
+<!-- E) Acesso a tecnologias convencionais -->
+<!--     E1 - Maquinário -->
+<!--     E2 - Uso de Insumos químicos -->
+
+<!-- F) Acesso a práticas não convencionais -->
+<!--     F1 - Agricultura orgânica -->
+
+
+```{r COD_Tabelas2, message=FALSE, warning=FALSE, include=FALSE}
+
+X6962_Internet <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6962_Internet.xlsx", na = "X") 
+X6962_Internet$COD[X6962_Internet$NIVEL == "BR"] <- 000
+
+X6778_EnergiaEletrica <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6778_EnergiaEletrica.xlsx", na = "X") 
+X6778_EnergiaEletrica$COD[X6778_EnergiaEletrica$NIVEL == "BR"] <- 000
+X6778_EnergiaEletrica <- X6778_EnergiaEletrica %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+X6860_recursoshidricos <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6860_recursoshidricos.xlsx", na = "X") 
+X6860_recursoshidricos$COD[X6860_recursoshidricos$NIVEL == "BR"] <- 000
+X6860_recursoshidricos <- X6860_recursoshidricos %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+X6756_Educacao <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6756_Educacao.xlsx", na = "X") 
+X6756_Educacao$COD[X6756_Educacao$NIVEL == "BR"] <- 000
+X6756_Educacao <- X6756_Educacao %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+X6779_OrientacaoTecnica <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6779_OrientacaoTecnica.xlsx", na = "X") 
+X6779_OrientacaoTecnica$COD[X6779_OrientacaoTecnica$NIVEL == "BR"] <- 000
+X6779_OrientacaoTecnica <- X6779_OrientacaoTecnica %>% #deletando colunas pra que elas não fiquem duplicadas quando for juntar as tabelas
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+XMortInfantil <- read_delim("data/tabelas/DATASUS/MORTALIDADEINFAN_MICRO.csv", 
+    ";", escape_double = FALSE, col_types = cols(COD_MICRO = col_character(), 
+        Nascim_17 = col_skip(), OBITOS_menos1ano = col_skip()), 
+    locale = locale(decimal_mark = ",", grouping_mark = "."), 
+    trim_ws = TRUE)
+
+
+
+
+#### PROCEDIMENTOS COM AS TABELAS -----------------
+
+#Join de todas as tabelas 
+todastabelas_extra <- X6962_Internet %>% 
+  left_join(., X6778_EnergiaEletrica, by = "COD") %>%
+  left_join(., X6860_recursoshidricos, by = "COD") %>%
+  left_join(., X6756_Educacao, by = "COD") %>%
+  left_join(., X6779_OrientacaoTecnica, by = "COD") %>%
+  left_join(., XMortInfantil, by = c("COD" = "COD_MICRO"))
+
+
+#Filtragem por recorte geográfico
+microrregioes_extra <- todastabelas_extra %>% filter(NIVEL == "MI")
+mesorregioes_extra <- todastabelas_extra %>% filter(NIVEL == "ME")
+estados_extra <- todastabelas_extra %>% filter(NIVEL == "UF")
+macrorregioes_extra <- todastabelas_extra %>% filter(NIVEL == "GR")
+brasil_extra <- todastabelas_extra %>% filter(NIVEL == "BR")
+
+
+#Criando colunas de código do estado e da região 
+microrregioes_extra <- microrregioes_extra %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+microrregioes_extra$COD_ESTADO <- substr(microrregioes_extra$COD_ESTADO, 0, 2)
+microrregioes_extra$COD_REGIAO <- substr(microrregioes_extra$COD_REGIAO, 0, 1)
+microrregioes_extra$COD_REGIAO[microrregioes_extra$COD_REGIAO == "1"] <- "Norte"
+microrregioes_extra$COD_REGIAO[microrregioes_extra$COD_REGIAO == "2"] <- "Nordeste"
+microrregioes_extra$COD_REGIAO[microrregioes_extra$COD_REGIAO == "3"] <- "Sudeste"
+microrregioes_extra$COD_REGIAO[microrregioes_extra$COD_REGIAO == "4"] <- "Sul"
+microrregioes_extra$COD_REGIAO[microrregioes_extra$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+
+
+# Calculo porcentagens
+
+microrregioes_extra_pct <- microrregioes_extra %>%
+  mutate(pct_INTERNET_sim = INTERNET_sim/INTERNET_tot ,
+         pct_INTERNET_nao = INTERNET_nao/INTERNET_tot,
+         
+         pct_EnerEle_nao_tot = EnerEle_nao_tot / EnerEle_tot ,
+         pct_EnerEle_nao_NAF = EnerEle_nao_NAF / EnerEle_NAF ,
+         pct_EnerEle_nao_AF = EnerEle_nao_AF / EnerEle_AF,
+         pct_EnerEle_nao_MP = EnerEle_nao_MP / EnerEle_MP ,
+         
+         pct_EM_tot = EDU_EM_tot / EDU_tot ,
+         pct_SUP_tot = EDU_SUP_tot / EDU_tot ,
+         pct_EM_AF = EDU_EM_AF / EDU_AF ,
+         pct_SUP_AF = EDU_SUP_AF / EDU_AF ,
+         pct_EM_MP = EDU_EM_MP / EDU_MP ,
+         pct_SUP_MP = EDU_SUP_MP / EDU_MP ,
+         pct_EM_NAF = EDU_EM_NAF / EDU_NAF ,
+         pct_SUP_NAF = EDU_SUP_NAF / EDU_NAF ,
+         
+         pct_OrTec_sim_tot  = OrTec_sim_tot / OrTec_tot ,
+         pct_OrTec_sim_AF  = OrTec_sim_AF / OrTec_AF ,
+         pct_OrTec_sim_MP  = OrTec_sim_MP / OrTec_MP ,
+         pct_OrTec_sim_NAF  = OrTec_sim_NAF / OrTec_NAF 
+         
+         
+         
+        #  pct_  =  /  ,
+        #  pct_  =  /  ,
+        #  pct_  =  /  ,
+        #  
+        # 
+        # 
+        # 
+        # 
+        # pct_  =  /  ,
+  )
+
+```
+
+```{r joins2, message=FALSE, warning=FALSE, include=FALSE}
+tmap_mode("plot")
+
+# A ser usado na hora de gerar o mapa
+margens <- list(b = 50, t = 115)
+
+# # make some bbox magic
+ bbox_new <- st_bbox(SHP_Microrregioes) # current bounding box
+# 
+ xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+ yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+# 
+  bbox_new[1] <- bbox_new[1] - (0.12 * xrange) # xmin - left
+#  bbox_new[3] <- bbox_new[3] + (0.1 * xrange) # xmax - right (aumenta a direita)
+#  bbox_new[2] <- bbox_new[2] - (0.50 * yrange) # ymin - bottom
+# #bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top (aumenta em cima)
+# 
+ bbox_new <- bbox_new %>%  # take the bounding box ...
+   st_as_sfc() # ... and make it a sf polygon
+
+# Juntando o shape e a tabela
+SHP_bloco3 <- SHP_Microrregioes %>%
+  left_join(., microrregioes_extra_pct, by = "COD")
+
+paletaspectral <- c("#5e4fa2", "#66c2a5", "#e6f598", "#fee08b", "#f46d43","#9e0142")
+paletaspectral_invert <- c("#9e0142", "#f46d43","#fee08b","#e6f598","#66c2a5","#5e4fa2")
+
+```
+
+## Infraestrutura 
+
+### Energia elétrica
+
+```{r energiaeletrica, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+### ENERGIA ELETRICA ####
+EnerEle_nao_AF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_EnerEle_nao_AF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_EnerEle_nao_AF", 
+          title = "% de estabelecimentos\nsem energia elétrica (AF)", 
+          id = "nome", 
+          palette=c("#5e4fa2", "#66c2a5", "#e6f598", "#fee08b", "#f46d43","#9e0142"),
+
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.05, 0.1, 0.2, 0.3, 0.50, 0.80)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Estabelecimentos sem\nenergia elétrica (AF)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")
+          ) +
+  
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+###
+EnerEle_nao_MP <-  SHP_bloco3 %>%
+  filter(!is.na(pct_EnerEle_nao_MP)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_EnerEle_nao_MP", 
+          title = "% de estabelecimentos\nsem energia elétrica (MP)", 
+          id = "nome", 
+          palette=c("#5e4fa2", "#66c2a5", "#e6f598", "#fee08b", "#f46d43","#9e0142"),
+
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.05, 0.1, 0.2, 0.3, 0.50, 0.80)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Estabelecimentos sem\nenergia elétrica (MP)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")
+          ) +
+  
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+####
+EnerEle_nao_NAF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_EnerEle_nao_NAF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_EnerEle_nao_NAF", 
+          title = "% de estabelecimentos\nsem energia elétrica (Não-AF)", 
+          id = "nome", 
+          palette=c("#5e4fa2", "#66c2a5", "#e6f598", "#fee08b", "#f46d43","#9e0142"),
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.05, 0.1, 0.2, 0.3, 0.50, 0.80)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Estabelecimentos sem\nenergia elétrica (não familiar)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom"),
+          title.size = 1) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+
+tmap_arrange(EnerEle_nao_AF, EnerEle_nao_MP, EnerEle_nao_NAF, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+### Internet
+
+```{r internet, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+
+
+### ACESSO A INTERNET ####
+  SHP_bloco3 %>%
+  filter(!is.na(pct_INTERNET_sim)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_INTERNET_sim", 
+          title = "% de estabelecimentos\ncom internet", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fisher") +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Estabelecimentos com acesso a internet", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")
+          ) +
+  
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+```
+
+
+## Capabilities
+
+### Educação
+
+```{r ensinomedioEsuperior, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+### ENSINO MÉDIO ####
+EM_AF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_EM_AF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_EM_AF", 
+          title = "% de responsáveis pelo estabelecimento\ncom ensino médio completo (AF)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.08, 0.16, 0.24, 0.32, 0.40, 0.50)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Responsáveis pelo estabelecimento\ncom ensino médio completo (AF)", main.title.position = "center", main.title.size = 0.7,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+###
+EM_MP <-  SHP_bloco3 %>%
+  filter(!is.na(pct_EM_MP)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_EM_MP", 
+          title = "% de responsáveis pelo estabelecimento\ncom ensino médio completo (MP)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.08, 0.16, 0.24, 0.32, 0.40, 0.50)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Responsáveis pelo estabelecimento\ncom ensino médio completo (MP)", main.title.position = "center", main.title.size = 0.7,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+####
+EM_NAF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_EM_NAF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_EM_NAF", 
+          title = "% de responsáveis pelo estabelecimento\ncom ensino médio completo (Não-AF)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.08, 0.16, 0.24, 0.32, 0.40, 0.50)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Responsáveis pelo estabelecimento\ncom ensino médio completo (não familiar)", main.title.position = "center", main.title.size = 0.7,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+
+
+tmap_arrange(EM_AF, EM_MP, EM_NAF, 
+             sync = TRUE, 
+             nrow = 1)
+
+
+
+
+
+
+### ENSINO superior ####
+SUP_AF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_SUP_AF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_SUP_AF", 
+          title = "% de responsáveis pelo estabelecimento\ncom ensino superior completo (AF)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.025, 0.1, 0.24, 0.32, 0.40, 0.50)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Responsáveis pelo estabelecimento\ncom ensino superior completo (AF)", main.title.position = "center", main.title.size = 0.7,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+###
+SUP_MP <-  SHP_bloco3 %>%
+  filter(!is.na(pct_SUP_MP)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_SUP_MP", 
+          title = "% de responsáveis pelo estabelecimento\ncom ensino superior completo (MP)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.025, 0.1, 0.24, 0.32, 0.40, 0.50)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Responsáveis pelo estabelecimento\ncom ensino superior completo (MP)", main.title.position = "center", main.title.size = 0.7,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+####
+SUP_NAF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_SUP_NAF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_SUP_NAF", 
+          title = "% de responsáveis pelo estabelecimento\ncom ensino superior completo (Não-AF)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.025, 0.1, 0.24, 0.32, 0.40, 0.53)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Responsáveis pelo estabelecimento\ncom ensino superior completo (não familiar)", main.title.position = "center", main.title.size = 0.7,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+
+
+tmap_arrange(SUP_AF, SUP_MP, SUP_NAF, 
+             sync = TRUE, 
+             nrow = 1)
+
+
+```    
+
+
+### Saúde
+
+```{r mortinfantil, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+
+  SHP_bloco3 %>%
+  filter(!is.na(txmortinf)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "txmortinf", 
+          title = "Tx. de mortalidade\ninfantil (por mil)", 
+          id = "nome", 
+          palette=paletaspectral,
+
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x), "‰")),
+          style = "fisher") +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Mortalidade infantil\nMenores de 1 ano", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")
+          ) +
+  
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+```
+
+
+
+## Situação fundiária
+
+
+## Políticas produtivas
+
+<!-- ### D1 - Crédito -->
+
+### Orientação técnica
+
+```{r orientacaotecnica, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+OrTec_sim_AF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_OrTec_sim_AF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_OrTec_sim_AF", 
+          title = "% de estabelecimentos que\nrecebem orientação técnica (AF)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.80)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Orientação técnica (AF)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000)) 
+###
+OrTec_sim_MP <-  SHP_bloco3 %>%
+  filter(!is.na(pct_OrTec_sim_MP)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_OrTec_sim_MP", 
+          title = "% de estabelecimentos que\nrecebem orientação técnica (MP)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.80)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Orientação técnica (MP)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+####
+OrTec_sim_NAF <-  SHP_bloco3 %>%
+  filter(!is.na(pct_OrTec_sim_NAF)) %>%
+  tm_shape(bbox = bbox_new) +
+  tm_fill(col = "pct_OrTec_sim_NAF", 
+          title = "% de estabelecimentos que\nrecebem orientação técnica (Não-AF)", 
+          id = "nome", 
+          palette=paletaspectral_invert,
+          n=6,
+          legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.80)) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1, col = "black") +
+  tm_layout(main.title = "Orientação técnica (não familiar)", main.title.position = "center", main.title.size = 0.8,
+          frame = FALSE, 
+          #legend.frame="white",
+          legend.title.color="black",
+          legend.title.size = 1,
+          legend.outside = F,
+          legend.position = c("left","bottom")) +
+  tm_legend(position = c(0, 0.2)) + 
+  tm_compass(position = c("right", "top"), 
+             size = 1.5, 
+             color.light = "grey90") +
+  tm_scale_bar(position=c("right", "bottom"), breaks = c(0,500,1000))
+
+
+tmap_arrange(OrTec_sim_AF, OrTec_sim_MP, OrTec_sim_NAF, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
 
