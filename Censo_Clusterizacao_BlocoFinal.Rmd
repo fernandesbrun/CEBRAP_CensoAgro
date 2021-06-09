@@ -472,7 +472,7 @@ Observação: Ao tratar de área útil dos estabelecimentos (hectare útil), o t
 
 <br>
 
-# Clusterização
+# 1. Clusterização
 
 ## Variáveis
 
@@ -1073,7 +1073,7 @@ SHP_clusters %>%
 
 
 
-# Mapas individuais extras
+# 2. Mapas individuais extras
 
 ## Pobreza rural
 
@@ -1428,7 +1428,7 @@ SHP_mapasfinais %>%
 
 
 
-# Variáveis adicionais para análise
+# 3. Variáveis adicionais para análise
 
 <!-- Bloco III - Fatores que influenciam -->
 
