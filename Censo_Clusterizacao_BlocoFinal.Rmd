@@ -1328,7 +1328,7 @@ SHP_mapasfinais %>%
 
 ### Estabelecimentos da AF
 
-**Diferença percentual de ocupados nos estabelecimentos de 2006 para 2017 na AF**
+**Diferença percentual de ocupados nos estabelecimentos da AF de 2006 para 2017**
 
 ```{r OCUPADOS_DIF_AF, echo=FALSE, message=FALSE, warning=FALSE}
 palete4 <- c("#b2182b", "#ef8a62", "#fddbc7", "#c7eae5", "#80cdc1", "#01665e")
@@ -1354,6 +1354,37 @@ SHP_mapasfinais %>%
 
 ```
 
+
+<br>
+
+### Estabelecimentos da AP
+
+**Diferença percentual de ocupados nos estabelecimentos não-familiares de 2006 para 2017**
+
+```{r OCUPADOS_DIF_AP, echo=FALSE, message=FALSE, warning=FALSE}
+palete4 <- c("#b2182b", "#ef8a62", "#fddbc7", "#c7eae5", "#80cdc1", "#01665e")
+
+SHP_mapasfinais %>%
+  mutate(Dif_OCU_NAF = Dif_OCU_NAF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(Dif_OCU_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_OCU_NAF", 
+          title = "Diferença percentual de ocupados<br>nos estabelecimentos Não-AF (2006/2017)", 
+          id = "LOCALIZACAO", palette=palete4,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = " ", format="f"), "%")),
+          style = "fixed",
+          breaks = c(-85, -50, -5, 5, 50, 100, 685)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
 <br>
 <br>
 <br>
@@ -1364,7 +1395,7 @@ SHP_mapasfinais %>%
 
 *Para garantir a comparação entre valores, os rendimentos de 2006 foram corrigidos de acordo com a inflação do período correspondente (IGP-M).
 
-*Diferença percentual de rendimentos totais dos estabelecimentos por ocupados nos estabelecimentos de 2006 para 2017 *
+**Diferença percentual de rendimentos totais dos estabelecimentos por ocupados nos estabelecimentos de 2006 para 2017**
 ```{r MAPAS_DifPercent_RENDA, echo=FALSE, message=FALSE, warning=FALSE}
 ### Diferença percentual de rendimentos totais dos estabelecimentos 
 
@@ -1394,7 +1425,7 @@ SHP_mapasfinais %>%
 <br>
 
 ### Estabelecimentos da AF
-*Diferença percentual de rendimentos totais da AF por ocupados nos estabelecimentos de 2006 para 2017 *
+**Diferença percentual de rendimentos totais da AF por ocupados nos estabelecimentos de 2006 para 2017**
 ```{r MAPAS_DifPercent_RENDA_AF, echo=FALSE, message=FALSE, warning=FALSE}
 ### Diferença percentual de rendimentos totais dos estabelecimentos 
 
@@ -1413,6 +1444,37 @@ SHP_mapasfinais %>%
           legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
           style = "fixed", 
           breaks = c(-200, -50, -5, 5, 100, 500, 1000)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+```
+
+<br>
+
+### Estabelecimentos da AP
+**Diferença percentual de rendimentos totais dos estabelecimentos não-familiares por ocupados nos estabelecimentos não-familiares de 2006 para 2017**
+```{r MAPAS_DifPercent_RENDA_AP, echo=FALSE, message=FALSE, warning=FALSE}
+### Diferença percentual de rendimentos totais dos estabelecimentos 
+
+palete3 <- c("#b2182b", "#ef8a62", "#fddbc7", "#c7eae5", "#80cdc1", "#01665e")
+
+#Total
+SHP_mapasfinais %>%
+  mutate(Dif_REND_OCU_NAF = Dif_REND_OCU_NAF * 100) %>%
+  filter(!is.na(LOCALIZACAO)) %>%
+  filter(!is.na(Dif_REND_OCU_NAF)) %>%
+  tm_shape() +
+  tm_fill(col = "Dif_REND_OCU_NAF", 
+          title = "Alteração percentual nos<br>rendimentos por ocupados nos<br>estab. da Não-AF de 2006* para 2017", 
+          id = "LOCALIZACAO", palette=palete3,
+          #n=7
+          legend.format=list(fun=function(x) paste0(formatC(x, digits=0, big.mark = ".", format="f"), "%")),
+          style = "fixed", 
+          breaks = c(-90, -50, -5, 5, 100, 500, 1200)
           ) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
