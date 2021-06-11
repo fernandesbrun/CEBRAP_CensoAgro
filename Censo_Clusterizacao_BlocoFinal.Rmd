@@ -157,7 +157,8 @@ todastabelas <- TABELA1 %>%
   left_join(., TABELA10, by = "COD") %>%
   full_join(., TABELA4_06, by = "COD") %>%
   full_join(., TABELA8_06, by = "COD") %>%
-  full_join(., TABELA2_06, by = "COD")
+  full_join(., TABELA2_06, by = "COD") %>%
+  mutate_if(is.numeric , replace_na, replace = 0)
 
 
 #Filtragem por recorte geográfico
@@ -889,7 +890,9 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 - Rendimentos 
 	+ Nos estabelecimentos da AF, em média 7% dos rendimentos não são de atividades de produção agropecuária; apesar de baixo, é a maior média dentre os estabelecimentos da AF
 	+ Nos estabelecimentos patronais, em média 9% dos rendimentos não são de atividades agropecuárias, mas diferentemente da AF, essa é a porcentagem mais baixa, dentre os patronais nos 5 clusters
+	+ Com média de 18% de participação da renda de programas sociais na composição da renda da AF, o valor é mais alto que o do cluster 2 e 4, com 2% de diferença a mais que a média do cluster 4
 	+ Nos estabelecimentos patronais o valor da produção por pessoa ocupada é, com larga margem, o mais alto de todos (a hipótese, a partir da localização do cluster, é que isso pode se dar tanto pelo baixo número de pessoas ocupadas nos estabelecimentos, quanto pelo alto rendimento bruto da produção)
+	
 
 
 **Cluster 2**
@@ -912,6 +915,7 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 	+ Em média, os rendimentos não agrícolas ocupam a menor porcentagem da renda da AF dentre todos os clusters, com apenas 5%. Nos estabelecimentos não familiares, o valor sobe para 11%, baixo quando em comparação com os clusters 3 e 5, mas alto quanto em comparação com a AF
 	+ O rendimento por pessoa ocupada fica com o valor mais alto dentre todos os cluster para a AF e com o segundo mais alto para a AP
 	+ Nas três tipologias esse é o cluster que mais depende das receitas agrícolas, com média de 81% da composição da renda da AF e 87% da composição da renda da AP dada pela produção agropecuária
+	+ Em média, 12% dos rendimentos são compostos por rendas de políticas e programas, sendo o menor valor dentre os clusters
 
 - Posse da terra
 	+ Com média muito similar ao cluster 1, as porcentagem de proprietários em estabelecimentos da AF e da AP são praticamente iguais, ambos com média de 86%.
@@ -940,7 +944,7 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 	+ Rendimento por ocupado na AP muito inferior aos dos clusters 1, 2 e 4, mas ainda superior ao cluster 5
 	+ Segunda maior porcentagem de rendimentos não agrícolas na composição da renda dos estabelecimentos patronais e de beneficiários do Pronamp
 	+ Receitas agrícolas compondo, em média, apenas 55% dos rendimentos da AF
-	+ Porcentagem baixa (4%), mas significativa quando em comparação com os demais clusters de rendimentos de programas sociais na AF
+	+ Segunda participação mais alta das rendas de programas e políticas nos estabelecimentos da AF, com em média 1/3 da renda sendo dessa origem
 
 - Posse da terra
 	+ Cluster em média bastante equilibrado em relação a posse da terra, com valores muito similares nas três tipologias
@@ -969,7 +973,7 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 	+ Rendimento por pessoal ocupado na AF relativamente alto, com média quase tão alta quanto no cluster 2 para a mesma tipologia
 	+ Porcentagem de rendimentos não agrícolas medianos quando em comparação com os demais clusters tanto para a AF quanto para a AP
 	+ Receitas agrícolas são mais relevantes na AP do que na AF, mas em ambas as tipologias compõem mais que 3/4 dos rendimentos
-	+ Média de receitas de programas e políticas na composição da renda baixa, mas maior do que nos dois primeiros clusters
+	+ Segunda média mais baixa de participação das receitas de programas e políticas na composição da renda da AF, com 16% é maior apenas que o cluster 2
 	+ Segunda menor porcentagem de proprietários da terra na AF, com quase 10% a menos na média quando comparado com o valor mais alto, no cluster 2. Valor menor que nos cluster 1, 2 e 3 para a AP, mas com diferença de apenas 5% para o maior valor
 
 
@@ -994,7 +998,7 @@ kbl(df_clusters_k5_sumarioPLOT, digits = 2,
 	+ Menor receita por ocupado dentre todos os clusters para todas as tipologias
 	+ Receitas não agrícolas são muito significativas nos estabelecimentos do Pronamp e não familiares, representando pouco mais de 40% da composição da renda
 	+ Uma vez que as receitas não agrícolas possuem um papel tão grande, as receitas agrícolas perdem força, com as menores participações dentre todos os clusters para todas as tipologias, com 34% na AF e 46% de média na AP
-	+ Cluster com a maior expressão da participação das receitas de programas sociais na composição da renda (7% em média)
+	+ Cluster com a maior expressão da participação das receitas de programas sociais na composição da renda, com mais da metade da renda das microrregiões composta por esse tipo (56% em média)
 	+ Menores valores relativos de proprietários nos estabelecimentos para todas as tipologias
 
 
@@ -1576,7 +1580,8 @@ todastabelas_extra <- X6962_Internet %>%
   left_join(., X6756_Educacao, by = "COD") %>%
   left_join(., X6779_OrientacaoTecnica, by = "COD") %>%
   left_join(., X6853_Organico, by = "COD") %>%
-  left_join(., XMortInfantil, by = c("COD" = "COD_MICRO"))
+  left_join(., XMortInfantil, by = c("COD" = "COD_MICRO")) %>%
+  mutate_if(is.numeric , replace_na, replace = 0)
 
 
 #Filtragem por recorte geográfico
@@ -2042,7 +2047,7 @@ OrTec_sim_AF <-  SHP_bloco3 %>%
           n=6,
           legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
           style = "fixed",
-        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.80)) +
+        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.90)) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1, col = "black") +
   tm_layout(main.title = "Orientação técnica (AF)", main.title.position = "center", main.title.size = 0.8,
@@ -2068,7 +2073,7 @@ OrTec_sim_MP <-  SHP_bloco3 %>%
           n=6,
           legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
           style = "fixed",
-        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.80)) +
+        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.90)) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1, col = "black") +
   tm_layout(main.title = "Orientação técnica (MP)", main.title.position = "center", main.title.size = 0.8,
@@ -2094,7 +2099,7 @@ OrTec_sim_NAF <-  SHP_bloco3 %>%
           n=6,
           legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
           style = "fixed",
-        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.80)) +
+        breaks = c(0, 0.1, 0.20, 0.40, 0.50, 0.65, 0.90)) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1, col = "black") +
   tm_layout(main.title = "Orientação técnica (não familiar)", main.title.position = "center", main.title.size = 0.8,
@@ -2126,7 +2131,7 @@ Uso da agricultura ou pecuária orgânica
 
 **% de estabelecimentos que fazem práticas orgânicas**
 ```{r organicos, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
-Organico_sim_AF <-  SHP_bloco3 %>%
+Organico_sim_AF <- SHP_bloco3 %>%
   filter(!is.na(pct_Organico_sim_AF)) %>%
   tm_shape(bbox = bbox_new) +
   tm_fill(col = "pct_Organico_sim_AF", 
@@ -2136,7 +2141,7 @@ Organico_sim_AF <-  SHP_bloco3 %>%
           n=6,
           legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
           style = "fixed",
-        breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
+          breaks = c(0, 0.009, 0.02, 0.05, 0.1, 0.25, 0.36)) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1, col = "black") +
   tm_layout(main.title = "Uso de agricultura ou\npecuária orgânica (AF)", main.title.position = "center", main.title.size = 0.8,
@@ -2162,7 +2167,8 @@ Organico_sim_MP <-  SHP_bloco3 %>%
           n=6,
           legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
           style = "fixed",
-        breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
+          breaks = c(0, 0.009, 0.02, 0.05, 0.1, 0.25, 0.36)) +
+        #breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1, col = "black") +
   tm_layout(main.title = "Uso de agricultura ou\npecuária orgânica (MP)", main.title.position = "center", main.title.size = 0.8,
@@ -2188,7 +2194,8 @@ Organico_sim_NAF <-  SHP_bloco3 %>%
           n=6,
           legend.format=list(text.separator = 'a', fun=function(x) paste0(round(x*100), "%")),
           style = "fixed",
-        breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
+          breaks = c(0, 0.009, 0.02, 0.05, 0.1, 0.25, 0.36)) +
+        #breaks = c(0, 0.01, 0.03, 0.07, 0.15, 0.25, 0.36)) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1, col = "black") +
   tm_layout(main.title = "Uso de agricultura ou pecuária\norgânica (não familiar)", main.title.position = "center", main.title.size = 0.8,
