@@ -3,7 +3,7 @@ title: "CadUnico"
 output:
   html_document:
     toc: true
-    toc_depth: 4 
+    toc_depth: 5 
     toc_float: 
       collapsed: false
     theme: flatly  
@@ -228,7 +228,7 @@ Uma vez que não é possível criar uma amostragem dos dados com famílias que r
 
 ##### Famílias rurais
 
-**Em valores por ano**
+###### Em valores por ano
 
 ```{r REND_TOT_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
@@ -300,7 +300,37 @@ tmap_arrange(RENDM_TOT_2012, RENDM_TOT_2015, RENDM_TOT_2018,
 
 ```
 
-**Em variação entre os anos**
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+    
+###### Em variação entre os anos
 ```{r RENDvar_TOT_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
@@ -383,7 +413,7 @@ tmap_arrange(REND_TOT_CADUNICO_12a15, REND_TOT_CADUNICO_15a18,
 
 ##### Famílias da AF
 
-**Em valores por ano**
+###### Em valores por ano
 
 ```{r REND_AF_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
@@ -456,7 +486,39 @@ tmap_arrange(RENDM_AF_2012, RENDM_AF_2015, RENDM_AF_2018,
 
 ```
 
-**Em variação entre os anos**
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+    
+
+###### Em variação entre os anos
 ```{r RENDvar_AF_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
@@ -541,7 +603,7 @@ tmap_arrange(REND_AF_CADUNICO_12a15, REND_AF_CADUNICO_15a18,
 
 ##### Famílias rurais
 
-**Em valores por ano**
+###### Em valores por ano
 ```{r REND_TOT_BF, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
@@ -642,7 +704,7 @@ tmap_arrange(RENDM_TOT_2012, RENDM_TOT_2015, RENDM_TOT_2018,
 
 <br>
 
-**Em variação entre os anos**
+###### Em variação entre os anos
 ```{r RENDvar_TOT_BF, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 
@@ -724,7 +786,7 @@ tmap_arrange(REND_BF_CADUNICO_12a15, REND_BF_CADUNICO_15a18,
 
 ##### Famílias da AF
 
-**Em valores por ano**
+###### Em valores por ano
 ```{r REND_AF_BF, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
@@ -825,7 +887,7 @@ tmap_arrange(RENDM_AF_2012, RENDM_AF_2015, RENDM_AF_2018,
 
 <br>
 
-**Em variação entre os anos**
+###### Em variação entre os anos
 ```{r RENDvar_AF_BF, echo=FALSE, message=FALSE, warning=FALSE}
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 
