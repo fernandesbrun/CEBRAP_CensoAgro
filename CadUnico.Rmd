@@ -1,0 +1,1130 @@
+---
+title: "CadUnico"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4 
+    toc_float: 
+      collapsed: false
+    theme: flatly  
+
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+               cache=FALSE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+```{r Pacotes, message=FALSE, warning=FALSE, include=FALSE}
+#pacotes
+
+#install.packages(c("ggthemes", "ggpubr", "readr", "readxl", "rstatix", "sp", "sf", "tmap", "leaflet", "arsenal", "knitr", "plotly", "kableExtra", "prettydoc", "rmdformats", "knitr", "scales", "esquisse", "pacman"))
+
+#install.packages(c(	"broom", "cli", "crayon" , "dbplyr", "dplyr", "forcats", "ggplot2", "haven", "hms", "httr", "jsonlite", "lubridate", "magrittr", "modelr", "pillar", "purrr", "readr", "readxl", "reprex", "rlang", "rstudioapi", "rvest", "stringr", "tibble", "tidyr", "xml2", "corrplot"))
+
+##install.packages("factoextra")
+##install.packages("qwraps2")
+
+pacman::p_load(ggthemes, ggpubr, tidyverse, readr, readxl, esquisse, rstatix, sp, sf, tmap, leaflet, arsenal, knitr, plotly, kableExtra, prettydoc, rmdformats, knitr, scales, broom, cli, crayon , dbplyr, dplyr, forcats, ggplot2, haven, hms, httr, jsonlite, lubridate, magrittr, modelr, pillar, purrr, readr, readxl, reprex, rlang, rstudioapi, rvest, stringr, tibble, tidyr, xml2, factoextra, qwraps2, corrplot) 
+
+
+options(scipen=999)
+
+```
+
+```{r bCODmapas PREPARACAO I, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+```
+
+
+## CadUnico / Bolsa Família
+
+```{r TABELA_POP_BF, message=FALSE, warning=FALSE, include=FALSE}
+tmap_mode("view")
+
+CENSODEM_10 <- read_excel("data/tabelas/CensoDemografico/CensoDem_2010_3216.xlsx", na = "X") 
+CENSODEM_10$COD[CENSODEM_10$NIVEL == "BR"] <- 000
+CENSODEM_10 <- CENSODEM_10 %>%
+  select(c(COD, POP10_Rur, DOM10_Rur))
+
+
+# CORRESPONDER MUNICÍPIO E MICRORREGIÃO
+corresp <- read_delim("data/tabelas/CORRESPmun_micro/TabelaCorrespondencia_MUN_MICRO.csv", 
+                      ";", escape_double = FALSE, locale = locale(encoding = "WINDOWS-1252"))
+
+
+# 
+FAM_2012_aggAF <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2012_aggAF.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+FAM_2015_aggAF <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2015_aggAF.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+FAM_2018_aggAF <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2018_aggAF.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+FAM_2012_aggTOT <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2012_aggTOT.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+FAM_2015_aggTOT <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2015_aggTOT.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+FAM_2018_aggTOT <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2018_aggTOT.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = "."), trim_ws = TRUE)
+
+
+CADUNICO_aggmunicipios <- FAM_2012_aggTOT %>%
+  full_join(., FAM_2012_aggAF, by = c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2015_aggTOT, by =  c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2015_aggAF, by =  c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2018_aggTOT, by =  c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2018_aggAF, by =  c("cd_ibge", "marc_pbf")) %>%
+  mutate(cd_ibge = as.character(cd_ibge)) %>%
+  left_join(., CENSODEM_10, by = c("cd_ibge" = "COD"))
+
+
+CADUNICO_aggmicrorTODOS <- CADUNICO_aggmunicipios %>%
+  mutate(cd_ibge = as.numeric(cd_ibge)) %>%
+  left_join(., corresp, by = c("cd_ibge" = "Código Município Completo")) %>%
+  group_by(COD_MICRO 
+           #marc_pbf
+           ) %>%
+  summarise(
+    marc_pbf = 2,
+    
+    renda_media_percapita_2012 = mean(renda_media_percapita_2012*1.39591160, na.rm = TRUE),
+    renda_media_percapitaAF_2012 = mean(renda_media_percapitaAF_2012*1.39591160, na.rm = TRUE),
+    renda_media_percapita_2015 = mean(renda_media_percapita_2015*1.15208830 , na.rm = TRUE),
+    renda_media_percapitaAF_2015  = mean(renda_media_percapitaAF_2015*1.15208830, na.rm = TRUE),
+    renda_media_percapita_2018 = mean(renda_media_percapita_2018, na.rm = TRUE),
+    renda_media_percapitaAF_2018 = mean(renda_media_percapitaAF_2018, na.rm = TRUE),
+    
+    qtde_pessoas_2012        = sum(qtde_pessoas_2012 , na.rm = TRUE),
+    qtde_familias_2012       = sum(qtde_familias_2012, na.rm = TRUE),
+    qtde_pessoasAF_2012         = sum(qtde_pessoasAF_2012, na.rm = TRUE),
+    qtde_familiasAF_2012  = sum(qtde_familiasAF_2012, na.rm = TRUE),
+    
+    qtde_pessoas_2015       = sum(qtde_pessoas_2015, na.rm = TRUE),
+    qtde_familias_2015         = sum(qtde_familias_2015, na.rm = TRUE),
+    qtde_pessoasAF_2015         = sum(qtde_pessoasAF_2015, na.rm = TRUE),
+    qtde_familiasAF_2015  = sum(qtde_familiasAF_2015  , na.rm = TRUE),
+    
+    qtde_pessoas_2018           = sum(qtde_pessoas_2018, na.rm = TRUE),
+    qtde_familias_2018          = sum(qtde_familias_2018, na.rm = TRUE),
+    qtde_pessoasAF_2018        = sum(qtde_pessoasAF_2018, na.rm = TRUE),
+    qtde_familiasAF_2018         = sum(qtde_familiasAF_2018, na.rm = TRUE),
+    UF = first(UF)) 
+
+  
+
+CADUNICO_aggmicror <- CADUNICO_aggmunicipios %>%
+  mutate(cd_ibge = as.numeric(cd_ibge)) %>%
+  left_join(., corresp, by = c("cd_ibge" = "Código Município Completo")) %>%
+  group_by(COD_MICRO, marc_pbf) %>%
+  summarise(renda_media_percapita_2012 = mean(renda_media_percapita_2012*1.39591160, na.rm = TRUE),
+    renda_media_percapitaAF_2012 = mean(renda_media_percapitaAF_2012*1.39591160, na.rm = TRUE),
+    renda_media_percapita_2015 = mean(renda_media_percapita_2015*1.15208830 , na.rm = TRUE),
+    renda_media_percapitaAF_2015  = mean(renda_media_percapitaAF_2015*1.15208830, na.rm = TRUE),
+    renda_media_percapita_2018 = mean(renda_media_percapita_2018, na.rm = TRUE),
+    renda_media_percapitaAF_2018 = mean(renda_media_percapitaAF_2018, na.rm = TRUE),
+    
+    qtde_pessoas_2012        = sum(qtde_pessoas_2012 , na.rm = TRUE),
+    qtde_familias_2012       = sum(qtde_familias_2012, na.rm = TRUE),
+    qtde_pessoasAF_2012         = sum(qtde_pessoasAF_2012, na.rm = TRUE),
+    qtde_familiasAF_2012  = sum(qtde_familiasAF_2012, na.rm = TRUE),
+    
+    qtde_pessoas_2015       = sum(qtde_pessoas_2015, na.rm = TRUE),
+    qtde_familias_2015         = sum(qtde_familias_2015, na.rm = TRUE),
+    qtde_pessoasAF_2015         = sum(qtde_pessoasAF_2015, na.rm = TRUE),
+    qtde_familiasAF_2015  = sum(qtde_familiasAF_2015  , na.rm = TRUE),
+    
+    qtde_pessoas_2018           = sum(qtde_pessoas_2018, na.rm = TRUE),
+    qtde_familias_2018          = sum(qtde_familias_2018, na.rm = TRUE),
+    qtde_pessoasAF_2018        = sum(qtde_pessoasAF_2018, na.rm = TRUE),
+    qtde_familiasAF_2018         = sum(qtde_familiasAF_2018, na.rm = TRUE),
+    UF = first(UF)) %>%
+  bind_rows(., CADUNICO_aggmicrorTODOS) %>%
+  mutate(COD_MICRO = as.character(COD_MICRO)) %>%
+  left_join(., CENSODEM_10, by = c("COD_MICRO" = "COD"))
+
+CADUNICO_aggmicror[is.na(CADUNICO_aggmicror)] = 0
+  
+
+CADUNICO_aggmicror <- CADUNICO_aggmicror %>%
+  mutate(
+    pct_qtde_pessoas_2012	=	(	qtde_pessoas_2012)	/	POP10_Rur,
+    pct_qtde_pessoasAF_2012	=	(	qtde_pessoasAF_2012)	/	POP10_Rur,
+    
+    pct_qtde_pessoas_2015	=	(	qtde_pessoas_2015)	/	POP10_Rur,
+    pct_qtde_pessoasAF_2015	=	(	qtde_pessoasAF_2015)	/	POP10_Rur,
+    
+    pct_qtde_pessoas_2018	=	(	qtde_pessoas_2018)	/	POP10_Rur,
+    pct_qtde_pessoasAF_2018	=	(	qtde_pessoasAF_2018)	/	POP10_Rur,
+    
+    dif_qtde_pessoas_2012a2015 = pct_qtde_pessoas_2015 - pct_qtde_pessoas_2012,
+    dif_qtde_pessoasAF_2012a2015 = pct_qtde_pessoasAF_2015 - pct_qtde_pessoasAF_2012,
+    
+    dif_qtde_pessoas_2015a2018 = pct_qtde_pessoas_2018 - pct_qtde_pessoas_2015,
+    dif_qtde_pessoasAF_2015a2018 = pct_qtde_pessoasAF_2018 - pct_qtde_pessoasAF_2015,
+    
+    pct_qtde_familias_2012	=	(	qtde_familias_2012)	/	DOM10_Rur,
+    pct_qtde_familiasAF_2012	=	(	qtde_familiasAF_2012)	/	DOM10_Rur,
+    
+    pct_qtde_familias_2015	=	(	qtde_familias_2015)	/	DOM10_Rur,
+    pct_qtde_familiasAF_2015	=	(	qtde_familiasAF_2015)	/	DOM10_Rur,
+    
+    pct_qtde_familias_2018	=	(	qtde_familias_2018)	/	DOM10_Rur,
+    pct_qtde_familiasAF_2018	=	(	qtde_familiasAF_2018)	/	DOM10_Rur,
+    
+    dif_qtde_familias_2012a2015 = pct_qtde_familias_2015 - pct_qtde_familias_2012,
+    dif_qtde_familiasAF_2012a2015 = pct_qtde_familiasAF_2015 - pct_qtde_familiasAF_2012,
+    
+    dif_qtde_familias_2015a2018 = pct_qtde_familias_2018 - pct_qtde_familias_2015,
+    dif_qtde_familiasAF_2015a2018 = pct_qtde_familiasAF_2018 - pct_qtde_familiasAF_2015,
+    
+    dif_rm_percapita_2012a2015	=	renda_media_percapita_2015	-	renda_media_percapita_2012,
+    dif_rm_percapita_2015a2018	=	renda_media_percapita_2018	-	renda_media_percapita_2015,
+    dif_rm_percapitaAF_2012a2015	=	renda_media_percapitaAF_2015	-	renda_media_percapitaAF_2012,
+    dif_rm_percapitaAF_2015a2018	=	renda_media_percapitaAF_2018	-	renda_media_percapitaAF_2015
+  )
+
+
+```
+
+```{r cMAPAS_CADUNICO, message=FALSE, warning=FALSE, include=FALSE}
+# Juntando o shape e a tabela
+SHP_CADUNICO <- SHP_Microrregioes %>%
+  left_join(., CADUNICO_aggmicror, by = c("COD" = "COD_MICRO"))
+```
+
+### Renda per capita 
+
+Uma vez que não é possível criar uma amostragem dos dados com famílias que recebiam o bolsa família em todos os três anos analisados, foi necessário analisar de forma generalizada a renda média per capita das famílias com cadastro no CadUnico nas microrregiões.
+- Não sendo possível elaborar uma análise considerando a situação de famílias específicas, os mapas abaixo mostram os dados para o universo dos cadastrados no CadUnico, tanto beneficiários quanto não beneficiários, intencionando abranger famílias que possam ter deixado de receber o benefício de um ano para outro por razão de aumento de renda.
+
+*Para garantir a comparação entre valores, os rendimentos de 2012 e 2015 foram corrigidos de acordo com a inflação para os preços correntes no ano de 2018 (IGP-M).
+
+#### Todos no CadUnico
+
+##### Famílias rurais
+
+**Em valores por ano**
+
+```{r REND_TOT_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+RENDM_TOT_2012 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapita_2012)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapita_2012", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2012)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(18, 50, 100, 200, 300, 450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+RENDM_TOT_2015 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapita_2015)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapita_2015", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2015)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(18, 50, 100, 200, 300, 450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+RENDM_TOT_2018 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapita_2018)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapita_2018", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2018)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(18, 50, 100, 200, 300, 450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(RENDM_TOT_2012, RENDM_TOT_2015, RENDM_TOT_2018,
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+**Em variação entre os anos**
+```{r RENDvar_TOT_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+REND_TOT_CADUNICO_12a15 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapita_2012a2015)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapita_2012a2015", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>cadastrados no CadUnico<br>2012 a 2015",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+REND_TOT_CADUNICO_15a18 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapita_2015a2018)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapita_2015a2018", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>cadastrados no CadUnico<br>2015 a 2018",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)   
+
+tmap_arrange(REND_TOT_CADUNICO_12a15, REND_TOT_CADUNICO_15a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+##### Famílias da AF
+
+**Em valores por ano**
+
+```{r REND_AF_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+RENDM_AF_2012 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapitaAF_2012)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapitaAF_2012", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2012/AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(18, 50, 100, 200, 300, 450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+  
+RENDM_AF_2015 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapitaAF_2015)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapitaAF_2015", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2015/AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(18, 50, 100, 200, 300, 450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+RENDM_AF_2018 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapitaAF_2018)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapitaAF_2018", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2018/AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(18, 50, 100, 200, 300, 450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(RENDM_AF_2012, RENDM_AF_2015, RENDM_AF_2018,
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+**Em variação entre os anos**
+```{r RENDvar_AF_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+REND_AF_CADUNICO_12a15 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapitaAF_2012a2015)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapitaAF_2012a2015", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>cadastrados no CadUnico<br>2012 a 2015 (AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+REND_AF_CADUNICO_15a18 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapitaAF_2015a2018)) %>%
+  filter(marc_pbf == 2) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapitaAF_2015a2018", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>cadastrados no CadUnico<br>2015 a 2018 (AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)   
+
+tmap_arrange(REND_AF_CADUNICO_12a15, REND_AF_CADUNICO_15a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+    
+#### Beneficiários do BF
+
+##### Famílias rurais
+
+**Em valores por ano**
+```{r REND_TOT_BF, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+RENDM_TOT_2012 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapita_2012)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapita_2012", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2012)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fisher",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+RENDM_TOT_2015 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapita_2015)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapita_2015", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2015)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fisher",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+RENDM_TOT_2018 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapita_2018)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapita_2018", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2018)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fisher",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(RENDM_TOT_2012, RENDM_TOT_2015, RENDM_TOT_2018,
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+**Em variação entre os anos**
+```{r RENDvar_TOT_BF, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+
+REND_BF_CADUNICO_12a15 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapita_2012a2015)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapita_2012a2015", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>beneficiários do BF<br>2012 a 2015",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-100,-30,0,30,80,120)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+REND_BF_CADUNICO_15a18 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapita_2015a2018)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapita_2015a2018", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>beneficiários do BF<br>2015 a 2018",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-100,-30,0,30,80,120)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)   
+
+tmap_arrange(REND_BF_CADUNICO_12a15, REND_BF_CADUNICO_15a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+##### Famílias da AF
+
+**Em valores por ano**
+```{r REND_AF_BF, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+RENDM_AF_2012 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapitaAF_2012)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapita_2012", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2012/AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fisher",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+RENDM_AF_2015 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapitaAF_2015)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapitaAF_2015", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2015/AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fisher",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+RENDM_AF_2018 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(renda_media_percapitaAF_2018)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "renda_media_percapitaAF_2018", 
+          palette = cores_spectral_inv,
+          title = "Renda média per capita dos<br>cadastrados no CadUnico (2018/AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fisher",
+          breaks = c(-70, -25, 0, 50, 100, 240)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+tmap_arrange(RENDM_AF_2012, RENDM_AF_2015, RENDM_AF_2018,
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+**Em variação entre os anos**
+```{r RENDvar_AF_BF, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+
+REND_BF_CADUNICOAF_12a15 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapitaAF_2012a2015)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapitaAF_2012a2015", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>beneficiários do BF<br>2012 a 2015 (AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-100,-30,0,30,80,120)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+REND_BF_CADUNICOAF_15a18 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapitaAF_2015a2018)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapitaAF_2015a2018", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>beneficiários do BF<br>2015 a 2018 (AF)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-100,-30,0,30,80,120)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)   
+
+tmap_arrange(REND_BF_CADUNICOAF_12a15, REND_BF_CADUNICOAF_15a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+    
+#### Não beneficiários do BF
+Não beneficiários do BF, mas cadastrados no CadUnico
+```{r REND_NBF_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+
+REND_NBF_CADUNICO_12a15 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapita_2012a2015)) %>%
+  filter(marc_pbf == 0) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapita_2012a2015", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>beneficiários do BF<br>2012 a 2015",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-160,-25,0,100,250,450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+REND_NBF_CADUNICO_15a18 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_rm_percapita_2015a2018)) %>%
+  filter(marc_pbf == 0) %>%
+  tm_shape() +
+  tm_fill(col = "dif_rm_percapita_2015a2018", 
+          palette = cores_spectral_inv,
+          title = "Evolução da renda dos<br>beneficiários do BF<br>2015 a 2018",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0("R$", round(x))),
+          style = "fixed",
+          breaks = c(-160,-25,0,100,250,450)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)   
+
+tmap_arrange(REND_NBF_CADUNICO_12a15, REND_NBF_CADUNICO_15a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+    
+
+### Evolução do n° de famílias BF
+ 
+Considerando o número de domicílios nas zonas rurais no ano de 2010, foram calculadas as variações percentuais do número de famílias beneficiárias do Bolsa Família.
+
+#### Todas as famílias rurais
+```{r FAM_TOT_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+FAM_TOT_CADUNICO_12a15 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_qtde_familias_2012a2015)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_qtde_familias_2012a2015", 
+          palette = cores_spectral,
+          title = "Variação % do n° de famílias<br>rurais beneficiárias<br>do BF (2012 a 2015)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.36, -0.10, 0, 0.10, 0.50, 1.10)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+  
+FAM_TOT_CADUNICO_15a18 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_qtde_familias_2015a2018)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_qtde_familias_2015a2018", 
+          palette = cores_spectral,
+          title = "Variação % do n° de famílias<br>rurais beneficiárias<br>do BF (2015 a 2018)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.36, -0.10, 0, 0.10, 0.50, 1.10)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1)   
+
+tmap_arrange(FAM_TOT_CADUNICO_12a15, FAM_TOT_CADUNICO_15a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+```
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+    
+#### Famílias rurais de agricultores familiares
+```{r FAM_AF_CADUNICO, echo=FALSE, message=FALSE, warning=FALSE}
+cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
+cores_spectral_inv <- c("#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba") 
+
+FAM_AF_CADUNICO_12a15 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_qtde_familiasAF_2012a2015)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_qtde_familiasAF_2012a2015", 
+          palette = cores_spectral,
+          title = "Variação % do n° de famílias<br>rurais da AF beneficiárias<br>do BF (2012 a 2015)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.15, 0, 0.1, 0.2, 0.3, 0.6)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1) 
+  
+FAM_AF_CADUNICO_15a18 <- 
+  SHP_CADUNICO %>%
+  filter(!is.na(dif_qtde_familiasAF_2015a2018)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_qtde_familiasAF_2015a2018", 
+          palette = cores_spectral,
+          title = "Variação % do n° de famílias<br>rurais da AF beneficiárias<br>do BF (2015 a 2018)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.15, 0, 0.1, 0.2, 0.3, 0.6)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1)   
+
+tmap_arrange(FAM_AF_CADUNICO_12a15, FAM_AF_CADUNICO_15a18, 
+             sync = TRUE, 
+             nrow = 1)
+
+
+```
+
+
+
