@@ -1093,84 +1093,171 @@ CENSODEM_10 <- CENSODEM_10 %>%
 # CORRESPONDER MUNICÍPIO E MICRORREGIÃO
 corresp <- read_delim("data/tabelas/CORRESPmun_micro/TabelaCorrespondencia_MUN_MICRO.csv", 
                       ";", escape_double = FALSE, locale = locale(encoding = "WINDOWS-1252"))
-```
 
 
-```{r tabelascadunico, message=FALSE, warning=FALSE, include=FALSE}
-
-CADUNICO_POP_2018 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2018.csv", 
-    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(), X1 = col_skip(),
-        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+# 
+FAM_2012_aggAF <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2012_aggAF.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = "."), trim_ws = TRUE)
-
-CADUNICO_POP_2017 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2017.csv", 
-    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(), X1 = col_skip(), 
-        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+FAM_2015_aggAF <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2015_aggAF.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = "."), trim_ws = TRUE)
-
-CADUNICO_POP_2016 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2016.csv", 
-    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
-        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+FAM_2018_aggAF <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2018_aggAF.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = "."), trim_ws = TRUE)
-
-CADUNICO_POP_2015 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2015.csv", 
-    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
-        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+FAM_2012_aggTOT <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2012_aggTOT.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = "."), trim_ws = TRUE)
-
-CADUNICO_POP_2014 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2014.csv", 
-    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
-        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+FAM_2015_aggTOT <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2015_aggTOT.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = "."), trim_ws = TRUE)
-
-CADUNICO_POP_2013 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2013.csv", 
-    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(), X1 = col_skip(), 
-        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
-        grouping_mark = "."), trim_ws = TRUE)
-
-CADUNICO_POP_2012 <- read_delim("data/tabelas/CADUNICO/CADUNICO_POP_2012.csv", 
-    ";", escape_double = FALSE, col_types = cols(NumPessoasBF = col_skip(),  X1 = col_skip(),
-        POP10_Rur = col_skip()), locale = locale(decimal_mark = ",", 
+FAM_2018_aggTOT <- read_delim("data/tabelas/CADUNICO/aggregated_weighted/FAM_2018_aggTOT.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = "."), trim_ws = TRUE)
 
 
-CADUNICO_18a12 <- CADUNICO_POP_2018 %>%
-  left_join(., CADUNICO_POP_2017, by = "COD_MICRO") %>%
-  left_join(., CADUNICO_POP_2016, by = "COD_MICRO") %>%
-  left_join(., CADUNICO_POP_2015, by = "COD_MICRO") %>%
-  left_join(., CADUNICO_POP_2014, by = "COD_MICRO") %>%
-  left_join(., CADUNICO_POP_2013, by = "COD_MICRO") %>%
-  left_join(., CADUNICO_POP_2012, by = "COD_MICRO") %>%
+CADUNICO_aggmunicipios <- FAM_2012_aggTOT %>%
+  full_join(., FAM_2012_aggAF, by = c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2015_aggTOT, by =  c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2015_aggAF, by =  c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2018_aggTOT, by =  c("cd_ibge", "marc_pbf")) %>%
+  full_join(., FAM_2018_aggAF, by =  c("cd_ibge", "marc_pbf")) %>%
+  mutate(cd_ibge = as.character(cd_ibge)) %>%
+  left_join(., CENSODEM_10, by = c("cd_ibge" = "COD"))
+
+
+
+
+
+CADUNICO_aggmicrorTODOS <- CADUNICO_aggmunicipios %>%
+  mutate(cd_ibge = as.numeric(cd_ibge)) %>%
+  left_join(., corresp, by = c("cd_ibge" = "Código Município Completo")) %>%
+  group_by(COD_MICRO 
+           #marc_pbf
+           ) %>%
+  summarise(
+    marc_pbf = 2,
+    
+    renda_media_percapita_2012 = mean(renda_media_percapita_2012, na.rm = TRUE),
+    renda_media_percapitaAF_2012 = mean(renda_media_percapitaAF_2012, na.rm = TRUE),
+    renda_media_percapita_2015 = mean(renda_media_percapita_2015 , na.rm = TRUE),
+    renda_media_percapitaAF_2015  = mean(renda_media_percapitaAF_2015, na.rm = TRUE),
+    renda_media_percapita_2018 = mean(renda_media_percapita_2018, na.rm = TRUE),
+    renda_media_percapitaAF_2018 = mean(renda_media_percapitaAF_2018, na.rm = TRUE),
+    
+    qtde_pessoas_2012        = sum(qtde_pessoas_2012 , na.rm = TRUE),
+    qtde_familias_2012       = sum(qtde_familias_2012, na.rm = TRUE),
+    qtde_pessoasAF_2012         = sum(qtde_pessoasAF_2012, na.rm = TRUE),
+    qtde_familiasAF_2012  = sum(qtde_familiasAF_2012, na.rm = TRUE),
+    
+    qtde_pessoas_2015       = sum(qtde_pessoas_2015, na.rm = TRUE),
+    qtde_familias_2015         = sum(qtde_familias_2015, na.rm = TRUE),
+    qtde_pessoasAF_2015         = sum(qtde_pessoasAF_2015, na.rm = TRUE),
+    qtde_familiasAF_2015  = sum(qtde_familiasAF_2015  , na.rm = TRUE),
+    
+    qtde_pessoas_2018           = sum(qtde_pessoas_2018, na.rm = TRUE),
+    qtde_familias_2018          = sum(qtde_familias_2018, na.rm = TRUE),
+    qtde_pessoasAF_2018        = sum(qtde_pessoasAF_2018, na.rm = TRUE),
+    qtde_familiasAF_2018         = sum(qtde_familiasAF_2018, na.rm = TRUE),
+    UF = first(UF)) 
+
+  
+
+CADUNICO_aggmicror <- CADUNICO_aggmunicipios %>%
+  mutate(cd_ibge = as.numeric(cd_ibge)) %>%
+  left_join(., corresp, by = c("cd_ibge" = "Código Município Completo")) %>%
+  group_by(COD_MICRO, marc_pbf) %>%
+  summarise(renda_media_percapita_2012 = mean(renda_media_percapita_2012, na.rm = TRUE),
+    renda_media_percapitaAF_2012 = mean(renda_media_percapitaAF_2012, na.rm = TRUE),
+    renda_media_percapita_2015 = mean(renda_media_percapita_2015 , na.rm = TRUE),
+    renda_media_percapitaAF_2015  = mean(renda_media_percapitaAF_2015, na.rm = TRUE),
+    renda_media_percapita_2018 = mean(renda_media_percapita_2018, na.rm = TRUE),
+    renda_media_percapitaAF_2018 = mean(renda_media_percapitaAF_2018, na.rm = TRUE),
+    
+    qtde_pessoas_2012        = sum(qtde_pessoas_2012 , na.rm = TRUE),
+    qtde_familias_2012       = sum(qtde_familias_2012, na.rm = TRUE),
+    qtde_pessoasAF_2012         = sum(qtde_pessoasAF_2012, na.rm = TRUE),
+    qtde_familiasAF_2012  = sum(qtde_familiasAF_2012, na.rm = TRUE),
+    
+    qtde_pessoas_2015       = sum(qtde_pessoas_2015, na.rm = TRUE),
+    qtde_familias_2015         = sum(qtde_familias_2015, na.rm = TRUE),
+    qtde_pessoasAF_2015         = sum(qtde_pessoasAF_2015, na.rm = TRUE),
+    qtde_familiasAF_2015  = sum(qtde_familiasAF_2015  , na.rm = TRUE),
+    
+    qtde_pessoas_2018           = sum(qtde_pessoas_2018, na.rm = TRUE),
+    qtde_familias_2018          = sum(qtde_familias_2018, na.rm = TRUE),
+    qtde_pessoasAF_2018        = sum(qtde_pessoasAF_2018, na.rm = TRUE),
+    qtde_familiasAF_2018         = sum(qtde_familiasAF_2018, na.rm = TRUE),
+    UF = first(UF)) %>%
+  bind_rows(., CADUNICO_aggmicrorTODOS) %>%
   mutate(COD_MICRO = as.character(COD_MICRO)) %>%
-  mutate(dif2012a2014 = pct_POPrur_BF_2014 - pct_POPrur_BF_2012,
-         dif2014a2016 = pct_POPrur_BF_2016 - pct_POPrur_BF_2014, 
-         dif2016a2018 = pct_POPrur_BF_2018 - pct_POPrur_BF_2016,
-         dif2012a2018 = pct_POPrur_BF_2018 - pct_POPrur_BF_2012)
- 
+  left_join(., CENSODEM_10, by = c("COD_MICRO" = "COD"))
+
+CADUNICO_aggmicror[is.na(CADUNICO_aggmicror)] = 0
+  
+
+CADUNICO_aggmicror <- CADUNICO_aggmicror %>%
+  mutate(
+    pct_qtde_pessoas_2012	=	(	qtde_pessoas_2012)	/	POP10_Rur,
+    pct_qtde_pessoasAF_2012	=	(	qtde_pessoasAF_2012)	/	POP10_Rur,
+    
+    pct_qtde_pessoas_2015	=	(	qtde_pessoas_2015)	/	POP10_Rur,
+    pct_qtde_pessoasAF_2015	=	(	qtde_pessoasAF_2015)	/	POP10_Rur,
+    
+    pct_qtde_pessoas_2018	=	(	qtde_pessoas_2018)	/	POP10_Rur,
+    pct_qtde_pessoasAF_2018	=	(	qtde_pessoasAF_2018)	/	POP10_Rur,
+    
+    dif_qtde_pessoas_2012a2015 = pct_qtde_pessoas_2015 - pct_qtde_pessoas_2012,
+    dif_qtde_pessoasAF_2012a2015 = pct_qtde_pessoasAF_2015 - pct_qtde_pessoasAF_2012,
+    
+    dif_qtde_pessoas_2015a2018 = pct_qtde_pessoas_2018 - pct_qtde_pessoas_2015,
+    dif_qtde_pessoasAF_2015a2018 = pct_qtde_pessoasAF_2018 - pct_qtde_pessoasAF_2015,
+    
+    
+    pct_qtde_familias_2012	=	(	qtde_familias_2012)	/	POP10_Rur,
+    pct_qtde_familiasAF_2012	=	(	qtde_familiasAF_2012)	/	POP10_Rur,
+    
+    pct_qtde_familias_2015	=	(	qtde_familias_2015)	/	POP10_Rur,
+    pct_qtde_familiasAF_2015	=	(	qtde_familiasAF_2015)	/	POP10_Rur,
+    
+    pct_qtde_familias_2018	=	(	qtde_familias_2018)	/	POP10_Rur,
+    pct_qtde_familiasAF_2018	=	(	qtde_familiasAF_2018)	/	POP10_Rur,
+    
+    dif_qtde_familias_2012a2015 = pct_qtde_familias_2015 - pct_qtde_familias_2012,
+    dif_qtde_familiasAF_2012a2015 = pct_qtde_familiasAF_2015 - pct_qtde_familiasAF_2012,
+    
+    dif_qtde_familias_2015a2018 = pct_qtde_familias_2018 - pct_qtde_familias_2015,
+    dif_qtde_familiasAF_2015a2018 = pct_qtde_familiasAF_2018 - pct_qtde_familiasAF_2015,
+    
+    
+    dif_rm_percapita_2012a2015	=	renda_media_percapita_2015	-	renda_media_percapita_2012,
+    dif_rm_percapita_2015a2018	=	renda_media_percapita_2018	-	renda_media_percapita_2015,
+    dif_rm_percapitaAF_2012a2015	=	renda_media_percapitaAF_2015	-	renda_media_percapitaAF_2012,
+    dif_rm_percapitaAF_2015a2018	=	renda_media_percapitaAF_2018	-	renda_media_percapitaAF_2015
+  )
+
 
 ```
-
 
 ```{r cMAPAS_CADUNICO, message=FALSE, warning=FALSE, include=FALSE}
 # Juntando o shape e a tabela
 SHP_CADUNICO <- SHP_Microrregioes %>%
-  left_join(., CADUNICO_18a12, by = c("COD" = "COD_MICRO"))
+  left_join(., CADUNICO_aggmicror, by = c("COD" = "COD_MICRO"))
 ```
 
-### Porcentagem de residentes de áreas rurais da microrregião que são beneficiários do bolsa família (2017)
+### Porcentagem de residentes de áreas rurais da microrregião que são beneficiários do bolsa família (2018)
 
 ```{r cMAPAS_CADUNICO2, echo=FALSE, message=FALSE, warning=FALSE}
-
-### Mobilidade de rendimentos por residentes de 2006 para 2017
 
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 
 SHP_CADUNICO %>%
-  filter(!is.na(pct_POPrur_BF_2017)) %>%
+  filter(!is.na(pct_qtde_pessoas_2018)) %>%
+  filter(pct_qtde_pessoas_2018 <= 1) %>%
   tm_shape() +
-  tm_fill(col = "pct_POPrur_BF_2017", 
+  tm_fill(col = "pct_qtde_pessoas_2018", 
           palette = cores_spectral,
-          title = "% de residentes na zona<br>rural que recebem BF (2017)",
+          title = "% de residentes na zona<br>rural que recebem BF (2018)",
           id = "LOCALIZACAO",
           n=5,
           legend.format=list(fun=function(x) paste0(round(x*100), "%")),
@@ -1182,9 +1269,6 @@ SHP_CADUNICO %>%
   tm_view(view.legend.position = c("right", "bottom")) +
   tm_shape(SHP_Estados) +
   tm_borders(lwd = 1) 
-
-
-
 ```
 
 <br>
@@ -1192,26 +1276,44 @@ SHP_CADUNICO %>%
 
 ### Evolução do número de beneficiários do bolsa família
 
-Para a análise da evolução da pobreza rural, ou seja, da variação da porcentagem de pessoas abaixo da linha da pobreza, será necessário realizar uma comparação dos anos de 2012 a 2018 (anos disponíveis dos dados de pessoas pobres), mas considerando todos sobre uma mesma base populacional (população rural de 2010, de acordo com o Censo Demográfico), uma vez que não foram encontrados dados anuais de contagem de população rural por microrregiões do Brasil. Portanto, enfatiza-se que a comparação não leva em consideração possíveis mudanças demográficas nas áreas rurais.
+Para a análise da evolução da pobreza rural, ou seja, da variação da porcentagem de pessoas abaixo da linha da pobreza, foi feita a comparação entre os anos de 2012, 2015 e 2018, mas considerando todos sobre uma mesma base populacional (população rural de 2010, de acordo com o Censo Demográfico), uma vez que não foram encontrados dados anuais de contagem de população rural por microrregiões do Brasil. 
+Portanto, enfatiza-se que a comparação **não** leva em consideração possíveis mudanças demográficas nas áreas rurais após 2010.
 
 
 ```{r cMAPAS_CADUNICO2_evolu, echo=FALSE, message=FALSE, warning=FALSE}
-
-### Mobilidade de rendimentos por residentes de 2006 para 2017
-
 cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
 
-COMP_CADUNICO_12a14 <- SHP_CADUNICO %>%
-  filter(!is.na(dif2012a2014)) %>%
+COMP_CADUNICO_12a15 <- SHP_CADUNICO %>%
+  filter(!is.na(dif_qtde_pessoas_2012a2015)) %>%
+  filter(marc_pbf == 1) %>%
   tm_shape() +
-  tm_fill(col = "dif2012a2014", 
+  tm_fill(col = "dif_qtde_pessoas_2012a2015", 
           palette = cores_spectral,
-          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2012 a 2014)",
+          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2012 a 2015)",
           id = "LOCALIZACAO",
           #n=5,
           legend.format=list(fun=function(x) paste0(round(x*100), "%")),
           style = "fixed",
-          breaks = c(-0.05, -0.025, 0, 0.05, 0.1, 0.2)
+          breaks = c(-0.45, -0.1, 0, 0.1, 0.45, 1)
+          ) +
+  tm_borders(lwd = 0.2) +
+  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_borders(lwd = 1) 
+
+COMP_CADUNICO_15a18 <- SHP_CADUNICO %>%
+  filter(!is.na(dif_qtde_pessoas_2015a2018)) %>%
+  filter(marc_pbf == 1) %>%
+  tm_shape() +
+  tm_fill(col = "dif_qtde_pessoas_2015a2018", 
+          palette = cores_spectral,
+          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2015 a 2018)",
+          id = "LOCALIZACAO",
+          #n=5,
+          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
+          style = "fixed",
+          breaks = c(-0.45, -0.1, 0, 0.1, 0.45, 1)
           ) +
   tm_borders(lwd = 0.2) +
   #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
@@ -1220,74 +1322,11 @@ COMP_CADUNICO_12a14 <- SHP_CADUNICO %>%
   tm_borders(lwd = 1) 
 
 
-
-COMP_CADUNICO_14a16 <- SHP_CADUNICO %>%
-  filter(!is.na(dif2014a2016)) %>%
-  tm_shape() +
-  tm_fill(col = "dif2014a2016", 
-          palette = cores_spectral,
-          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2014 a 2016)",
-          id = "LOCALIZACAO",
-          #n=5,
-          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
-          style = "fixed",
-          breaks = c(-0.15, -0.05, 0, 0.01, 0.03, 0.05)
-          ) +
-  tm_borders(lwd = 0.2) +
-  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("right", "bottom")) +
-  tm_shape(SHP_Estados) +
-  tm_borders(lwd = 1) 
-
-
-
-COMP_CADUNICO_16a18 <- SHP_CADUNICO %>%
-  filter(!is.na(dif2016a2018)) %>%
-  tm_shape() +
-  tm_fill(col = "dif2016a2018", 
-          palette = cores_spectral,
-          title = "Evolução do número de<br>pessoas que recebem<br>o BF (2016 a 2018)",
-          id = "LOCALIZACAO",
-          #n=5,
-          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
-          style = "fixed",
-          breaks = c(-0.10, -0.05, 0, 0.05, 0.1, 0.15)
-          ) +
-  tm_borders(lwd = 0.2) +
-  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("right", "bottom")) +
-  tm_shape(SHP_Estados) +
-  tm_borders(lwd = 1) 
-
-
-tmap_arrange(COMP_CADUNICO_12a14, COMP_CADUNICO_14a16, COMP_CADUNICO_16a18, 
+tmap_arrange(COMP_CADUNICO_12a15, COMP_CADUNICO_15a18, 
              sync = TRUE, 
              nrow = 1)
 
 ```
-
-```{r cMAPAS_CADUNICO2_final, echo=FALSE, message=FALSE, warning=FALSE}
-cores_spectral <- c("#2b83ba", "#abdda4", "#ffffbf", "#fdae61", "#d7191c") 
-
-SHP_CADUNICO %>%
-  filter(!is.na(dif2012a2018)) %>%
-  tm_shape() +
-  tm_fill(col = "dif2012a2018", 
-          palette = cores_spectral,
-          title = "Aumento/redução no número<br>de pessoas que recebem<br>o BF (2012 a 2018)",
-          id = "LOCALIZACAO",
-          #n=5,
-          legend.format=list(fun=function(x) paste0(round(x*100), "%")),
-          style = "fixed",
-          breaks = c(-0.15, -0.05, 0, 0.05, 0.1, 0.2)
-          ) +
-  tm_borders(lwd = 0.2) +
-  #tm_facets(by = "TIPOLOGIA", nrow = 1, sync = TRUE, free.coords = TRUE) +
-  tm_view(view.legend.position = c("right", "bottom")) +
-  tm_shape(SHP_Estados) +
-  tm_borders(lwd = 1) 
-```
-
 
 <br>
 <br>
@@ -2218,5 +2257,21 @@ tmap_arrange(Organico_sim_AF, Organico_sim_MP, Organico_sim_NAF,
              nrow = 1)
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
