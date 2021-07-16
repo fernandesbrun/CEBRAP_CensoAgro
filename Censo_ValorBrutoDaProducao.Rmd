@@ -1,0 +1,821 @@
+---
+title: "Censo Agro - Comparação de valor da produção"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4 
+    toc_float: 
+      collapsed: false
+    theme: flatly  
+---
+
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+               cache=FALSE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+```{r Pacotes, message=FALSE, warning=FALSE, include=FALSE}
+#pacotes
+
+#install.packages(c("ggthemes", "ggpubr", "readr", "readxl", "rstatix", "sp", "sf", "tmap", "leaflet", "arsenal", "knitr", "plotly", "kableExtra", "prettydoc", "rmdformats", "knitr", "scales", "esquisse", "pacman"))
+
+#install.packages(c(	"broom", "cli", "crayon" , "dbplyr", "dplyr", "forcats", "ggplot2", "haven", "hms", "httr", "jsonlite", "lubridate", "magrittr", "modelr", "pillar", "purrr", "readr", "readxl", "reprex", "rlang", "rstudioapi", "rvest", "stringr", "tibble", "tidyr", "xml2", "corrplot"))
+
+##install.packages("factoextra")
+##install.packages("qwraps2")
+
+pacman::p_load(ggthemes, ggpubr, tidyverse, readr, readxl, esquisse, rstatix, sp, sf, tmap, leaflet, arsenal, knitr, plotly, kableExtra, prettydoc, rmdformats, knitr, scales, broom, cli, crayon , dbplyr, dplyr, forcats, ggplot2, haven, hms, httr, jsonlite, lubridate, magrittr, modelr, pillar, purrr, readr, readxl, reprex, rlang, rstudioapi, rvest, stringr, tibble, tidyr, xml2, factoextra, qwraps2, corrplot) 
+
+
+options(scipen=999)
+
+```
+
+
+
+```{r COD_Tabelas, message=FALSE, warning=FALSE, include=FALSE}
+TABELA2 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6878_MUN_areaestabelecimentos+niveis.xlsx", na = "X") 
+TABELA2$COD[TABELA2$NIVEL == "BR"] <- 000
+
+
+TABELA6 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6898_MUN_valordaproducao+niveis.xlsx", na = "X") 
+TABELA6$COD[TABELA6$NIVEL == "BR"] <- 000
+TABELA6 <- TABELA6 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+# TABELA8 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6901_MUN_valorreceitas+niveis.xlsx", na = "X") 
+# TABELA8$COD[TABELA8$NIVEL == "BR"] <- 000
+# TABELA8 <- TABELA8 %>%
+#   select(., -NIVEL) %>% 
+#   select(., -LOCALIZACAO)
+# 
+# TABELA9 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6882_MUN_areapreservacao+niveis.xlsx", na = "X") 
+# TABELA9$COD[TABELA9$NIVEL == "BR"] <- 000
+# TABELA9 <- TABELA9 %>%
+#   select(., -NIVEL) %>% 
+#   select(., -LOCALIZACAO)
+
+TABELA10 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6788_MUN_totalestabelecimentos+niveis.xlsx", na = "X") 
+TABELA10$COD[TABELA10$NIVEL == "BR"] <- 000
+TABELA10 <- TABELA10 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+```
+
+
+```{r COD_Procedimentos com as tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### PROCEDIMENTOS COM AS TABELAS -----------------
+
+#Join de todas as tabelas 
+todastabelas <- TABELA2 %>% 
+  left_join(., TABELA6, by = "COD") %>%
+#  left_join(., TABELA8, by = "COD") %>%
+#  left_join(., TABELA9, by = "COD") %>%
+  left_join(., TABELA10, by = "COD") %>%
+  mutate_if(is.numeric , replace_na, replace = 0)
+
+
+#Filtragem por recorte geográfico
+
+municipios <- todastabelas %>% filter(NIVEL == "MU")
+microrregioes <- todastabelas %>% filter(NIVEL == "MI")
+mesorregioes <- todastabelas %>% filter(NIVEL == "ME")
+estados <- todastabelas %>% filter(NIVEL == "UF")
+macrorregioes <- todastabelas %>% filter(NIVEL == "GR")
+brasil <- todastabelas %>% filter(NIVEL == "BR")
+
+
+#Criando colunas de código do estado e da região - MUNICIPIOS
+municipios <- municipios %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+municipios$COD_ESTADO <- substr(municipios$COD_ESTADO, 0, 2)
+municipios$COD_REGIAO <- substr(municipios$COD_REGIAO, 0, 1)
+municipios$COD_REGIAO[municipios$COD_REGIAO == "1"] <- "Norte"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "2"] <- "Nordeste"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "3"] <- "Sudeste"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "4"] <- "Sul"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+#Criando colunas de código do estado e da região - MICRORREGIOES
+microrregioes <- microrregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+microrregioes$COD_ESTADO <- substr(microrregioes$COD_ESTADO, 0, 2)
+microrregioes$COD_REGIAO <- substr(microrregioes$COD_REGIAO, 0, 1)
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "1"] <- "Norte"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "2"] <- "Nordeste"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "3"] <- "Sudeste"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "4"] <- "Sul"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+
+mesorregioes <- mesorregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+mesorregioes$COD_ESTADO <- substr(mesorregioes$COD_ESTADO, 0, 2)
+mesorregioes$COD_REGIAO <- substr(mesorregioes$COD_REGIAO, 0, 1)
+
+```
+
+# Introdução
+
+O presente documento tem como objetivo comparar o valor da produção obtido nos estabelecimentos agropecuários da agricultura familiar e não familiar, com a média e mediana do valor da produção obtido pelo conjunto total dos estabelecimentos agropecuários no país.
+
+A variável utilizada tem como origem o Censo Agropecuário de 2017, de nome "Valor da produção dos estabelecimentos agropecuários (Mil Reais)".
+
+<br>
+
+## Metodologia
+O trabalho está dividido em duas seçoes principais, por unidade espacial de análise (município ou microrregião) e por tipologia do estabelecimento dentro de cada uma dessas unidades (agricultura familiar e agricultura não familiar).
+
+
+**Para a agricultura familiar**
+A unidade espacial analisada (municípios ou microrregiões) foi classificada dentre três categorias possíveis:
+
+- Valor bruto da produção obtido pelos estabelecimentos da AF na unidade espacial possuem valor abaixo da mediana do valor da produção obtido por todos os estabelecimentos do país;
+- Valor bruto da produção obtido pelos estabelecimentos da AF na unidade espacial possuem valor entre a mediana e a média do valor da produção obtido por todos os estabelecimentos do país;
+- Valor bruto da produção obtido pelos estabelecimentos da AF na unidade espacial possuem valor acima da média do valor da produção obtido por todos os estabelecimentos do país 
+
+
+**Para a agricultura não familiar**
+A unidade espacial analisada (municípios ou microrregiões) foi classificada dentre três categorias possíveis:
+
+- Valor bruto da produção obtido pelos estabelecimentos da não-AF na unidade espacial possuem valor abaixo da mediana do valor da produção obtido por todos os estabelecimentos do país; 
+- Valor bruto da produção obtido pelos estabelecimentos da não-AF na unidade espacial possuem valor entre a mediana e a média do valor da produção obtido por todos os estabelecimentos do país; 
+- Valor bruto da produção obtido pelos estabelecimentos da não-AF na unidade espacial possuem valor acima da média do valor da produção obtido por todos os estabelecimentos do país 
+
+
+```{r COD_Novas colunas, message=FALSE, warning=FALSE, include=FALSE}
+
+#### Municípios ####
+
+municipios <- municipios %>%
+  mutate(PAIS = "Brasil") %>%
+  group_by(NIVEL, COD, LOCALIZACAO, PAIS, COD_ESTADO, COD_REGIAO) %>%
+  mutate(
+    VBP_T = VP_T,
+    VBP_AF = VP_AF,
+    VBP_NAF = (VP_T - VP_AF),
+    .keep = "used"
+    )
+ 
+# media_estadoMUN <- municipios %>%
+#   group_by(COD_ESTADO) %>%
+#   mutate(
+#     RENDA_TRABALHO_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302),  #rendimentos totais do trabalho
+#     # RENDAporESTAB_TRABALHO_T = (RENDA_TRABALHO_T / NEST_T), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#     VBP_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302),  #rendimentos totais do trabalho
+#     # RENDAporESTAB_TRABALHO_AF = (VBP_AF / NEST_AF), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#   ) %>%
+#   summarise(
+#     REN_ESTD_mean_T = mean(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_ESTD_TRABALHO_mean_T = mean(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_ESTD_mean_AF = mean(VBP_AF, na.rm = TRUE),
+#     # RENDAporESTAB_TRABALHO_mean_AF = mean(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE),
+#     
+#     REN_ESTD_median_T = median(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_ESTD_TRABALHO_median_T = median(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_ESTD_median_AF = median(VBP_AF, na.rm = TRUE),
+#     # RENDAporESTAB_TRABALHO_median_AF = median(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE)
+#   )
+# 
+# media_regiaoMUN <- municipios %>%
+#   group_by(COD_REGIAO) %>%
+#   mutate(
+#     RENDA_TRABALHO_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302),  #rendimentos totais do trabalho
+#     # RENDAporESTAB_TRABALHO_T = (RENDA_TRABALHO_T / NEST_T), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#     VBP_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302),  #rendimentos totais do trabalho
+#     # RENDAporESTAB_TRABALHO_AF = (VBP_AF / NEST_AF), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#   ) %>%
+#   summarise(
+#     REN_REG_mean_T = mean(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_mean_T = mean(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_REG_mean_AF = mean(VBP_AF, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_mean_AF = mean(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE),
+#     
+#     REN_REG_median_T = median(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_median_T = median(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_REG_median_AF = median(VBP_AF, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_median_AF = median(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE)
+#   )
+
+
+media_brasilMUN <- municipios %>%
+  mutate(PAIS = "Brasil") %>%
+  group_by(PAIS) %>%
+  mutate(
+    VBP_T = VP_T,
+    VBP_AF = VP_AF,
+    VBP_NAF = (VP_T - VP_AF)
+  ) %>%
+  summarise(
+    VBP_BRA_mean_T = mean(VBP_T, na.rm = TRUE),
+    VBP_BRA_mean_AF = mean(VBP_AF, na.rm = TRUE),
+    VBP_BRA_mean_NAF = mean(VBP_NAF, na.rm = TRUE),
+    
+    VBP_BRA_median_T = median(VBP_T, na.rm = TRUE),
+    VBP_BRA_median_AF = median(VBP_AF, na.rm = TRUE),
+    VBP_BRA_median_NAF = median(VBP_NAF, na.rm = TRUE)
+    )
+
+municipios_all <- municipios %>%
+  left_join(., media_brasilMUN, by = "PAIS") 
+# %>%
+#   left_join(., media_regiaoMUN, by = "COD_REGIAO") %>%
+#   left_join(., media_estadoMUN, by = "COD_ESTADO")
+
+
+#### Microrregiões ####
+
+microrregioes <- microrregioes %>%
+  mutate(PAIS = "Brasil") %>%
+  group_by(NIVEL, COD, LOCALIZACAO, PAIS, COD_ESTADO, COD_REGIAO) %>%
+  mutate(
+    VBP_T = VP_T,
+    VBP_AF = VP_AF,
+    VBP_NAF = (VP_T - VP_AF),
+    .keep = "used"
+  )
+
+# media_estadoMIC <- microrregioes %>%
+#   group_by(COD_ESTADO) %>%
+#   mutate(
+#     RENDA_TRABALHO_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302),  #rendimentos totais do trabalho
+#     RENDAporESTAB_TRABALHO_T = (RENDA_TRABALHO_T / NEST_T), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#     VBP_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302),  #rendimentos totais do trabalho
+#     RENDAporESTAB_TRABALHO_AF = (VBP_AF / NEST_AF), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#   ) %>%
+#   summarise(
+#     REN_ESTD_mean_T = mean(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_ESTD_TRABALHO_mean_T = mean(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_ESTD_mean_AF = mean(VBP_AF, na.rm = TRUE),
+#     # RENDAporESTAB_TRABALHO_mean_AF = mean(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE),
+#     
+#     REN_ESTD_median_T = median(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_ESTD_TRABALHO_median_T = median(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_ESTD_median_AF = median(VBP_AF, na.rm = TRUE),
+#     # RENDAporESTAB_TRABALHO_median_AF = median(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE)
+#   )
+# 
+# media_regiaoMIC <- microrregioes %>%
+#   group_by(COD_REGIAO) %>%
+#   mutate(
+#     RENDA_TRABALHO_T = (R_VALOR_T_1 + R_VALOR_T_2 + R_VALOR_T_302),  #rendimentos totais do trabalho
+#     RENDAporESTAB_TRABALHO_T = (RENDA_TRABALHO_T / NEST_T), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#     VBP_AF = (R_VALOR_AF_1 + R_VALOR_AF_2 + R_VALOR_AF_302),  #rendimentos totais do trabalho
+#     RENDAporESTAB_TRABALHO_AF = (VBP_AF / NEST_AF), #rendimentos totais do trabalho, pelo número total de estabelecimentos
+#   ) %>%
+#   summarise(
+#     REN_REG_mean_T = mean(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_mean_T = mean(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_REG_mean_AF = mean(VBP_AF, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_mean_AF = mean(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE),
+#     
+#     REN_REG_median_T = median(RENDA_TRABALHO_T, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_median_T = median(RENDAporESTAB_TRABALHO_T, na.rm = TRUE),
+#     REN_REG_median_AF = median(VBP_AF, na.rm = TRUE),
+#     # RENEST_REG_TRABALHO_median_AF = median(RENDAporESTAB_TRABALHO_AF, na.rm = TRUE)
+#   )
+
+media_brasilMIC <- microrregioes %>%
+  mutate(PAIS = "Brasil") %>%
+  group_by(PAIS) %>%
+  mutate(
+    VBP_T = VP_T,
+    VBP_AF = VP_AF,
+    VBP_NAF = (VP_T - VP_AF)
+  ) %>%
+  summarise(
+    VBP_BRA_mean_T = mean(VBP_T, na.rm = TRUE),
+    VBP_BRA_mean_AF = mean(VBP_AF, na.rm = TRUE),
+    VBP_BRA_mean_NAF = mean(VBP_NAF, na.rm = TRUE),
+    
+    VBP_BRA_median_T = median(VBP_T, na.rm = TRUE),
+    VBP_BRA_median_AF = median(VBP_AF, na.rm = TRUE),
+    VBP_BRA_median_NAF = median(VBP_NAF, na.rm = TRUE)
+  )
+
+
+microrregioes_all <- microrregioes %>%
+  left_join(., media_brasilMIC, by = "PAIS") 
+# %>%
+#   left_join(., media_regiaoMIC, by = "COD_REGIAO") %>%
+#   left_join(., media_estadoMIC, by = "COD_ESTADO") 
+
+```
+
+```{r CALCULO_CLASSIFICACOES, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+municipios_class <- municipios_all %>%
+  mutate(
+    classVBP_BRA_AF_T = case_when(
+      VBP_AF < VBP_BRA_median_T ~ "Abaixo da mediana do país",
+      VBP_AF >= VBP_BRA_median_T & VBP_AF <= VBP_BRA_mean_T ~ "Entre a média e a mediana do país",
+      VBP_AF > VBP_BRA_mean_T ~ "Acima da média do país"),
+    
+    classVBP_BRA_NAF_T = case_when(
+      VBP_NAF < VBP_BRA_median_T ~ "Abaixo da mediana do país",
+      VBP_NAF >= VBP_BRA_median_T & VBP_NAF <= VBP_BRA_mean_T ~ "Entre a média e a mediana do país",
+      VBP_NAF > VBP_BRA_mean_T ~ "Acima da média do país"))
+    
+    
+    
+
+    
+    
+    
+    # classVBP_BRA_mean_T = case_when(RENDA_TRABALHO_T >= VBP_BRA_mean_T ~ "Acima da média do país",
+    #                                      RENDA_TRABALHO_T < VBP_BRA_mean_T ~ "Abaixo da média do país"),
+    #      # classVBP_BRA_mean_AFAF = case_when(VBP_AF >= REN_BRA_mean_AF ~ "Acima da média do país",
+    #      #                                 VBP_AF < REN_BRA_mean_AF ~ "Abaixo da média do país"),
+    #      classVBP_BRA_mean_AFT = case_when(VBP_AF >= VBP_BRA_mean_T ~ "Acima da média do país",
+    #                                      VBP_AF < VBP_BRA_mean_T ~ "Abaixo da média do país"),
+    #      classVBP_BRA_mean_NAFT = case_when(VBP_NAF >= VBP_BRA_mean_T ~ "Acima da média do país",
+    #                                      VBP_NAF < VBP_BRA_mean_T ~ "Abaixo da média do país"),
+    #      
+    #      classVBP_BRA_median_T = case_when(RENDA_TRABALHO_T >= VBP_BRA_median_T ~ "Acima da mediana do país",
+    #                                      RENDA_TRABALHO_T < VBP_BRA_median_T ~ "Abaixo da mediana do país"),
+    #      # classVBP_BRA_median_AFAF = case_when(VBP_AF >= REN_BRA_median_AF ~ "Acima da mediana do país",
+    #      #                                 VBP_AF < REN_BRA_median_AF ~ "Abaixo da mediana do país"),
+    #      classVBP_BRA_median_AFT = case_when(VBP_AF >= VBP_BRA_median_T ~ "Acima da mediana do país",
+    #                                      VBP_AF < VBP_BRA_median_T ~ "Abaixo da mediana do país"),
+    #      classVBP_BRA_median_NAFT = case_when(VBP_NAF >= VBP_BRA_median_T ~ "Acima da mediana do país",
+    #                                      VBP_NAF < VBP_BRA_median_T ~ "Abaixo da mediana do país"),
+    #      
+    #      
+    #      # classVBP_REG_mean_T = case_when(RENDA_TRABALHO_T >= REN_REG_mean_T ~ "Acima da média da região",
+    #      #                                 RENDA_TRABALHO_T < REN_REG_mean_T ~ "Abaixo da média da região"),
+    #      # classVBP_REG_mean_AFAF = case_when(VBP_AF >= REN_REG_mean_AF ~ "Acima da média da região",
+    #      #                                 VBP_AF < REN_REG_mean_AF ~ "Abaixo da média da região"),
+    #      # classVBP_REG_mean_AFT = case_when(VBP_AF >= REN_REG_mean_T ~ "Acima da média da região",
+    #      #                                 VBP_AF < REN_REG_mean_T ~ "Abaixo da média da região"),
+    #      # 
+    #      # classVBP_REG_median_T = case_when(RENDA_TRABALHO_T >= REN_REG_median_T ~ "Acima da mediana da região",
+    #      #                                 RENDA_TRABALHO_T < REN_REG_median_T ~ "Abaixo da mediana da região"),
+    #      # classVBP_REG_median_AFAF = case_when(VBP_AF >= REN_REG_median_AF ~ "Acima da mediana da região",
+    #      #                                 VBP_AF < REN_REG_median_AF ~ "Abaixo da mediana da região"),
+    #      # classVBP_REG_median_AFT = case_when(VBP_AF >= REN_REG_median_T ~ "Acima da mediana da região",
+    #      #                                 VBP_AF < REN_REG_median_T ~ "Abaixo da mediana da região"),
+    #      # 
+    #      # 
+    #      # classVBP_ESTD_mean_T = case_when(RENDA_TRABALHO_T >= REN_ESTD_mean_T ~ "Acima da média do estado",
+    #      #                                 RENDA_TRABALHO_T < REN_ESTD_mean_T ~ "Abaixo da média do estado"),
+    #      # classVBP_ESTD_mean_AFAF = case_when(VBP_AF >= REN_ESTD_mean_AF ~ "Acima da média do estado",
+    #      #                                 VBP_AF < REN_ESTD_mean_AF ~ "Abaixo da média do estado"),
+    #      # classVBP_ESTD_mean_AFT = case_when(VBP_AF >= REN_ESTD_mean_T ~ "Acima da média do estado",
+    #      #                                 VBP_AF < REN_ESTD_mean_T ~ "Abaixo da média do estado"),
+    #      # 
+    #      # classVBP_ESTD_median_T = case_when(RENDA_TRABALHO_T >= REN_ESTD_median_T ~ "Acima da mediana do estado",
+    #      #                                 RENDA_TRABALHO_T < REN_ESTD_median_T ~ "Abaixo da mediana do estado"),
+    #      # classVBP_ESTD_median_AFAF = case_when(VBP_AF >= REN_ESTD_median_AF ~ "Acima da mediana do estado",
+    #      #                                 VBP_AF < REN_ESTD_median_AF ~ "Abaixo da mediana do estado"),
+    #      # classVBP_ESTD_median_AFT = case_when(VBP_AF >= REN_ESTD_median_T ~ "Acima da mediana do estado",
+    #      #                                 VBP_AF < REN_ESTD_median_T ~ "Abaixo da mediana do estado")
+    #      )
+
+
+microrregioes_class <- microrregioes_all %>%
+  mutate(
+    classVBP_BRA_AF_T = case_when(
+      VBP_AF < VBP_BRA_median_T ~ "Abaixo da mediana do país",
+      VBP_AF >= VBP_BRA_median_T & VBP_AF <= VBP_BRA_mean_T ~ "Entre a média e a mediana do país",
+      VBP_AF > VBP_BRA_mean_T ~ "Acima da média do país"),
+    
+    classVBP_BRA_NAF_T = case_when(
+      VBP_NAF < VBP_BRA_median_T ~ "Abaixo da mediana do país",
+      VBP_NAF >= VBP_BRA_median_T & VBP_NAF <= VBP_BRA_mean_T ~ "Entre a média e a mediana do país",
+      VBP_NAF > VBP_BRA_mean_T ~ "Acima da média do país"))
+    
+    
+    # classVBP_BRA_mean_T = case_when(RENDA_TRABALHO_T >= VBP_BRA_mean_T ~ "Acima da média do país",
+    #                                      RENDA_TRABALHO_T < VBP_BRA_mean_T ~ "Abaixo da média do país"),
+    #      # classVBP_BRA_mean_AFAF = case_when(VBP_AF >= REN_BRA_mean_AF ~ "Acima da média do país",
+    #      #                                 VBP_AF < REN_BRA_mean_AF ~ "Abaixo da média do país"),
+    #      classVBP_BRA_mean_AFT = case_when(VBP_AF >= VBP_BRA_mean_T ~ "Acima da média do país",
+    #                                      VBP_AF < VBP_BRA_mean_T ~ "Abaixo da média do país"),
+    #      classVBP_BRA_mean_NAFT = case_when(VBP_NAF >= VBP_BRA_mean_T ~ "Acima da média do país",
+    #                                      VBP_NAF < VBP_BRA_mean_T ~ "Abaixo da média do país"),
+    #      
+    #      classVBP_BRA_median_T = case_when(RENDA_TRABALHO_T >= VBP_BRA_median_T ~ "Acima da mediana do país",
+    #                                      RENDA_TRABALHO_T < VBP_BRA_median_T ~ "Abaixo da mediana do país"),
+    #      # classVBP_BRA_median_AFAF = case_when(VBP_AF >= REN_BRA_median_AF ~ "Acima da mediana do país",
+    #      #                                 VBP_AF < REN_BRA_median_AF ~ "Abaixo da mediana do país"),
+    #      classVBP_BRA_median_AFT = case_when(VBP_AF >= VBP_BRA_median_T ~ "Acima da mediana do país",
+    #                                      VBP_AF < VBP_BRA_median_T ~ "Abaixo da mediana do país"),
+    #      classVBP_BRA_median_NAFT = case_when(VBP_NAF >= VBP_BRA_median_T ~ "Acima da mediana do país",
+    #                                      VBP_NAF < VBP_BRA_median_T ~ "Abaixo da mediana do país"),
+    #      
+    #      
+    #      # classVBP_REG_mean_T = case_when(RENDA_TRABALHO_T >= REN_REG_mean_T ~ "Acima da média da região",
+    #      #                                 RENDA_TRABALHO_T < REN_REG_mean_T ~ "Abaixo da média da região"),
+    #      # classVBP_REG_mean_AFAF = case_when(VBP_AF >= REN_REG_mean_AF ~ "Acima da média da região",
+    #      #                                 VBP_AF < REN_REG_mean_AF ~ "Abaixo da média da região"),
+    #      # classVBP_REG_mean_AFT = case_when(VBP_AF >= REN_REG_mean_T ~ "Acima da média da região",
+    #      #                                 VBP_AF < REN_REG_mean_T ~ "Abaixo da média da região"),
+    #      # 
+    #      # classVBP_REG_median_T = case_when(RENDA_TRABALHO_T >= REN_REG_median_T ~ "Acima da mediana da região",
+    #      #                                 RENDA_TRABALHO_T < REN_REG_median_T ~ "Abaixo da mediana da região"),
+    #      # classVBP_REG_median_AFAF = case_when(VBP_AF >= REN_REG_median_AF ~ "Acima da mediana da região",
+    #      #                                 VBP_AF < REN_REG_median_AF ~ "Abaixo da mediana da região"),
+    #      # classVBP_REG_median_AFT = case_when(VBP_AF >= REN_REG_median_T ~ "Acima da mediana da região",
+    #      #                                 VBP_AF < REN_REG_median_T ~ "Abaixo da mediana da região"),
+    #      # 
+    #      # 
+    #      # classVBP_ESTD_mean_T = case_when(RENDA_TRABALHO_T >= REN_ESTD_mean_T ~ "Acima da média do estado",
+    #      #                                 RENDA_TRABALHO_T < REN_ESTD_mean_T ~ "Abaixo da média do estado"),
+    #      # classVBP_ESTD_mean_AFAF = case_when(VBP_AF >= REN_ESTD_mean_AF ~ "Acima da média do estado",
+    #      #                                 VBP_AF < REN_ESTD_mean_AF ~ "Abaixo da média do estado"),
+    #      # classVBP_ESTD_mean_AFT = case_when(VBP_AF >= REN_ESTD_mean_T ~ "Acima da média do estado",
+    #      #                                 VBP_AF < REN_ESTD_mean_T ~ "Abaixo da média do estado"),
+    #      # 
+    #      # classVBP_ESTD_median_T = case_when(RENDA_TRABALHO_T >= REN_ESTD_median_T ~ "Acima da mediana do estado",
+    #      #                                 RENDA_TRABALHO_T < REN_ESTD_median_T ~ "Abaixo da mediana do estado"),
+    #      # classVBP_ESTD_median_AFAF = case_when(VBP_AF >= REN_ESTD_median_AF ~ "Acima da mediana do estado",
+    #      #                                 VBP_AF < REN_ESTD_median_AF ~ "Abaixo da mediana do estado"),
+    #      # classVBP_ESTD_median_AFT = case_when(VBP_AF >= REN_ESTD_median_T ~ "Acima da mediana do estado",
+    #      #                                 VBP_AF < REN_ESTD_median_T ~ "Abaixo da mediana do estado")
+    #      )
+
+```
+
+```{r shapefiles, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+SHP_Municipios <- read_sf("data/shapes/BR_Municipios_2020_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+# tmap_mode("plot") #> tmap mode set to plotting
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+names(SHP_Municipios)[1] <- "COD"
+
+SHP_Microrregioes_class <- left_join(SHP_Microrregioes, microrregioes_class, by = "COD")
+SHP_Municipios_class <- left_join(SHP_Municipios, municipios_class, by = "COD")
+
+```
+
+# Por Municípios
+
+A média brasileira por municípios, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMUN[1,]$VBP_BRA_mean_T, 1),"(mil reais)")`.
+
+A mediana brasileira por municípios, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMUN[1,]$VBP_BRA_median_T, 1),"(mil reais)")`.
+
+
+## Agricultura familiar
+
+
+**Resumo por região**
+
+```{r tabelaresumo_municipios_AF, echo=FALSE, message=FALSE, warning=FALSE}
+
+municipios_class_sumario <- municipios_class %>%
+  select(COD_REGIAO, classVBP_BRA_AF_T) %>%
+  group_by(COD_REGIAO, classVBP_BRA_AF_T) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = classVBP_BRA_AF_T, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Abaixo da mediana do país`,
+         `pct_Abaixo da mediana do país`,
+         `n_Entre a média e a mediana do país`,
+         `pct_Entre a média e a mediana do país`,
+         `n_Acima da média do país`,
+         `pct_Acima da média do país`) 
+
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(municipios_class_sumario,
+    col.names = c("Região",
+                  "Nº de municípios",
+                  "% na região",
+                  "Nº de municipios",
+                  "% na região",
+                  "Nº de municipios",
+                  "% na região"),
+    align = "crlrlrl",
+    caption = "Resumo por região") %>%
+  #kable_classic() %>%
+#  kable_minimal() %>%
+  #kable_material(c("striped", "hover")) 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "Valor da produção da AF abaixo da mediana do país" = 2, "Valor da produção da AF entre a média e a mediana do país" = 2, "Valor da produção da AF acima da média do país" = 2)) %>%
+  add_header_above(c(" " = 1, "Posição dos estabelecimentos da AF em relação a média e mediana gerais do país" = 6)) 
+  #row_spec(6, bold = T, color = "black")
+
+
+```
+
+**Representação espacial**
+
+```{r mapa_municipios_AF, echo=FALSE, message=FALSE, warning=FALSE}
+
+cores <- c("#d95f02", "#e6ab02", "#1b9e77")
+
+SHP_Municipios_class$classVBP_BRA_AF_T <- factor(SHP_Municipios_class$classVBP_BRA_AF_T, levels = c("Abaixo da mediana do país", 
+                                                                                                    "Entre a média e a mediana do país",
+                                                                                                    "Acima da média do país")
+                                                 )
+
+
+  SHP_Municipios_class %>%
+  filter(!is.na(classVBP_BRA_AF_T)) %>%
+  tm_shape() +
+  tm_fill(col = "classVBP_BRA_AF_T", 
+          palette = cores,
+          title = "Valor da produção na AF",
+          id = "LOCALIZACAO",
+          style = "cat"
+          ) +
+  tm_borders(lwd = 0.0) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1) 
+```
+
+<br>
+
+<br>
+
+
+
+## Agricultura não familiar
+
+
+**Resumo por região**
+
+```{r tabelaresumo_municipios_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+
+municipios_class_sumario_NAF <- municipios_class %>%
+  select(COD_REGIAO, classVBP_BRA_NAF_T) %>%
+  group_by(COD_REGIAO, classVBP_BRA_NAF_T) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = classVBP_BRA_NAF_T, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Abaixo da mediana do país`,
+         `pct_Abaixo da mediana do país`,
+         `n_Entre a média e a mediana do país`,
+         `pct_Entre a média e a mediana do país`,
+         `n_Acima da média do país`,
+         `pct_Acima da média do país`) 
+
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(municipios_class_sumario_NAF,
+    col.names = c("Região",
+                  "Nº de municípios",
+                  "% na região",
+                  "Nº de municipios",
+                  "% na região",
+                  "Nº de municipios",
+                  "% na região"),
+    align = "crlrlrl",
+    caption = "Resumo por região") %>%
+  #kable_classic() %>%
+#  kable_minimal() %>%
+  #kable_material(c("striped", "hover")) 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "Valor da produção não-AF abaixo da mediana do país" = 2, "Valor da produção não-AF entre a média e a mediana do país" = 2, "Valor da produção não-AF acima da média do país" = 2)) %>%
+  add_header_above(c(" " = 1, "Posição dos estabelecimentos não familiares em relação a média e mediana gerais do país" = 6)) 
+
+
+```
+
+**Representação espacial**
+
+```{r mapa_municipios_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+
+cores <- c("#d95f02", "#e6ab02", "#1b9e77")
+
+SHP_Municipios_class$classVBP_BRA_NAF_T <- factor(SHP_Municipios_class$classVBP_BRA_NAF_T, levels = c("Abaixo da mediana do país", 
+                                                                                                    "Entre a média e a mediana do país",
+                                                                                                    "Acima da média do país")
+                                                 )
+
+
+  SHP_Municipios_class %>%
+  filter(!is.na(classVBP_BRA_NAF_T)) %>%
+  tm_shape() +
+  tm_fill(col = "classVBP_BRA_NAF_T", 
+          palette = cores,
+          title = "Valor da produção não familiar",
+          id = "LOCALIZACAO",
+          style = "cat"
+          ) +
+  tm_borders(lwd = 0.0) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Por Microrregiões
+
+A média brasileira por microrregiões, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMIC[1,]$VBP_BRA_mean_T, 1),"(mil reais)")`.
+
+A mediana brasileira por municípios, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMIC[1,]$VBP_BRA_median_T, 1),"(mil reais)")`.
+
+
+
+## Agricultura familiar
+
+
+**Resumo por região**
+
+```{r tabelaresumo_microrregioes_AF, echo=FALSE, message=FALSE, warning=FALSE}
+
+microrregioes_class_sumario <- microrregioes_class %>%
+  select(COD_REGIAO, classVBP_BRA_AF_T) %>%
+  group_by(COD_REGIAO, classVBP_BRA_AF_T) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = classVBP_BRA_AF_T, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Abaixo da mediana do país`,
+         `pct_Abaixo da mediana do país`,
+         `n_Entre a média e a mediana do país`,
+         `pct_Entre a média e a mediana do país`,
+         `n_Acima da média do país`,
+         `pct_Acima da média do país`) 
+
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(microrregioes_class_sumario,
+    col.names = c("Região",
+                  "Nº de micro",
+                  "% na região",
+                  "Nº de micro",
+                  "% na região",
+                  "Nº de micro",
+                  "% na região"),
+    align = "crlrlrl",
+    caption = "Resumo por região - Unidade espacial da microrregião") %>%
+  #kable_classic() %>%
+#  kable_minimal() %>%
+  #kable_material(c("striped", "hover")) 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "Valor da produção da AF abaixo da mediana do país" = 2, "Valor da produção da AF entre a média e a mediana do país" = 2, "Valor da produção da AF acima da média do país" = 2)) %>%
+  add_header_above(c(" " = 1, "Posição dos estabelecimentos da AF em relação a média e mediana gerais do país" = 6)) 
+  #row_spec(6, bold = T, color = "black")
+
+
+```
+
+**Representação espacial**
+
+```{r mapa_microrregioes_AF, echo=FALSE, message=FALSE, warning=FALSE}
+
+cores <- c("#d95f02", "#e6ab02", "#1b9e77")
+
+SHP_Microrregioes_class$classVBP_BRA_AF_T <- factor(SHP_Microrregioes_class$classVBP_BRA_AF_T, levels = c("Abaixo da mediana do país", 
+                                                                                                    "Entre a média e a mediana do país",
+                                                                                                    "Acima da média do país")
+                                                 )
+
+
+  SHP_Microrregioes_class %>%
+  filter(!is.na(classVBP_BRA_AF_T)) %>%
+  tm_shape() +
+  tm_fill(col = "classVBP_BRA_AF_T", 
+          palette = cores,
+          title = "Valor da produção na AF",
+          id = "LOCALIZACAO",
+          style = "cat"
+          ) +
+  tm_borders(lwd = 0.0) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1) 
+```
+
+<br>
+
+<br>
+
+
+
+## Agricultura não familiar
+
+
+**Resumo por região**
+
+```{r tabelaresumo_microrregioes_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+
+microrregioes_class_sumario_NAF <- microrregioes_class %>%
+  select(COD_REGIAO, classVBP_BRA_NAF_T) %>%
+  group_by(COD_REGIAO, classVBP_BRA_NAF_T) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = classVBP_BRA_NAF_T, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Abaixo da mediana do país`,
+         `pct_Abaixo da mediana do país`,
+         `n_Entre a média e a mediana do país`,
+         `pct_Entre a média e a mediana do país`,
+         `n_Acima da média do país`,
+         `pct_Acima da média do país`) 
+
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(microrregioes_class_sumario_NAF,
+    col.names = c("Região",
+                  "Nº de micro",
+                  "% na região",
+                  "Nº de micro",
+                  "% na região",
+                  "Nº de micro",
+                  "% na região"),
+    align = "crlrlrl",
+    caption = "Resumo por região - Unidade espacial da microrregião") %>%
+  #kable_classic() %>%
+#  kable_minimal() %>%
+  #kable_material(c("striped", "hover")) 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "Valor da produção não-AF abaixo da mediana do país" = 2, "Valor da produção não-AF entre a média e a mediana do país" = 2, "Valor da produção não-AF acima da média do país" = 2)) %>%
+  add_header_above(c(" " = 1, "Posição dos estabelecimentos não familiares em relação a média e mediana gerais do país" = 6)) 
+
+
+```
+
+**Representação espacial**
+
+```{r mapa_microrregioes_NAF, echo=FALSE, message=FALSE, warning=FALSE}
+
+cores <- c("#d95f02", "#e6ab02", "#1b9e77")
+
+SHP_Microrregioes_class$classVBP_BRA_NAF_T <- factor(SHP_Microrregioes_class$classVBP_BRA_NAF_T, levels = c("Abaixo da mediana do país", 
+                                                                                                    "Entre a média e a mediana do país",
+                                                                                                    "Acima da média do país")
+                                                 )
+
+
+  SHP_Microrregioes_class %>%
+  filter(!is.na(classVBP_BRA_NAF_T)) %>%
+  tm_shape() +
+  tm_fill(col = "classVBP_BRA_NAF_T", 
+          palette = cores,
+          title = "Valor da produção não familiar",
+          id = "LOCALIZACAO",
+          style = "cat"
+          ) +
+  tm_borders(lwd = 0.0) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1) 
+```
