@@ -471,9 +471,9 @@ SHP_Municipios_class <- left_join(SHP_Municipios, municipios_class, by = "COD")
 
 # Por Municípios
 
-A média brasileira por municípios, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMUN[1,]$VBP_BRA_mean_T, 1),"(mil reais)")`.
+A média brasileira por municípios, considerando o valor da produção de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMUN[1,]$VBP_BRA_mean_T, 1),"(mil reais)")`.
 
-A mediana brasileira por municípios, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMUN[1,]$VBP_BRA_median_T, 1),"(mil reais)")`.
+A mediana brasileira por municípios, considerando o valor da produção de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMUN[1,]$VBP_BRA_median_T, 1),"(mil reais)")`.
 
 
 ## Agricultura familiar
@@ -655,9 +655,9 @@ SHP_Municipios_class$classVBP_BRA_NAF_T <- factor(SHP_Municipios_class$classVBP_
 
 # Por Microrregiões
 
-A média brasileira por microrregiões, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMIC[1,]$VBP_BRA_mean_T, 1),"(mil reais)")`.
+A média brasileira por microrregiões, considerando o valor da produção de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMIC[1,]$VBP_BRA_mean_T, 1),"(mil reais)")`.
 
-A mediana brasileira por municípios, considerando os rendimentos de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMIC[1,]$VBP_BRA_median_T, 1),"(mil reais)")`.
+A mediana brasileira por municípios, considerando o valor da produção de todos os estabelecimentos agropecuários no ano de referência, é de `r paste("R$",round(media_brasilMIC[1,]$VBP_BRA_median_T, 1),"(mil reais)")`.
 
 
 
