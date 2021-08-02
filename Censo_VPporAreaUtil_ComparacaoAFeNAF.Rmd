@@ -1,0 +1,756 @@
+---
+title: "Censo Agro - VP/área útil na AF e na AP"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4 
+    toc_float: 
+      collapsed: false
+    theme: flatly  
+
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+               cache=FALSE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+```{r Pacotes, message=FALSE, warning=FALSE, include=FALSE}
+#pacotes
+
+#install.packages(c("ggthemes", "ggpubr", "readr", "readxl", "rstatix", "sp", "sf", "tmap", "leaflet", "arsenal", "knitr", "plotly", "kableExtra", "prettydoc", "rmdformats", "knitr", "scales", "esquisse", "pacman"))
+
+#install.packages(c(	"broom", "cli", "crayon" , "dbplyr", "dplyr", "forcats", "ggplot2", "haven", "hms", "httr", "jsonlite", "lubridate", "magrittr", "modelr", "pillar", "purrr", "readr", "readxl", "reprex", "rlang", "rstudioapi", "rvest", "stringr", "tibble", "tidyr", "xml2", "corrplot"))
+
+##install.packages("factoextra")
+##install.packages("qwraps2")
+
+pacman::p_load(ggthemes, ggpubr, tidyverse, readr, readxl, esquisse, rstatix, sp, sf, tmap, leaflet, arsenal, knitr, plotly, kableExtra, prettydoc, rmdformats, knitr, scales, broom, cli, crayon , dbplyr, dplyr, forcats, ggplot2, haven, hms, httr, jsonlite, lubridate, magrittr, modelr, pillar, purrr, readr, readxl, reprex, rlang, rstudioapi, rvest, stringr, tibble, tidyr, xml2, factoextra, qwraps2, corrplot) 
+
+
+options(scipen=999)
+
+tmap_options(check.and.fix = TRUE)
+
+```
+
+
+
+```{r COD_Tabelas, message=FALSE, warning=FALSE, include=FALSE}
+TABELA2 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6878_MUN_areaestabelecimentos+niveis.xlsx", na = "X") 
+TABELA2$COD[TABELA2$NIVEL == "BR"] <- 000
+
+TABELA9 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6882_MUN_areapreservacao+niveis.xlsx", na = "X") 
+TABELA9$COD[TABELA9$NIVEL == "BR"] <- 000
+TABELA9 <- TABELA9 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA10 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6788_MUN_totalestabelecimentos+niveis.xlsx", na = "X") 
+TABELA10$COD[TABELA10$NIVEL == "BR"] <- 000
+TABELA10 <- TABELA10 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+
+
+TABELA6 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6898_MUN_valordaproducao+niveis.xlsx", na = "X") 
+TABELA6$COD[TABELA6$NIVEL == "BR"] <- 000
+TABELA6 <- TABELA6 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+TABELA8 <- read_excel("data/tabelas/micro_meso_uf_macro_brasil/communicipio/6901_MUN_valorreceitas+niveis.xlsx", na = "X") 
+TABELA8$COD[TABELA8$NIVEL == "BR"] <- 000
+TABELA8 <- TABELA8 %>%
+  select(., -NIVEL) %>% 
+  select(., -LOCALIZACAO)
+
+```
+
+```{r COD_Procedimentos com as tabelas, message=FALSE, warning=FALSE, include=FALSE}
+#### PROCEDIMENTOS COM AS TABELAS -----------------
+
+#Join de todas as tabelas 
+todastabelas <- TABELA2 %>%
+  left_join(., TABELA9, by = "COD") %>%
+  left_join(., TABELA10, by = "COD") %>%
+  left_join(., TABELA6, by = "COD") %>%
+  left_join(., TABELA8, by = "COD") %>%
+  mutate_if(is.numeric , replace_na, replace = 0)
+
+
+#Filtragem por recorte geográfico
+municipios <- todastabelas %>% filter(NIVEL == "MU")
+microrregioes <- todastabelas %>% filter(NIVEL == "MI")
+mesorregioes <- todastabelas %>% filter(NIVEL == "ME")
+estados <- todastabelas %>% filter(NIVEL == "UF")
+macrorregioes <- todastabelas %>% filter(NIVEL == "GR")
+brasil <- todastabelas %>% filter(NIVEL == "BR")
+
+
+#Criando colunas de código do estado e da região - MUNICIPIOS
+municipios <- municipios %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+municipios$COD_ESTADO <- substr(municipios$COD_ESTADO, 0, 2)
+municipios$COD_REGIAO <- substr(municipios$COD_REGIAO, 0, 1)
+municipios$COD_REGIAO[municipios$COD_REGIAO == "1"] <- "Norte"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "2"] <- "Nordeste"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "3"] <- "Sudeste"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "4"] <- "Sul"
+municipios$COD_REGIAO[municipios$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+
+#Criando colunas de código do estado e da região 
+microrregioes <- microrregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+microrregioes$COD_ESTADO <- substr(microrregioes$COD_ESTADO, 0, 2)
+microrregioes$COD_REGIAO <- substr(microrregioes$COD_REGIAO, 0, 1)
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "1"] <- "Norte"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "2"] <- "Nordeste"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "3"] <- "Sudeste"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "4"] <- "Sul"
+microrregioes$COD_REGIAO[microrregioes$COD_REGIAO == "5"] <- "Centro-Oeste"
+
+
+mesorregioes <- mesorregioes %>%
+  mutate(COD_ESTADO = COD, 
+         COD_REGIAO = COD)
+mesorregioes$COD_ESTADO <- substr(mesorregioes$COD_ESTADO, 0, 2)
+mesorregioes$COD_REGIAO <- substr(mesorregioes$COD_REGIAO, 0, 1)
+
+
+```
+
+```{r COD_Novas colunas2, message=FALSE, warning=FALSE, include=FALSE}
+#### CÁLCULO DAS PORCENTAGENS -----------------
+microrregioes <- microrregioes %>%
+  mutate(#Valor da produção por área útil
+    TT_VPdivAREA = (VP_T*1000) / (AREA_T - AREAPRESERV_T), 
+    AF_VPdivAREA = (VP_AF*1000) / (AREA_AF - AREAPRESERV_AF),
+    MP_VPdivAREA = (VP_MP*1000) / (AREA_MP - AREAPRESERV_MP),
+    NAF_VPdivAREA = ((VP_T - VP_AF)*1000) / ((AREA_T - AREA_AF) - AREAPRESERV_GP)
+)
+
+municipios <- municipios %>%
+  mutate(#Valor da produção por área útil
+    TT_VPdivAREA = (VP_T*1000) /             (AREA_T            - AREAPRESERV_T), 
+    AF_VPdivAREA = (VP_AF*1000) /            (AREA_AF           - AREAPRESERV_AF),
+    MP_VPdivAREA = (VP_MP*1000) /            (AREA_MP           - AREAPRESERV_MP),
+    NAF_VPdivAREA = ((VP_T - VP_AF)*1000) / ((AREA_T - AREA_AF) - AREAPRESERV_GP)
+)
+
+```
+
+```{r CALCULO_CLASSIFICACOES, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+microrregioes_class <- microrregioes %>%
+  mutate(PAIS = "Brasil") %>%
+   group_by(NIVEL, COD, LOCALIZACAO, PAIS, COD_ESTADO, COD_REGIAO) %>%
+  mutate(
+    AF_para_NAF = case_when(
+      AF_VPdivAREA > NAF_VPdivAREA ~ AF_VPdivAREA/NAF_VPdivAREA,
+      NAF_VPdivAREA > AF_VPdivAREA ~ (NAF_VPdivAREA/AF_VPdivAREA)*-1
+    ),
+    
+    AF_NAF_class = case_when(
+      AF_para_NAF > 0 & AF_para_NAF < 2 ~ "Até 2x maior",
+      AF_para_NAF >= 2 & AF_para_NAF < 5 ~ "De 2 a 5x maior",
+      AF_para_NAF >= 5 & AF_para_NAF < 10 ~ "De 5 a 10x maior",
+      AF_para_NAF >= 10 ~ "Mais de 10x maior",
+      
+      AF_para_NAF > -2 & AF_para_NAF <= 0 ~ "Até 2x menor",
+      AF_para_NAF > -5 & AF_para_NAF <= -2 ~ "De 2 a 5x menor",
+      AF_para_NAF > -10 & AF_para_NAF <= -5 ~ "De 5 a 10x menor"),
+    
+    AF_NAF_classRESUMO = case_when(
+      AF_para_NAF > 0 ~ "Maior na AF",
+      AF_para_NAF < 0 ~ "Menor na AF"),
+    
+    .keep = "used"
+  )
+
+municipios_class <- municipios %>%
+  mutate(PAIS = "Brasil") %>%
+   group_by(NIVEL, COD, LOCALIZACAO, PAIS, COD_ESTADO, COD_REGIAO) %>%
+  mutate(
+    AF_para_NAF = case_when(
+      AF_VPdivAREA > NAF_VPdivAREA ~ AF_VPdivAREA/NAF_VPdivAREA,
+      NAF_VPdivAREA > AF_VPdivAREA ~ (NAF_VPdivAREA/AF_VPdivAREA)*-1
+    ),
+    
+    AF_NAF_class = case_when(
+      AF_para_NAF > 0 & AF_para_NAF < 2 ~ "Até 2x maior",
+      AF_para_NAF >= 2 & AF_para_NAF < 5 ~ "De 2 a 5x maior",
+      AF_para_NAF >= 5 & AF_para_NAF < 10 ~ "De 5 a 10x maior",
+      AF_para_NAF >= 10 ~ "Mais de 10x maior",
+      
+      AF_para_NAF > -2 & AF_para_NAF <= 0 ~ "Até 2x menor",
+      AF_para_NAF > -5 & AF_para_NAF <= -2 ~ "De 2 a 5x menor",
+      AF_para_NAF > -10 & AF_para_NAF <= -5 ~ "De 5 a 10x menor",
+      AF_para_NAF <= -10 ~ "Mais de 10x menor"),
+    
+    
+    AF_NAF_classRESUMO = case_when(
+      AF_para_NAF > 0 ~ "Maior na AF",
+      AF_para_NAF < 0 ~ "Menor na AF"),
+    
+    .keep = "used"
+  )
+
+```
+
+```{r shapefiles, message=FALSE, warning=FALSE, include=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+SHP_Microrregioes <- read_sf("data/shapes/BR_Microrregioes_2019_simplif.shp")
+SHP_Municipios <- read_sf("data/shapes/BR_Municipios_2020_simplif.shp")
+SHP_Estados <- read_sf("data/shapes/estados_2010_simplif.shp")
+st_crs(SHP_Microrregioes)
+tmap_mode("view")
+
+# Mudando o nome pra ficar igual ao da tabela
+names(SHP_Microrregioes)[1] <- "COD"
+names(SHP_Municipios)[1] <- "COD"
+
+
+SHP_Microrregioes_class <- left_join(SHP_Microrregioes, microrregioes_class, by = "COD")
+SHP_Municipios_class <- left_join(SHP_Municipios, municipios_class, by = "COD")
+
+#SHP_Microrregioes_class <- read_sf("data/shapes/SHP_Municipios_class.gpkg")
+
+```
+
+# Por Municípios
+
+## Mapa
+
+**Representação espacial**
+
+Valor da produção por área útil da agricultura familiar em comparação com a mesma variável para a agricultura não familiar.
+
+```{r mapa_municipios_AF, echo=FALSE, message=FALSE, warning=FALSE}
+
+cores <- c("#542788","#8073ac","#b2abd2","#d8daeb","#fee0b6","#fdb863","#e08214","#b35806")
+
+SHP_Municipios_class$AF_NAF_class <- factor(SHP_Municipios_class$AF_NAF_class, levels = c("Mais de 10x maior" ,
+"De 5 a 10x maior" ,
+"De 2 a 5x maior",   
+"Até 2x maior" ,
+"Até 2x menor"  ,
+"De 2 a 5x menor" , 
+"De 5 a 10x menor" ,
+"Mais de 10x menor")
+)
+
+
+SHP_Municipios_class %>%
+  filter(!is.na(AF_NAF_class)) %>%
+  tm_shape() +
+  tm_fill(col = "AF_NAF_class", 
+          palette = cores,
+          title = "VP/área útil<br>(comparação AF/NAF)",
+          id = "LOCALIZACAO",
+          style = "cat"
+          ) +
+  tm_borders(lwd = 0.0) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1) 
+```
+
+## Tabelas 
+
+**Tabela simplificada**
+
+```{r tabelaresumao_municipios, echo=FALSE, message=FALSE, warning=FALSE}
+municipios_class_sumariao_REG <- municipios_class %>%
+  filter(!is.na(AF_NAF_classRESUMO)) %>%
+  select(COD_REGIAO, AF_NAF_classRESUMO) %>%
+  group_by(COD_REGIAO, AF_NAF_classRESUMO) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_classRESUMO, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Maior na AF` ,
+         `pct_Maior na AF` ,
+         `n_Menor na AF`   ,
+         `pct_Menor na AF`) 
+
+
+
+municipios_class_sumariao_BRA <- municipios_class %>%
+  filter(!is.na(AF_NAF_classRESUMO)) %>%
+  select(PAIS, AF_NAF_classRESUMO) %>%
+  group_by(PAIS, AF_NAF_classRESUMO) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_classRESUMO, 
+              values_from = c(n, pct)) %>%
+  select(PAIS,
+         `n_Maior na AF` ,
+         `pct_Maior na AF` ,
+         `n_Menor na AF`   ,
+         `pct_Menor na AF`) %>%
+  rename(COD_REGIAO = PAIS)
+
+municipios_class_sumariao <- bind_rows(municipios_class_sumariao_REG, municipios_class_sumariao_BRA)
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(municipios_class_sumariao,
+    col.names = c("Região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região"),
+    align = "crlrlrlrlrlrlrlrl",
+    caption = "Resumo por região (número de municípios e porcentagem na região") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "VP/área útil MAIOR na AF que na não-AF" = 2, "VP/área útil MENOR na AF que na não-AF" = 2)) %>%
+  #add_header_above(c(" " = 1, "VP/área útil MAIOR na AF que na não-AF" = 8, "VP/área útil MENOR na AF que na não-AF" = 8)) %>%
+  #add_header_above(c(" " = 1, "Posição dos estabelecimentos da AF em relação a média e mediana gerais do país" = 6)) 
+  row_spec(6, bold = T, color = "black")
+```
+
+**Tabela por região**
+
+```{r tabelaresumo_municipios, echo=FALSE, message=FALSE, warning=FALSE}
+municipios_class_sumario_REG <- municipios_class %>%
+  filter(!is.na(AF_NAF_class)) %>%
+  select(COD_REGIAO, AF_NAF_class) %>%
+  group_by(COD_REGIAO, AF_NAF_class) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_class, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Mais de 10x maior` ,
+         `pct_Mais de 10x maior`,
+         
+         `n_De 5 a 10x maior` ,
+         `pct_De 5 a 10x maior`,
+         
+         `n_De 2 a 5x maior`,   
+         `pct_De 2 a 5x maior`,
+         
+         `n_Até 2x maior` ,
+         `pct_Até 2x maior`, 
+         
+         
+         `n_Até 2x menor`  ,
+         `pct_Até 2x menor` ,
+         
+         `n_De 2 a 5x menor` , 
+         `pct_De 2 a 5x menor`,  
+         
+         `n_De 5 a 10x menor` ,
+         `pct_De 5 a 10x menor`,
+         
+         `n_Mais de 10x menor`,
+         `pct_Mais de 10x menor`) 
+
+
+
+municipios_class_sumario_BRA <- municipios_class %>%
+  filter(!is.na(AF_NAF_class)) %>%
+  select(PAIS, AF_NAF_class) %>%
+  group_by(PAIS, AF_NAF_class) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_class, 
+              values_from = c(n, pct)) %>%
+  select(PAIS,
+         `n_Mais de 10x maior` ,
+         `pct_Mais de 10x maior`,
+         
+         `n_De 5 a 10x maior` ,
+         `pct_De 5 a 10x maior`,
+         
+         `n_De 2 a 5x maior`,   
+         `pct_De 2 a 5x maior`,
+         
+         `n_Até 2x maior` ,
+         `pct_Até 2x maior`, 
+         
+         
+         `n_Até 2x menor`  ,
+         `pct_Até 2x menor` ,
+         
+         `n_De 2 a 5x menor` , 
+         `pct_De 2 a 5x menor`,  
+         
+         `n_De 5 a 10x menor` ,
+         `pct_De 5 a 10x menor`,
+         
+         `n_Mais de 10x menor`,
+         `pct_Mais de 10x menor`
+         ) %>%
+  rename(COD_REGIAO = PAIS)
+
+municipios_class_sumario <- bind_rows(municipios_class_sumario_REG, municipios_class_sumario_BRA)
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(municipios_class_sumario,
+    col.names = c("Região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região"),
+    align = "crlrlrlrlrlrlrlrl",
+    caption = "Resumo por região (número de municípios e porcentagem na região") %>%
+  #kable_classic() %>%
+#  kable_minimal() %>%
+  #kable_material(c("striped", "hover")) 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "Mais de 10x maior" = 2, "De 5 a 10x maior" = 2, "De 2 a 5x maior" = 2, "Até 2x maior" = 2, "Até 2x menor" = 2, "De 2 a 5x menor" = 2, 
+"De 5 a 10x menor" = 2, "Mais de 10x menor" = 2)) %>%
+  add_header_above(c(" " = 1, "VP/área útil MAIOR na AF que na não-AF" = 8, "VP/área útil MENOR na AF que na não-AF" = 8)) %>%
+  #add_header_above(c(" " = 1, "Posição dos estabelecimentos da AF em relação a média e mediana gerais do país" = 6)) 
+  row_spec(6, bold = T, color = "black")
+
+```
+
+
+**Tabela completa**
+
+- V1: Classificação resumida apenas em duas classes, VBP/área útil maior na AF quando em comparação com a não-AF, ou menor;
+
+- V2: Classificação resumida em intervalos de classes, considerando quantas vezes o VBP/área útil é maior ou menor na AF em comparação com a não-AF;
+
+- V3: Número indicativo de quantas vezes, naquele município, o VBP/área útil foi maior ou menor na AF em comparação com a não-AF.
+
+```{r tabelacompleta_municipios}
+
+library(DT)
+
+municipios_class_TABELACOMPLETA <- municipios_class %>%
+  ungroup() %>%
+  select(LOCALIZACAO, COD_REGIAO, AF_NAF_classRESUMO, AF_NAF_class, AF_para_NAF) %>%
+  filter(!is.na(AF_NAF_classRESUMO)) %>%
+  mutate(AF_para_NAF = round(AF_para_NAF, 2))
+  
+
+
+datatable(municipios_class_TABELACOMPLETA, rownames = FALSE,
+          colnames = c('Município', 'Região', 'VBP/área útil (V1)', 'VBP/área útil (V2)', 'VBP/área útil (V3)'),
+          
+          filter = 'top',
+          
+          extensions = 'Buttons',
+          
+          options = list(
+             initComplete = JS(
+               "function(settings, json) {",
+               "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+               "}"),
+             
+             dom = 'Bfrtip',
+             buttons = c('copy', 'csv', 'excel', 'pdf'))
+)
+
+
+
+```
+
+
+
+# Por Microrregiões
+
+## Mapa
+
+**Representação espacial**
+
+Valor da produção por área útil da agricultura familiar em comparação com a mesma variável para a agricultura não familiar.
+
+```{r mapa_microrregioes_AF, echo=FALSE, message=FALSE, warning=FALSE}
+
+cores <- c("#542788","#8073ac","#b2abd2","#d8daeb","#fee0b6", "#f1a340", "#b35806")
+
+SHP_Microrregioes_class$AF_NAF_class <- factor(SHP_Microrregioes_class$AF_NAF_class, levels = c("Mais de 10x maior" ,
+"De 5 a 10x maior" ,
+"De 2 a 5x maior",   
+"Até 2x maior" ,
+"Até 2x menor"  ,
+"De 2 a 5x menor" , 
+"De 5 a 10x menor")
+)
+
+SHP_Microrregioes_class <- SHP_Microrregioes_class[!st_is_empty(SHP_Microrregioes_class),,drop=FALSE]
+
+SHP_Microrregioes_class %>%
+  filter(!is.na(AF_NAF_class)) %>%
+  tm_shape() +
+  tm_fill(col = "AF_NAF_class", 
+          palette = cores,
+          title = "VP/área útil<br>(comparação AF/NAF)",
+          id = "LOCALIZACAO",
+          style = "cat"
+          ) +
+  tm_borders(lwd = 0.0) +
+  tm_view(view.legend.position = c("right", "bottom")) +
+  tm_shape(SHP_Estados) +
+  tm_layout(frame = FALSE) +
+  tm_borders(lwd = 1) 
+```
+
+## Tabelas 
+
+**Tabela simplificada**
+
+```{r tabelaresumao_microrregioes, echo=FALSE, message=FALSE, warning=FALSE}
+microrregioes_class_sumariao_REG <- microrregioes_class %>%
+  filter(!is.na(AF_NAF_classRESUMO)) %>%
+  select(COD_REGIAO, AF_NAF_classRESUMO) %>%
+  group_by(COD_REGIAO, AF_NAF_classRESUMO) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_classRESUMO, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Maior na AF` ,
+         `pct_Maior na AF` ,
+         `n_Menor na AF`   ,
+         `pct_Menor na AF`) 
+
+
+
+microrregioes_class_sumariao_BRA <- microrregioes_class %>%
+  filter(!is.na(AF_NAF_classRESUMO)) %>%
+  select(PAIS, AF_NAF_classRESUMO) %>%
+  group_by(PAIS, AF_NAF_classRESUMO) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_classRESUMO, 
+              values_from = c(n, pct)) %>%
+  select(PAIS,
+         `n_Maior na AF` ,
+         `pct_Maior na AF` ,
+         `n_Menor na AF`   ,
+         `pct_Menor na AF`) %>%
+  rename(COD_REGIAO = PAIS)
+
+microrregioes_class_sumariao <- bind_rows(microrregioes_class_sumariao_REG, microrregioes_class_sumariao_BRA)
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(microrregioes_class_sumariao,
+    col.names = c("Região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região"),
+    align = "crlrlrlrlrlrlrlrl",
+    caption = "Resumo por região (número de microrregiões e porcentagem na região") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "VP/área útil MAIOR na AF que na não-AF" = 2, "VP/área útil MENOR na AF que na não-AF" = 2)) %>%
+  #add_header_above(c(" " = 1, "VP/área útil MAIOR na AF que na não-AF" = 8, "VP/área útil MENOR na AF que na não-AF" = 8)) %>%
+  #add_header_above(c(" " = 1, "Posição dos estabelecimentos da AF em relação a média e mediana gerais do país" = 6)) 
+  row_spec(6, bold = T, color = "black")
+```
+
+**Tabela por região**
+
+```{r tabelaresumo_microrregioes, echo=FALSE, message=FALSE, warning=FALSE}
+microrregioes_class_sumario_REG <- microrregioes_class %>%
+  filter(!is.na(AF_NAF_class)) %>%
+  select(COD_REGIAO, AF_NAF_class) %>%
+  group_by(COD_REGIAO, AF_NAF_class) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_class, 
+              values_from = c(n, pct)) %>%
+  select(COD_REGIAO,
+         `n_Mais de 10x maior` ,
+         `pct_Mais de 10x maior`,
+         
+         `n_De 5 a 10x maior` ,
+         `pct_De 5 a 10x maior`,
+         
+         `n_De 2 a 5x maior`,   
+         `pct_De 2 a 5x maior`,
+         
+         `n_Até 2x maior` ,
+         `pct_Até 2x maior`, 
+         
+         
+         `n_Até 2x menor`  ,
+         `pct_Até 2x menor` ,
+         
+         `n_De 2 a 5x menor` , 
+         `pct_De 2 a 5x menor`,  
+         
+         `n_De 5 a 10x menor` ,
+         `pct_De 5 a 10x menor`) 
+
+
+
+microrregioes_class_sumario_BRA <- microrregioes_class %>%
+  filter(!is.na(AF_NAF_class)) %>%
+  select(PAIS, AF_NAF_class) %>%
+  group_by(PAIS, AF_NAF_class) %>%
+  summarise(n = n()) %>%
+  mutate(pct = n/sum(n)) %>%
+  mutate(pct = scales::percent(pct, big.mark = ".",  decimal.mark = "," , na.rm = TRUE, accuracy = 0.1)) %>%
+  
+  pivot_wider(names_from = AF_NAF_class, 
+              values_from = c(n, pct)) %>%
+  select(PAIS,
+         `n_Mais de 10x maior` ,
+         `pct_Mais de 10x maior`,
+         
+         `n_De 5 a 10x maior` ,
+         `pct_De 5 a 10x maior`,
+         
+         `n_De 2 a 5x maior`,   
+         `pct_De 2 a 5x maior`,
+         
+         `n_Até 2x maior` ,
+         `pct_Até 2x maior`, 
+         
+         
+         `n_Até 2x menor`  ,
+         `pct_Até 2x menor` ,
+         
+         `n_De 2 a 5x menor` , 
+         `pct_De 2 a 5x menor`,  
+         
+         `n_De 5 a 10x menor` ,
+         `pct_De 5 a 10x menor`
+         ) %>%
+  rename(COD_REGIAO = PAIS)
+
+microrregioes_class_sumario <- bind_rows(microrregioes_class_sumario_REG, microrregioes_class_sumario_BRA)
+
+options(knitr.kable.NA = 'Não há')
+
+
+kbl(microrregioes_class_sumario,
+    col.names = c("Região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região",
+                  "Nº mun",
+                  "% região"),
+    align = "crlrlrlrlrlrlrlrl",
+    caption = "Resumo por região (número de microrregiões e porcentagem na região") %>%
+  #kable_classic() %>%
+#  kable_minimal() %>%
+  #kable_material(c("striped", "hover")) 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  add_header_above(c(" " = 1, "Mais de 10x maior" = 2, "De 5 a 10x maior" = 2, "De 2 a 5x maior" = 2, "Até 2x maior" = 2, "Até 2x menor" = 2, "De 2 a 5x menor" = 2, "De 5 a 10x menor" = 2)) %>%
+  add_header_above(c(" " = 1, "VP/área útil MAIOR na AF que na não-AF" = 8, "VP/área útil MENOR na AF que na não-AF" = 6)) %>%
+  #add_header_above(c(" " = 1, "Posição dos estabelecimentos da AF em relação a média e mediana gerais do país" = 6)) 
+  row_spec(6, bold = T, color = "black")
+
+```
+
+
+
+**Tabela completa**
+
+- V1: Classificação resumida apenas em duas classes, VBP/área útil maior na AF quando em comparação com a não-AF, ou menor;
+
+- V2: Classificação resumida em intervalos de classes, considerando quantas vezes o VBP/área útil é maior ou menor na AF em comparação com a não-AF;
+
+- V3: Número indicativo de quantas vezes, naquele município, o VBP/área útil foi maior ou menor na AF em comparação com a não-AF.
+
+```{r tabelacompleta_microrregioes}
+microrregioes_class_TABELACOMPLETA <- microrregioes_class %>%
+  ungroup() %>%
+  select(LOCALIZACAO, COD_REGIAO, AF_NAF_classRESUMO, AF_NAF_class, AF_para_NAF) %>%
+  filter(!is.na(AF_NAF_classRESUMO)) %>%
+  mutate(AF_para_NAF = round(AF_para_NAF, 2))
+  
+
+
+datatable(microrregioes_class_TABELACOMPLETA, rownames = FALSE,
+          colnames = c('Microrregião', 'Região', 'VBP/área útil (V1)', 'VBP/área útil (V2)', 'VBP/área útil (V3)'),
+          filter = 'top',
+          extensions = 'Buttons',
+          
+          options = list(
+             initComplete = JS(
+               "function(settings, json) {",
+               "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+               "}"),
+             
+             dom = 'Bfrtip',
+             buttons = c('copy', 'csv', 'excel', 'pdf'))
+)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
