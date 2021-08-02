@@ -1,5 +1,6 @@
 ---
 title: "Censo Agro - VP/área útil na AF e na AP"
+subtitle: "VP/área útil nos estabelecimentos da AF em comparação com os da não-AF" 
 output:
   html_document:
     toc: true
@@ -232,6 +233,26 @@ SHP_Municipios_class <- left_join(SHP_Municipios, municipios_class, by = "COD")
 #SHP_Microrregioes_class <- read_sf("data/shapes/SHP_Municipios_class.gpkg")
 
 ```
+
+
+# Introdução
+
+Este documento tem como objetivo comparar o valor da produção (VP) por área útil entre os estabelecimentos agropecuários da agricultura familiar e os não familiares.
+
+A variável principal utilizada é uma composição utilizando três variáveis de origem no Censo Agropecuário de 2017, sendo ela o quociente entre a variável de nome "Valor da produção dos estabelecimentos agropecuários" e a variável de área dos estabelecimentos, exceto as destinadas à preservação ambiental (obtida pela diferença entre a variável de nome "Área dos estabelecimentos agropecuários" e a de nome "Utilização das terras, área de matas ou florestas naturais destinadas à preservação permanente ou reserva legal").
+
+<br>
+
+## Metodologia
+O trabalho está dividido em duas seçoes principais, por unidade espacial de análise (município ou microrregião). As unidades espaciais foram classificadas entre locais em que o VP/ÁreaÚtil da AF é maior do que o da não-AF e locais em que o VP/ÁreaÚtil da AF é menor que o da não-AF. 
+As tabelas apresentam os dados em 3 formatos distintos:
+
+- Resumo por região simplificado: Formato mais simples de todos, apresentando a porcentagem de unidades espaciais (mun ou micro) no qual a AF tem VP/ÁreaÚtil superior ou inferior a não-AF; 
+
+- Resumo por região: Na tabela resumo por região, o VP/ÁreaÚtil da AF acima ou abaixo do da não-AF foi aberto em categorias que ajudam a entender o quão acima ou abaixo o valor está na AF em comparação com a não-AF; 
+
+- Completo: Por fim, a tabela completa apresenta a lista completa com todas as unidades espaciais, sendo possível filtrar pela coluna da classificação simplificada, da classificação aberta em categorias ou do valor geral (quantas vezes o valor da AF é maior ou menor que o da não-AF).
+
 
 # Por Municípios
 
